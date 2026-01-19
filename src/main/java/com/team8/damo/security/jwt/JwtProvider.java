@@ -17,13 +17,12 @@ import java.util.Date;
 @Slf4j
 @Component
 public class JwtProvider {
-
     private final Key key;
     private final long accessTokenExpTime;
     private final long refreshTokenExpTime;
 
     public JwtProvider(
-        @Value("${jwt.secret}") String secretKey,
+        @Value("${jwt.secret-key}") String secretKey,
         @Value("${jwt.expiration.access}") long accessTokenExpTime,
         @Value("${jwt.expiration.refresh}") long refreshTokenExpTime
     ) {

@@ -23,6 +23,10 @@ public class JwtUserDetails implements UserDetails {
         return List.of();
     }
 
+    public Long getUserId() {
+        return userId;
+    }
+
     @Override
     public String getUsername() {
         return email;
