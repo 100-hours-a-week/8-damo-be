@@ -2,6 +2,12 @@ spring:
 
   profiles:
     active: local
+
+jwt:
+  secret-key: ${JWT_SECRET}
+  expiration:
+    access: 900       # 15분 (s)
+    refresh: 1209600  # 14일 (s)
 ---
 spring:
   config:
