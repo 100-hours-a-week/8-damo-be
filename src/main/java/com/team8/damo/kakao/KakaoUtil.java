@@ -36,7 +36,6 @@ public class KakaoUtil {
 
     // 받은 인가코드를 사용하여 액세스 토큰 발급
     public KakaoResponse.OAuthToken getAccessToken(String code) {
-        System.out.println("code: " + code);
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-type", CONTENT_TYPE);
@@ -58,11 +57,9 @@ public class KakaoUtil {
 
         KakaoResponse.OAuthToken oAuthToken = null;
         ObjectMapper objectMapper = new ObjectMapper();
-        log.info(response.getBody());
 
         try {
             oAuthToken = objectMapper.readValue(response.getBody(), KakaoResponse.OAuthToken.class);
-            log.info("oAuthToken : {}", oAuthToken.getAccess_token());
         } catch (Exception e) {
             throw new CustomException(JSON_PARSING_ERROR);
         }
@@ -85,14 +82,12 @@ public class KakaoUtil {
             HttpMethod.POST,
             kakaoRequest,
             String.class);
-        System.out.println("response = " + response.getBody());
 
         KakaoResponse.UserInfo userInfo = null;
         ObjectMapper objectMapper = new ObjectMapper();
 
         try {
             userInfo = objectMapper.readValue(response.getBody(), KakaoResponse.UserInfo.class);
-            log.info(userInfo.getKakao_account().getEmail());
         } catch (Exception e) {
             throw new CustomException(JSON_PARSING_ERROR);
         }
