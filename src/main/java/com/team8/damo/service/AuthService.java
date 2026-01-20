@@ -1,6 +1,6 @@
 package com.team8.damo.service;
 
-import com.team8.damo.controller.response.UserOAuthResponse;
+import com.team8.damo.service.response.UserOAuthResponse;
 import com.team8.damo.entity.User;
 import com.team8.damo.kakao.KakaoResponse;
 import com.team8.damo.kakao.KakaoUtil;

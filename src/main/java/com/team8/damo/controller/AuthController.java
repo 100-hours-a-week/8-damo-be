@@ -2,8 +2,8 @@ package com.team8.damo.controller;
 
 import com.team8.damo.controller.request.OAuthLoginRequest;
 import com.team8.damo.controller.response.BaseResponse;
-import com.team8.damo.controller.response.OAuthLoginResponse;
-import com.team8.damo.controller.response.UserOAuthResponse;
+import com.team8.damo.service.response.OAuthLoginResponse;
+import com.team8.damo.service.response.UserOAuthResponse;
 import com.team8.damo.service.AuthService;
 import com.team8.damo.util.CookieUtil;
 import jakarta.servlet.http.HttpServletResponse;
