@@ -25,7 +25,10 @@ public class KakaoUtil {
     @Value("${kakao.oauth.client-id}")
     private String clientId;
 
-    @Value("${kakao.oauth.redirect-uri")
+    @Value("${kakao.oauth.client-secret}")
+    private String clientSecret;
+
+    @Value("${kakao.oauth.redirect-uri}")
     private String redirectUri;
 
     private final String CONTENT_TYPE = "application/x-www-form-urlencoded;charset=utf-8";
@@ -33,6 +36,7 @@ public class KakaoUtil {
 
     // 받은 인가코드를 사용하여 액세스 토큰 발급
     public KakaoResponse.OAuthToken getAccessToken(String code) {
+        System.out.println("code: " + code);
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-type", CONTENT_TYPE);
@@ -40,6 +44,7 @@ public class KakaoUtil {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", GRANT_TYPE);
         params.add("client_id", clientId);
+        params.add("client_secret", clientSecret);
         params.add("redirect_uri", redirectUri);
         params.add("code", code);
 
