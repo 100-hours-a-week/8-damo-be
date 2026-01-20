@@ -54,6 +54,11 @@ spring:
       hibernate:
         format_sql: true
         show_sql: false
+    defer-datasource-initialization: true
+
+  sql:
+    init:
+      mode: always
 
   output:
     ansi:
@@ -99,6 +104,11 @@ spring:
       hibernate:
         format_sql: false
         show_sql: false
+    defer-datasource-initialization: true
+
+  sql:
+    init:
+      mode: always
 
 decorator:
   datasource:
