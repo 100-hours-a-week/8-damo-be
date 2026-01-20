@@ -8,6 +8,13 @@ jwt:
   expiration:
     access: 900       # 15분 (s)
     refresh: 1209600  # 14일 (s)
+
+kakao:
+  oauth:
+    admin: ${KAKAO_ADMIN}
+    client-id: ${KAKAO_CLIENT_ID}
+    client-secret: ${KAKAO_CLIENT_SECRET}
+    redirect-uri: ${KAKAO_REDIRECT_URI}
 ---
 spring:
   config:
