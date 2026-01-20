@@ -104,4 +104,11 @@ public class User extends BaseTimeEntity {
         this.isWithdraw = true;
         this.withdrawAt = LocalDateTime.now();
     }
+
+    public void updateBasic(String nickname, Gender gender, AgeGroup ageGroup) {
+        this.nickname = nickname;
+        this.gender = gender;
+        this.ageGroup = ageGroup;
+        this.onboardingStep = OnboardingStep.CHARACTERISTIC;
+    }
 }
