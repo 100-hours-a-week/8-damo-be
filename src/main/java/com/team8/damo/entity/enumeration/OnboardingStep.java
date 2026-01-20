@@ -1,4 +1,4 @@
-package com.team8.damo.entity;
+package com.team8.damo.entity.enumeration;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
