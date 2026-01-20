@@ -27,7 +27,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private static final String[] AUTH_WHITELIST = {
-        "/api",
+        "/api/v1/auth/oauth",
         "/login",
         "/swagger-ui/**",
         "/v3/api-docs/**",
