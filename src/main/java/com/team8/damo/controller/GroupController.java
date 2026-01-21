@@ -29,6 +29,7 @@ public class GroupController implements GroupControllerDocs {
         return BaseResponse.created(groupService.createGroup(user.getUserId(), request.toServiceRequest()));
     }
 
+    @Override
     @GetMapping("/users/me/groups")
     public BaseResponse<List<UserGroupResponse>> groupList(
         @AuthenticationPrincipal JwtUserDetails user
