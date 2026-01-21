@@ -1,6 +1,7 @@
 HELP.md
 .gradle
 .env
+data.sql
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
@@ -26,6 +27,7 @@ bin/
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
+/src/test/http
 
 ### NetBeans ###
 /nbproject/private/

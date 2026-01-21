@@ -6,8 +6,14 @@ import com.team8.damo.security.jwt.JwtUserDetails;
 import com.team8.damo.swagger.annotation.ApiErrorResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import com.team8.damo.service.response.UserGroupResponse;
+
+import java.util.List;
 
 import static com.team8.damo.exception.errorcode.ErrorCode.*;
 
@@ -31,5 +37,27 @@ public interface GroupControllerDocs {
         @Parameter(hidden = true)
         JwtUserDetails user,
         GroupCreateRequest request
+    );
+
+    @Operation(
+        summary = "내 그룹 목록 조회",
+        description = """
+            ### 사용자가 속한 그룹 목록을 조회합니다.
+            - groupId: 그룹 ID
+            - name: 그룹명
+            - introduction: 소개글
+            """
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "성공",
+        content = @Content(
+            mediaType = "application/json",
+            array = @ArraySchema(schema = @Schema(implementation = UserGroupResponse.class))
+        )
+    )
+    BaseResponse<List<UserGroupResponse>> groupList(
+        @Parameter(hidden = true)
+        JwtUserDetails user
     );
 }

@@ -8,10 +8,13 @@ import com.team8.damo.repository.GroupRepository;
 import com.team8.damo.repository.UserGroupRepository;
 import com.team8.damo.repository.UserRepository;
 import com.team8.damo.service.request.GroupCreateServiceRequest;
+import com.team8.damo.service.response.UserGroupResponse;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 import static com.team8.damo.exception.errorcode.ErrorCode.USER_NOT_FOUND;
 
@@ -35,5 +38,12 @@ public class GroupService {
         groupRepository.save(group);
         userGroupRepository.save(groupLeader);
         return group.getId();
+    }
+
+    public List<UserGroupResponse> getGroupList(Long userId) {
+        List<UserGroup> userGroups = userGroupRepository.findAllByUserIdWithGroup(userId);
+        return userGroups.stream()
+            .map(UserGroupResponse::of)
+            .toList();
     }
 }
