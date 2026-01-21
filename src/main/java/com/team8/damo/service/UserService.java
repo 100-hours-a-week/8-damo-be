@@ -1,6 +1,5 @@
 package com.team8.damo.service;
 
-import com.team8.damo.controller.response.UserProfileResponse;
 import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.OnboardingStep;
 import com.team8.damo.exception.CustomException;
@@ -8,6 +7,8 @@ import com.team8.damo.exception.errorcode.ErrorCode;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.UserBasicUpdateServiceRequest;
 import com.team8.damo.service.request.UserCharacteristicsCreateServiceRequest;
+import com.team8.damo.service.response.UserBasicResponse;
+import com.team8.damo.service.response.UserProfileResponse;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -131,5 +132,11 @@ public class UserService {
             .toList();
 
         return UserProfileResponse.of(user, allergies, likeFoods, likeIngredients);
+    }
+
+    public UserBasicResponse getUserBasic(Long userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+        return UserBasicResponse.from(user);
     }
 }

@@ -1,4 +1,4 @@
-package com.team8.damo.controller.response;
+package com.team8.damo.service.response;
 
 import com.team8.damo.entity.AllergyCategory;
 import com.team8.damo.entity.LikeFoodCategory;

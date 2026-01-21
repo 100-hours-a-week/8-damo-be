@@ -1,6 +1,5 @@
 package com.team8.damo.service;
 
-import com.team8.damo.controller.response.UserProfileResponse;
 import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.*;
 import com.team8.damo.exception.CustomException;
@@ -9,6 +8,8 @@ import com.team8.damo.fixture.UserFixture;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.UserBasicUpdateServiceRequest;
 import com.team8.damo.service.request.UserCharacteristicsCreateServiceRequest;
+import com.team8.damo.service.response.UserBasicResponse;
+import com.team8.damo.service.response.UserProfileResponse;
 import com.team8.damo.util.Snowflake;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
 import java.util.Optional;
@@ -30,7 +32,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
-
+@ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
@@ -453,5 +455,43 @@ class UserServiceTest {
         then(userAllergyRepository).should(never()).findByUserIdWithCategory(any());
         then(userLikeFoodRepository).should(never()).findByUserIdWithCategory(any());
         then(userLikeIngredientRepository).should(never()).findByUserIdWithCategory(any());
+    }
+
+    @Test
+    @DisplayName("사용자 기본 정보를 성공적으로 조회한다.")
+    void getUserBasic_success() {
+        // given
+        Long userId = 1L;
+        User user = UserFixture.create(userId);
+        user.updateBasic("맛집탐험가", Gender.FEMALE, AgeGroup.THIRTIES);
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+
+        // when
+        UserBasicResponse response = userService.getUserBasic(userId);
+
+        // then
+        assertThat(response.getUserId()).isEqualTo(userId);
+        assertThat(response.getNickname()).isEqualTo("맛집탐험가");
+        assertThat(response.getGender()).isEqualTo(Gender.FEMALE);
+        assertThat(response.getAgeGroup()).isEqualTo(AgeGroup.THIRTIES);
+
+        then(userRepository).should().findById(userId);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 사용자의 기본 정보를 조회할 수 없다.")
+    void getUserBasic_userNotFound() {
+        // given
+        Long userId = 999L;
+
+        given(userRepository.findById(userId)).willReturn(Optional.empty());
+
+        // when // then
+        assertThatThrownBy(() -> userService.getUserBasic(userId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", USER_NOT_FOUND);
+
+        then(userRepository).should().findById(userId);
     }
 }

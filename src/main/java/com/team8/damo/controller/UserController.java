@@ -4,7 +4,8 @@ import com.team8.damo.controller.docs.UserControllerDocs;
 import com.team8.damo.controller.request.UserBasicUpdateRequest;
 import com.team8.damo.controller.request.UserCharacteristicsCreateRequest;
 import com.team8.damo.controller.response.BaseResponse;
-import com.team8.damo.controller.response.UserProfileResponse;
+import com.team8.damo.service.response.UserBasicResponse;
+import com.team8.damo.service.response.UserProfileResponse;
 import com.team8.damo.security.jwt.JwtUserDetails;
 import com.team8.damo.service.UserService;
 import jakarta.validation.Valid;
@@ -20,6 +21,13 @@ import org.springframework.web.bind.annotation.*;
 public class UserController implements UserControllerDocs {
 
     private final UserService userService;
+
+    @GetMapping("/me/basic")
+    public BaseResponse<UserBasicResponse> getBasic(
+        @AuthenticationPrincipal JwtUserDetails user
+    ) {
+        return BaseResponse.ok(userService.getUserBasic(user.getUserId()));
+    }
 
     @PatchMapping("/me/basic")
     public BaseResponse<Void> updateBasic(
