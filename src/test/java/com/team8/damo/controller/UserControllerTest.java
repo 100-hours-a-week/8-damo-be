@@ -5,6 +5,7 @@ import com.team8.damo.entity.enumeration.*;
 import com.team8.damo.fixture.CategoryFixture;
 import com.team8.damo.fixture.UserFixture;
 import com.team8.damo.service.UserService;
+import com.team8.damo.service.response.UserBasicResponse;
 import com.team8.damo.service.response.UserProfileResponse;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -411,5 +412,32 @@ class UserControllerTest {
             .andExpect(jsonPath("$.data.likeIngredients.length()").value(0));
 
         then(userService).should().getUserProfile(any());
+    }
+
+    @Test
+    @DisplayName("사용자 기본 정보를 성공적으로 조회한다.")
+    void getBasic_success() throws Exception {
+        // given
+        Long userId = 1L;
+        User user = UserFixture.create(userId);
+        user.updateBasic("맛집탐험가", Gender.FEMALE, AgeGroup.THIRTIES);
+
+        UserBasicResponse response = UserBasicResponse.from(user);
+
+        given(userService.getUserBasic(any())).willReturn(response);
+
+        // when // then
+        mockMvc.perform(
+                get("/api/v1/users/me/basic")
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.userId").value(userId))
+            .andExpect(jsonPath("$.data.nickname").value("맛집탐험가"))
+            .andExpect(jsonPath("$.data.gender").value("FEMALE"))
+            .andExpect(jsonPath("$.data.ageGroup").value("THIRTIES"));
+
+        then(userService).should().getUserBasic(any());
     }
 }
