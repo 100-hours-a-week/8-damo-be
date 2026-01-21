@@ -8,6 +8,8 @@ import com.team8.damo.repository.GroupRepository;
 import com.team8.damo.repository.UserGroupRepository;
 import com.team8.damo.repository.UserRepository;
 import com.team8.damo.service.request.GroupCreateServiceRequest;
+import com.team8.damo.service.response.GroupDetailResponse;
+import com.team8.damo.entity.enumeration.GroupRole;
 import com.team8.damo.service.response.UserGroupResponse;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 import static com.team8.damo.exception.errorcode.ErrorCode.USER_NOT_FOUND;
+import static com.team8.damo.exception.errorcode.ErrorCode.USER_NOT_GROUP_MEMBER;
 
 @Service
 @RequiredArgsConstructor
@@ -45,5 +48,13 @@ public class GroupService {
         return userGroups.stream()
             .map(UserGroupResponse::of)
             .toList();
+    }
+
+    public GroupDetailResponse getGroupDetail(Long userId, Long groupId) {
+        UserGroup userGroup = userGroupRepository.findByUserIdAndGroupId(userId, groupId)
+            .orElseThrow(() -> new CustomException(USER_NOT_GROUP_MEMBER));
+
+        boolean isGroupLeader = userGroup.getRole() == GroupRole.LEADER;
+        return GroupDetailResponse.of(userGroup.getGroup(), isGroupLeader);
     }
 }
