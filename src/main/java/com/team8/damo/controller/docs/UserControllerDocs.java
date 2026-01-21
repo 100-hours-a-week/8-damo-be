@@ -3,6 +3,7 @@ package com.team8.damo.controller.docs;
 import com.team8.damo.controller.request.UserBasicUpdateRequest;
 import com.team8.damo.controller.request.UserCharacteristicsCreateRequest;
 import com.team8.damo.controller.response.BaseResponse;
+import com.team8.damo.controller.response.UserProfileResponse;
 import com.team8.damo.security.jwt.JwtUserDetails;
 import com.team8.damo.swagger.annotation.ApiErrorResponses;
 import io.swagger.v3.oas.annotations.Operation;
@@ -48,5 +49,23 @@ public interface UserControllerDocs {
         @Parameter(hidden = true)
         JwtUserDetails user,
         UserCharacteristicsCreateRequest request
+    );
+
+    @Operation(
+        summary = "사용자 프로필 조회",
+        description = """
+            ### 사용자의 프로필 정보를 조회합니다.
+            - userId: 사용자 ID
+            - nickname: 닉네임
+            - allergies: 알레르기 카테고리 목록
+            - likeFoods: 선호 음식 카테고리 목록
+            - likeIngredients: 선호 재료 카테고리 목록
+            """
+    )
+    @ApiResponse(responseCode = "200", description = "성공")
+    @ApiErrorResponses({USER_NOT_FOUND})
+    BaseResponse<UserProfileResponse> getProfile(
+        @Parameter(hidden = true)
+        JwtUserDetails user
     );
 }
