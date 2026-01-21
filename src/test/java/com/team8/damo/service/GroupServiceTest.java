@@ -7,6 +7,7 @@ import com.team8.damo.entity.enumeration.GroupRole;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.fixture.GroupFixture;
 import com.team8.damo.fixture.UserFixture;
+import com.team8.damo.service.response.GroupDetailResponse;
 import com.team8.damo.service.response.UserGroupResponse;
 import com.team8.damo.repository.GroupRepository;
 import com.team8.damo.repository.UserGroupRepository;
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.team8.damo.exception.errorcode.ErrorCode.USER_NOT_FOUND;
+import static com.team8.damo.exception.errorcode.ErrorCode.USER_NOT_GROUP_MEMBER;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -209,5 +211,78 @@ class GroupServiceTest {
         assertThat(result).isEmpty();
 
         then(userGroupRepository).should().findAllByUserIdWithGroup(userId);
+    }
+
+    @Test
+    @DisplayName("그룹장이 그룹 상세 정보를 조회한다.")
+    void getGroupDetail_asLeader() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+
+        User user = UserFixture.create(userId);
+        Group group = GroupFixture.create(groupId, "맛집탐방대", "서울 맛집 모임");
+        UserGroup userGroup = UserGroup.createLeader(200L, user, group);
+
+        given(userGroupRepository.findByUserIdAndGroupId(userId, groupId))
+            .willReturn(Optional.of(userGroup));
+
+        // when
+        GroupDetailResponse result = groupService.getGroupDetail(userId, groupId);
+
+        // then
+        assertThat(result)
+            .extracting("name", "introduction", "participantsCount", "isGroupLeader")
+            .contains("맛집탐방대", "서울 맛집 모임", 1, true);
+
+        then(userGroupRepository).should().findByUserIdAndGroupId(userId, groupId);
+    }
+
+    @Test
+    @DisplayName("일반 참여자가 그룹 상세 정보를 조회한다.")
+    void getGroupDetail_asParticipant() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+
+        User user = UserFixture.create(userId);
+        Group group = GroupFixture.create(groupId, "맛집탐방대", "서울 맛집 모임");
+        UserGroup userGroup = UserGroup.builder()
+            .id(200L)
+            .user(user)
+            .group(group)
+            .role(GroupRole.PARTICIPANT)
+            .build();
+
+        given(userGroupRepository.findByUserIdAndGroupId(userId, groupId))
+            .willReturn(Optional.of(userGroup));
+
+        // when
+        GroupDetailResponse result = groupService.getGroupDetail(userId, groupId);
+
+        // then
+        assertThat(result)
+            .extracting("name", "introduction", "participantsCount", "isGroupLeader")
+            .contains("맛집탐방대", "서울 맛집 모임", 1, false);
+
+        then(userGroupRepository).should().findByUserIdAndGroupId(userId, groupId);
+    }
+
+    @Test
+    @DisplayName("그룹에 속하지 않은 사용자는 그룹 상세 정보를 조회할 수 없다.")
+    void getGroupDetail_userNotGroupMember() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+
+        given(userGroupRepository.findByUserIdAndGroupId(userId, groupId))
+            .willReturn(Optional.empty());
+
+        // when // then
+        assertThatThrownBy(() -> groupService.getGroupDetail(userId, groupId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", USER_NOT_GROUP_MEMBER);
+
+        then(userGroupRepository).should().findByUserIdAndGroupId(userId, groupId);
     }
 }
