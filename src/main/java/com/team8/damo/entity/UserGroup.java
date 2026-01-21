@@ -39,10 +39,6 @@ public class UserGroup {
     @Column(name = "role", nullable = false, length = 20)
     private GroupRole role;
 
-    @CreatedDate
-    @Column(name = "participation_at", nullable = false, updatable = false)
-    private LocalDateTime participationAt;
-
     public UserGroup(Long id, User user, Group group, GroupRole role) {
         this.id = id;
         this.user = user;
