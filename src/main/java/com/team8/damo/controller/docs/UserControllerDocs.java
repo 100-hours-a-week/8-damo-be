@@ -1,6 +1,7 @@
 package com.team8.damo.controller.docs;
 
 import com.team8.damo.controller.request.UserBasicUpdateRequest;
+import com.team8.damo.controller.request.UserCharacteristicsCreateRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.security.jwt.JwtUserDetails;
 import com.team8.damo.swagger.annotation.ApiErrorResponses;
@@ -9,8 +10,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-import static com.team8.damo.exception.errorcode.ErrorCode.DUPLICATE_NICKNAME;
-import static com.team8.damo.exception.errorcode.ErrorCode.USER_NOT_FOUND;
+import static com.team8.damo.exception.errorcode.ErrorCode.*;
 
 @Tag(name = "User API", description = "사용자 관련 API")
 public interface UserControllerDocs {
@@ -30,5 +30,23 @@ public interface UserControllerDocs {
         @Parameter(hidden = true)
         JwtUserDetails user,
         UserBasicUpdateRequest request
+    );
+
+    @Operation(
+        summary = "사용자 개인 특성 수집",
+        description = """
+            ### 사용자의 개인 특성 정보를 수집합니다.
+            - allergyIds: 알레르기 카테고리 ID 목록
+            - likeFoodIds: 선호 음식 카테고리 ID 목록
+            - likeIngredientIds: 선호 재료 카테고리 ID 목록
+            - otherCharacteristics: 기타 특성 (최대 100자)
+            """
+    )
+    @ApiResponse(responseCode = "201", description = "성공")
+    @ApiErrorResponses({USER_NOT_FOUND, INVALID_CATEGORY, DUPLICATE_ALLERGY_CATEGORY, DUPLICATE_LIKE_FOOD_CATEGORY, DUPLICATE_LIKE_INGREDIENT_CATEGORY})
+    BaseResponse<Void> createCharacteristics(
+        @Parameter(hidden = true)
+        JwtUserDetails user,
+        UserCharacteristicsCreateRequest request
     );
 }

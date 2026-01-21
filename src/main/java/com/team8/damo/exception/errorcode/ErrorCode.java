@@ -12,6 +12,10 @@ import static org.springframework.http.HttpStatus.CONFLICT;
 public enum ErrorCode {
     USER_NOT_FOUND(NOT_FOUND, "사용자를 찾을 수 없습니다."),
     DUPLICATE_NICKNAME(CONFLICT, "이미 사용중인 닉네임입니다."),
+    INVALID_CATEGORY(BAD_REQUEST, "잘못된 카테고리입니다."),
+    DUPLICATE_ALLERGY_CATEGORY(CONFLICT, "알레르기 카테고리가 중복 선택 되었습니다."),
+    DUPLICATE_LIKE_FOOD_CATEGORY(CONFLICT, "선호 음식 카테고리가 중복 선택 되었습니다."),
+    DUPLICATE_LIKE_INGREDIENT_CATEGORY(CONFLICT, "선호 재료 카테고리가 중복 선택 되었습니다."),
 
     JSON_PARSING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "JSON 파싱 오류입니다."),
     NOT_FOUND_END_POINT(HttpStatus.NOT_FOUND, "존재하지 않는 API 입니다."),

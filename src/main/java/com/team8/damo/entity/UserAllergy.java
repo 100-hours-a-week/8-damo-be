@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserAllergy extends BaseTimeEntity {
+public class UserAllergy {
 
     @Id
     @Column(name = "id", nullable = false)

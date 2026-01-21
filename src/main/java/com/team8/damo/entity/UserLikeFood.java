@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserLikeFood extends BaseTimeEntity {
+public class UserLikeFood {
 
     @Id
     @Column(name = "id", nullable = false)
