@@ -5,11 +5,12 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "groups")
+@Table(name = "`groups`")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Group extends BaseTimeEntity {
@@ -33,6 +34,7 @@ public class Group extends BaseTimeEntity {
     @Column(name = "longitude", nullable = false)
     private double longitude;
 
+    @Builder
     public Group(Long id, String name, String introduction, double latitude, double longitude) {
         this.id = id;
         this.name = name;
