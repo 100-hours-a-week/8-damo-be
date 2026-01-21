@@ -2,7 +2,6 @@ package com.team8.damo.kakao;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team8.damo.exception.CustomException;
-import com.team8.damo.exception.errorcode.GlobalErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -14,7 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import static com.team8.damo.exception.errorcode.GlobalErrorCode.*;
+import static com.team8.damo.exception.errorcode.ErrorCode.*;
 
 @Slf4j
 @Component

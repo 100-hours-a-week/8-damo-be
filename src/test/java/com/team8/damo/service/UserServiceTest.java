@@ -16,8 +16,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
-import static com.team8.damo.exception.errorcode.UserErrorCode.DUPLICATE_NICKNAME;
-import static com.team8.damo.exception.errorcode.UserErrorCode.USER_NOT_FOUND;
+import static com.team8.damo.exception.errorcode.ErrorCode.DUPLICATE_NICKNAME;
+import static com.team8.damo.exception.errorcode.ErrorCode.USER_NOT_FOUND;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;

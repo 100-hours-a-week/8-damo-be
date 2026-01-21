@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.team8.damo.exception.errorcode.UserErrorCode.*;
+import static com.team8.damo.exception.errorcode.ErrorCode.*;
 
 @Service
 @RequiredArgsConstructor
