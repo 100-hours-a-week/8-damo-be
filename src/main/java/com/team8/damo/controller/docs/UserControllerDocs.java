@@ -3,7 +3,8 @@ package com.team8.damo.controller.docs;
 import com.team8.damo.controller.request.UserBasicUpdateRequest;
 import com.team8.damo.controller.request.UserCharacteristicsCreateRequest;
 import com.team8.damo.controller.response.BaseResponse;
-import com.team8.damo.controller.response.UserProfileResponse;
+import com.team8.damo.service.response.UserBasicResponse;
+import com.team8.damo.service.response.UserProfileResponse;
 import com.team8.damo.security.jwt.JwtUserDetails;
 import com.team8.damo.swagger.annotation.ApiErrorResponses;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,6 +16,23 @@ import static com.team8.damo.exception.errorcode.ErrorCode.*;
 
 @Tag(name = "User API", description = "사용자 관련 API")
 public interface UserControllerDocs {
+
+    @Operation(
+        summary = "사용자 기본 정보 조회",
+        description = """
+            ### 사용자의 기본 정보를 조회합니다.
+            - userId: 사용자 ID
+            - nickname: 닉네임
+            - gender: 성별 (MALE, FEMALE)
+            - ageGroup: 연령대 (TWENTIES, THIRTIES, FORTIES, FIFTIES_PLUS)
+            """
+    )
+    @ApiResponse(responseCode = "200", description = "성공")
+    @ApiErrorResponses({USER_NOT_FOUND})
+    BaseResponse<UserBasicResponse> getBasic(
+        @Parameter(hidden = true)
+        JwtUserDetails user
+    );
 
     @Operation(
         summary = "사용자 기본 정보 수집",

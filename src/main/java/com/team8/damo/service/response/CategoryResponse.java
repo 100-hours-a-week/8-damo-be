@@ -1,4 +1,4 @@
-package com.team8.damo.controller.response;
+package com.team8.damo.service.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -1,17 +1,11 @@
 package com.team8.damo.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.team8.damo.controller.response.CategoryResponse;
-import com.team8.damo.controller.response.UserProfileResponse;
 import com.team8.damo.entity.User;
-import com.team8.damo.entity.enumeration.AgeGroup;
-import com.team8.damo.entity.enumeration.AllergyType;
-import com.team8.damo.entity.enumeration.FoodType;
-import com.team8.damo.entity.enumeration.Gender;
-import com.team8.damo.entity.enumeration.IngredientType;
+import com.team8.damo.entity.enumeration.*;
 import com.team8.damo.fixture.CategoryFixture;
 import com.team8.damo.fixture.UserFixture;
 import com.team8.damo.service.UserService;
+import com.team8.damo.service.response.UserProfileResponse;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
@@ -23,22 +17,20 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.then;
-import static org.mockito.BDDMockito.willDoNothing;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.mockito.BDDMockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 class UserControllerTest {
 

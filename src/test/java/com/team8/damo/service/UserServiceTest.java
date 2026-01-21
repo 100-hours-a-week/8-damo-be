@@ -1,6 +1,5 @@
 package com.team8.damo.service;
 
-import com.team8.damo.controller.response.UserProfileResponse;
 import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.*;
 import com.team8.damo.exception.CustomException;
@@ -9,6 +8,7 @@ import com.team8.damo.fixture.UserFixture;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.UserBasicUpdateServiceRequest;
 import com.team8.damo.service.request.UserCharacteristicsCreateServiceRequest;
+import com.team8.damo.service.response.UserProfileResponse;
 import com.team8.damo.util.Snowflake;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
 import java.util.Optional;
@@ -30,7 +31,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
-
+@ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
