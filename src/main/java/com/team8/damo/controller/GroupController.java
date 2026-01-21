@@ -2,6 +2,7 @@ package com.team8.damo.controller;
 
 import com.team8.damo.controller.request.GroupCreateRequest;
 import com.team8.damo.controller.response.BaseResponse;
+import com.team8.damo.service.response.GroupDetailResponse;
 import com.team8.damo.security.jwt.JwtUserDetails;
 import com.team8.damo.service.GroupService;
 import com.team8.damo.service.response.UserGroupResponse;
@@ -35,5 +36,14 @@ public class GroupController implements GroupControllerDocs {
         @AuthenticationPrincipal JwtUserDetails user
     ) {
         return BaseResponse.ok(groupService.getGroupList(user.getUserId()));
+    }
+
+    @Override
+    @GetMapping("/groups/{groupId}")
+    public BaseResponse<GroupDetailResponse> getGroupDetail(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @PathVariable Long groupId
+    ) {
+        return BaseResponse.ok(groupService.getGroupDetail(user.getUserId(), groupId));
     }
 }

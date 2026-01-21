@@ -2,6 +2,7 @@ package com.team8.damo.controller.docs;
 
 import com.team8.damo.controller.request.GroupCreateRequest;
 import com.team8.damo.controller.response.BaseResponse;
+import com.team8.damo.service.response.GroupDetailResponse;
 import com.team8.damo.security.jwt.JwtUserDetails;
 import com.team8.damo.swagger.annotation.ApiErrorResponses;
 import io.swagger.v3.oas.annotations.Operation;
@@ -59,5 +60,33 @@ public interface GroupControllerDocs {
     BaseResponse<List<UserGroupResponse>> groupList(
         @Parameter(hidden = true)
         JwtUserDetails user
+    );
+
+    @Operation(
+        summary = "그룹 상세 조회",
+        description = """
+            ### 그룹 상세 정보를 조회합니다.
+            - name: 그룹명
+            - introduction: 소개글
+            - participantsCount: 참여자 수
+            - isGroupLeader: 그룹장 여부
+
+            **접근 권한**: 해당 그룹에 속한 사용자만 조회 가능
+            """
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "성공",
+        content = @Content(
+            mediaType = "application/json",
+            schema = @Schema(implementation = GroupDetailResponse.class)
+        )
+    )
+    @ApiErrorResponses({USER_NOT_GROUP_MEMBER})
+    BaseResponse<GroupDetailResponse> getGroupDetail(
+        @Parameter(hidden = true)
+        JwtUserDetails user,
+        @Parameter(description = "그룹 ID", required = true)
+        Long groupId
     );
 }

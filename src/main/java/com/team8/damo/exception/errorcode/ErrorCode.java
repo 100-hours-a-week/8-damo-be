@@ -17,6 +17,9 @@ public enum ErrorCode {
     DUPLICATE_LIKE_FOOD_CATEGORY(CONFLICT, "선호 음식 카테고리가 중복 선택 되었습니다."),
     DUPLICATE_LIKE_INGREDIENT_CATEGORY(CONFLICT, "선호 재료 카테고리가 중복 선택 되었습니다."),
 
+    // Group
+    USER_NOT_GROUP_MEMBER(FORBIDDEN, "그룹에 속하지 않아 접근할 수 없습니다."),
+
     JSON_PARSING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "JSON 파싱 오류입니다."),
     NOT_FOUND_END_POINT(HttpStatus.NOT_FOUND, "존재하지 않는 API 입니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "예상치 못한 서버 오류입니다."),
