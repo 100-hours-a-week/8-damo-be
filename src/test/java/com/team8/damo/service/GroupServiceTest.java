@@ -5,7 +5,9 @@ import com.team8.damo.entity.User;
 import com.team8.damo.entity.UserGroup;
 import com.team8.damo.entity.enumeration.GroupRole;
 import com.team8.damo.exception.CustomException;
+import com.team8.damo.fixture.GroupFixture;
 import com.team8.damo.fixture.UserFixture;
+import com.team8.damo.service.response.UserGroupResponse;
 import com.team8.damo.repository.GroupRepository;
 import com.team8.damo.repository.UserGroupRepository;
 import com.team8.damo.repository.UserRepository;
@@ -20,9 +22,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.util.List;
 import java.util.Optional;
 
 import static com.team8.damo.exception.errorcode.ErrorCode.USER_NOT_FOUND;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -151,5 +155,59 @@ class GroupServiceTest {
         then(userRepository).should().findById(userId);
         then(groupRepository).should(never()).save(any());
         then(userGroupRepository).should(never()).save(any());
+    }
+
+    @Test
+    @DisplayName("사용자가 속한 그룹 목록을 성공적으로 조회한다.")
+    void getGroupList_success() {
+        // given
+        Long userId = 1L;
+        User user = UserFixture.create(userId);
+
+        Group group1 = GroupFixture.create(100L, "맛집탐방대", "서울 맛집 모임");
+        Group group2 = GroupFixture.create(101L, "카페투어", "카페 탐방 모임");
+
+        UserGroup userGroup1 = UserGroup.createLeader(200L, user, group1);
+        UserGroup userGroup2 = UserGroup.builder()
+            .id(201L)
+            .user(user)
+            .group(group2)
+            .role(GroupRole.PARTICIPANT)
+            .build();
+
+        given(userGroupRepository.findAllByUserIdWithGroup(userId))
+            .willReturn(List.of(userGroup1, userGroup2));
+
+        // when
+        List<UserGroupResponse> result = groupService.getGroupList(userId);
+
+        // then
+        assertThat(result).hasSize(2);
+        assertThat(result)
+            .extracting("groupId", "name", "introduction")
+            .containsExactly(
+                tuple(100L, "맛집탐방대", "서울 맛집 모임"),
+                tuple(101L, "카페투어", "카페 탐방 모임")
+            );
+
+        then(userGroupRepository).should().findAllByUserIdWithGroup(userId);
+    }
+
+    @Test
+    @DisplayName("속한 그룹이 없으면 빈 목록을 반환한다.")
+    void getGroupList_emptyList() {
+        // given
+        Long userId = 1L;
+
+        given(userGroupRepository.findAllByUserIdWithGroup(userId))
+            .willReturn(List.of());
+
+        // when
+        List<UserGroupResponse> result = groupService.getGroupList(userId);
+
+        // then
+        assertThat(result).isEmpty();
+
+        then(userGroupRepository).should().findAllByUserIdWithGroup(userId);
     }
 }
