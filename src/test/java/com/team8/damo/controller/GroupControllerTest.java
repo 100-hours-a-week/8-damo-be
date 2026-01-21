@@ -1,6 +1,7 @@
 package com.team8.damo.controller;
 
 import com.team8.damo.service.GroupService;
+import com.team8.damo.service.response.GroupDetailResponse;
 import com.team8.damo.service.response.UserGroupResponse;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -332,5 +333,92 @@ class GroupControllerTest {
             .andExpect(jsonPath("$.data.length()").value(0));
 
         then(groupService).should().getGroupList(any());
+    }
+
+    @Test
+    @DisplayName("그룹장이 그룹 상세 정보를 조회한다.")
+    void getGroupDetail_asLeader() throws Exception {
+        // given
+        Long groupId = 100L;
+        GroupDetailResponse response = new GroupDetailResponse(
+            "맛집탐방대",
+            "서울 맛집 모임",
+            5,
+            true
+        );
+
+        given(groupService.getGroupDetail(any(), any())).willReturn(response);
+
+        // when // then
+        mockMvc.perform(
+                get("/api/v1/groups/{groupId}", groupId)
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.name").value("맛집탐방대"))
+            .andExpect(jsonPath("$.data.introduction").value("서울 맛집 모임"))
+            .andExpect(jsonPath("$.data.participantsCount").value(5))
+            .andExpect(jsonPath("$.data.isGroupLeader").value(true));
+
+        then(groupService).should().getGroupDetail(any(), any());
+    }
+
+    @Test
+    @DisplayName("일반 참여자가 그룹 상세 정보를 조회한다.")
+    void getGroupDetail_asParticipant() throws Exception {
+        // given
+        Long groupId = 100L;
+        GroupDetailResponse response = new GroupDetailResponse(
+            "맛집탐방대",
+            "서울 맛집 모임",
+            5,
+            false
+        );
+
+        given(groupService.getGroupDetail(any(), any())).willReturn(response);
+
+        // when // then
+        mockMvc.perform(
+                get("/api/v1/groups/{groupId}", groupId)
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.name").value("맛집탐방대"))
+            .andExpect(jsonPath("$.data.introduction").value("서울 맛집 모임"))
+            .andExpect(jsonPath("$.data.participantsCount").value(5))
+            .andExpect(jsonPath("$.data.isGroupLeader").value(false));
+
+        then(groupService).should().getGroupDetail(any(), any());
+    }
+
+    @Test
+    @DisplayName("소개글이 없는 그룹 상세 정보를 조회한다.")
+    void getGroupDetail_withoutIntroduction() throws Exception {
+        // given
+        Long groupId = 100L;
+        GroupDetailResponse response = new GroupDetailResponse(
+            "맛집탐방대",
+            null,
+            3,
+            true
+        );
+
+        given(groupService.getGroupDetail(any(), any())).willReturn(response);
+
+        // when // then
+        mockMvc.perform(
+                get("/api/v1/groups/{groupId}", groupId)
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.name").value("맛집탐방대"))
+            .andExpect(jsonPath("$.data.introduction").doesNotExist())
+            .andExpect(jsonPath("$.data.participantsCount").value(3))
+            .andExpect(jsonPath("$.data.isGroupLeader").value(true));
+
+        then(groupService).should().getGroupDetail(any(), any());
     }
 }
