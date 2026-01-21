@@ -4,6 +4,7 @@ import com.team8.damo.controller.docs.UserControllerDocs;
 import com.team8.damo.controller.request.UserBasicUpdateRequest;
 import com.team8.damo.controller.request.UserCharacteristicsCreateRequest;
 import com.team8.damo.controller.response.BaseResponse;
+import com.team8.damo.controller.response.UserProfileResponse;
 import com.team8.damo.security.jwt.JwtUserDetails;
 import com.team8.damo.service.UserService;
 import jakarta.validation.Valid;
@@ -36,5 +37,12 @@ public class UserController implements UserControllerDocs {
     ) {
         userService.createCharacteristics(user.getUserId(), request.toServiceRequest());
         return BaseResponse.created(null);
+    }
+
+    @GetMapping("/me/profile")
+    public BaseResponse<UserProfileResponse> getProfile(
+        @AuthenticationPrincipal JwtUserDetails user
+    ) {
+        return BaseResponse.ok(userService.getUserProfile(user.getUserId()));
     }
 }

@@ -1,5 +1,6 @@
 package com.team8.damo.service;
 
+import com.team8.damo.controller.response.UserProfileResponse;
 import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.OnboardingStep;
 import com.team8.damo.exception.CustomException;
@@ -109,5 +110,26 @@ public class UserService {
             .map(category -> new UserLikeIngredient(snowflake.nextId(), user, category))
             .toList();
         userLikeIngredientRepository.saveAll(userLikeIngredients);
+    }
+
+    public UserProfileResponse getUserProfile(Long userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+
+        List<UserAllergy> userAllergies = userAllergyRepository.findByUserIdWithCategory(userId);
+        List<UserLikeFood> userLikeFoods = userLikeFoodRepository.findByUserIdWithCategory(userId);
+        List<UserLikeIngredient> userLikeIngredients = userLikeIngredientRepository.findByUserIdWithCategory(userId);
+
+        List<AllergyCategory> allergies = userAllergies.stream()
+            .map(UserAllergy::getAllergyCategory)
+            .toList();
+        List<LikeFoodCategory> likeFoods = userLikeFoods.stream()
+            .map(UserLikeFood::getLikeFoodCategory)
+            .toList();
+        List<LikeIngredientCategory> likeIngredients = userLikeIngredients.stream()
+            .map(UserLikeIngredient::getLikeIngredientCategory)
+            .toList();
+
+        return UserProfileResponse.of(user, allergies, likeFoods, likeIngredients);
     }
 }

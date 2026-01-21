@@ -1,6 +1,16 @@
 package com.team8.damo.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.team8.damo.controller.response.CategoryResponse;
+import com.team8.damo.controller.response.UserProfileResponse;
+import com.team8.damo.entity.User;
+import com.team8.damo.entity.enumeration.AgeGroup;
+import com.team8.damo.entity.enumeration.AllergyType;
+import com.team8.damo.entity.enumeration.FoodType;
+import com.team8.damo.entity.enumeration.Gender;
+import com.team8.damo.entity.enumeration.IngredientType;
+import com.team8.damo.fixture.CategoryFixture;
+import com.team8.damo.fixture.UserFixture;
 import com.team8.damo.service.UserService;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -16,12 +26,17 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willDoNothing;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
@@ -321,5 +336,88 @@ class UserControllerTest {
             .andExpect(status().isOk());
 
         then(userService).should().createCharacteristics(any(), any());
+    }
+
+    @Test
+    @DisplayName("사용자 프로필을 성공적으로 조회한다.")
+    void getProfile_success() throws Exception {
+        // given
+        Long userId = 1L;
+        User user = UserFixture.create(userId);
+        user.updateBasic("맛집탐험가", Gender.MALE, AgeGroup.TWENTIES);
+
+        UserProfileResponse response = UserProfileResponse.of(
+            user,
+            List.of(
+                CategoryFixture.createAllergyCategory(1, AllergyType.SHRIMP),
+                CategoryFixture.createAllergyCategory(2, AllergyType.CRAB)
+            ),
+            List.of(
+                CategoryFixture.createLikeFoodCategory(1, FoodType.KOREAN)
+            ),
+            List.of(
+                CategoryFixture.createLikeIngredientCategory(1, IngredientType.MEAT)
+            )
+        );
+
+        given(userService.getUserProfile(any())).willReturn(response);
+
+        // when // then
+        mockMvc.perform(
+                get("/api/v1/users/me/profile")
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.userId").value(userId))
+            .andExpect(jsonPath("$.data.nickname").value("맛집탐험가"))
+            .andExpect(jsonPath("$.data.allergies").isArray())
+            .andExpect(jsonPath("$.data.allergies.length()").value(2))
+            .andExpect(jsonPath("$.data.allergies[0].id").value(1))
+            .andExpect(jsonPath("$.data.allergies[0].category").value("새우"))
+            .andExpect(jsonPath("$.data.likeFoods").isArray())
+            .andExpect(jsonPath("$.data.likeFoods.length()").value(1))
+            .andExpect(jsonPath("$.data.likeFoods[0].category").value("한식"))
+            .andExpect(jsonPath("$.data.likeIngredients").isArray())
+            .andExpect(jsonPath("$.data.likeIngredients.length()").value(1))
+            .andExpect(jsonPath("$.data.likeIngredients[0].category").value("육류"));
+
+        then(userService).should().getUserProfile(any());
+    }
+
+    @Test
+    @DisplayName("카테고리가 모두 비어있어도 프로필 조회에 성공한다.")
+    void getProfile_emptyCategories() throws Exception {
+        // given
+        Long userId = 1L;
+        User user = UserFixture.create(userId);
+        user.updateBasic("새회원", Gender.FEMALE, AgeGroup.THIRTIES);
+
+        UserProfileResponse response = UserProfileResponse.of(
+            user,
+            List.of(),
+            List.of(),
+            List.of()
+        );
+
+        given(userService.getUserProfile(any())).willReturn(response);
+
+        // when // then
+        mockMvc.perform(
+                get("/api/v1/users/me/profile")
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.userId").value(userId))
+            .andExpect(jsonPath("$.data.nickname").value("새회원"))
+            .andExpect(jsonPath("$.data.allergies").isArray())
+            .andExpect(jsonPath("$.data.allergies.length()").value(0))
+            .andExpect(jsonPath("$.data.likeFoods").isArray())
+            .andExpect(jsonPath("$.data.likeFoods.length()").value(0))
+            .andExpect(jsonPath("$.data.likeIngredients").isArray())
+            .andExpect(jsonPath("$.data.likeIngredients.length()").value(0));
+
+        then(userService).should().getUserProfile(any());
     }
 }

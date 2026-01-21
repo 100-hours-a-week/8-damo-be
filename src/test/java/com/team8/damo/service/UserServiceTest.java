@@ -1,10 +1,10 @@
 package com.team8.damo.service;
 
+import com.team8.damo.controller.response.UserProfileResponse;
 import com.team8.damo.entity.*;
-import com.team8.damo.entity.enumeration.AgeGroup;
-import com.team8.damo.entity.enumeration.Gender;
-import com.team8.damo.entity.enumeration.OnboardingStep;
+import com.team8.damo.entity.enumeration.*;
 import com.team8.damo.exception.CustomException;
+import com.team8.damo.fixture.CategoryFixture;
 import com.team8.damo.fixture.UserFixture;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.UserBasicUpdateServiceRequest;
@@ -23,11 +23,13 @@ import java.util.Optional;
 import static com.team8.damo.exception.errorcode.ErrorCode.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
+
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -342,5 +344,114 @@ class UserServiceTest {
         assertThatThrownBy(() -> userService.createCharacteristics(userId, request))
             .isInstanceOf(CustomException.class)
             .hasFieldOrPropertyWithValue("errorCode", USER_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("사용자 프로필을 성공적으로 조회한다.")
+    void getUserProfile_success() {
+        // given
+        Long userId = 1L;
+        User user = UserFixture.create(userId);
+        user.updateBasic("맛집탐험가", Gender.MALE, AgeGroup.TWENTIES);
+
+        AllergyCategory allergy1 = CategoryFixture.createAllergyCategory(1, AllergyType.SHRIMP);
+        AllergyCategory allergy2 = CategoryFixture.createAllergyCategory(2, AllergyType.CRAB);
+        LikeFoodCategory food1 = CategoryFixture.createLikeFoodCategory(1, FoodType.KOREAN);
+        LikeFoodCategory food2 = CategoryFixture.createLikeFoodCategory(2, FoodType.CHINESE);
+        LikeIngredientCategory ingredient1 = CategoryFixture.createLikeIngredientCategory(1, IngredientType.MEAT);
+
+        List<UserAllergy> userAllergies = List.of(
+            new UserAllergy(100L, user, allergy1),
+            new UserAllergy(101L, user, allergy2)
+        );
+        List<UserLikeFood> userLikeFoods = List.of(
+            new UserLikeFood(200L, user, food1),
+            new UserLikeFood(201L, user, food2)
+        );
+        List<UserLikeIngredient> userLikeIngredients = List.of(
+            new UserLikeIngredient(300L, user, ingredient1)
+        );
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(userAllergyRepository.findByUserIdWithCategory(userId)).willReturn(userAllergies);
+        given(userLikeFoodRepository.findByUserIdWithCategory(userId)).willReturn(userLikeFoods);
+        given(userLikeIngredientRepository.findByUserIdWithCategory(userId)).willReturn(userLikeIngredients);
+
+        // when
+        UserProfileResponse response = userService.getUserProfile(userId);
+
+        // then
+        assertThat(response.getUserId()).isEqualTo(userId);
+        assertThat(response.getNickname()).isEqualTo("맛집탐험가");
+        assertThat(response.getAllergies())
+            .extracting("id", "category")
+            .containsExactly(
+                tuple(1, "새우"),
+                tuple(2, "게")
+            );
+        assertThat(response.getLikeFoods())
+            .extracting("id", "category")
+            .containsExactly(
+                tuple(1, "한식"),
+                tuple(2, "중식")
+            );
+        assertThat(response.getLikeIngredients())
+            .extracting("id", "category")
+            .containsExactly(
+                tuple(1, "육류")
+            );
+
+        then(userRepository).should().findById(userId);
+        then(userAllergyRepository).should().findByUserIdWithCategory(userId);
+        then(userLikeFoodRepository).should().findByUserIdWithCategory(userId);
+        then(userLikeIngredientRepository).should().findByUserIdWithCategory(userId);
+    }
+
+    @Test
+    @DisplayName("카테고리가 모두 비어있어도 프로필 조회에 성공한다.")
+    void getUserProfile_emptyCategories() {
+        // given
+        Long userId = 1L;
+        User user = UserFixture.create(userId);
+        user.updateBasic("새회원", Gender.FEMALE, AgeGroup.THIRTIES);
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(userAllergyRepository.findByUserIdWithCategory(userId)).willReturn(List.of());
+        given(userLikeFoodRepository.findByUserIdWithCategory(userId)).willReturn(List.of());
+        given(userLikeIngredientRepository.findByUserIdWithCategory(userId)).willReturn(List.of());
+
+        // when
+        UserProfileResponse response = userService.getUserProfile(userId);
+
+        // then
+        assertThat(response.getUserId()).isEqualTo(userId);
+        assertThat(response.getNickname()).isEqualTo("새회원");
+        assertThat(response.getAllergies()).isEmpty();
+        assertThat(response.getLikeFoods()).isEmpty();
+        assertThat(response.getLikeIngredients()).isEmpty();
+
+        then(userRepository).should().findById(userId);
+        then(userAllergyRepository).should().findByUserIdWithCategory(userId);
+        then(userLikeFoodRepository).should().findByUserIdWithCategory(userId);
+        then(userLikeIngredientRepository).should().findByUserIdWithCategory(userId);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 사용자의 프로필을 조회할 수 없다.")
+    void getUserProfile_userNotFound() {
+        // given
+        Long userId = 999L;
+
+        given(userRepository.findById(userId)).willReturn(Optional.empty());
+
+        // when // then
+        assertThatThrownBy(() -> userService.getUserProfile(userId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", USER_NOT_FOUND);
+
+        then(userRepository).should().findById(userId);
+        then(userAllergyRepository).should(never()).findByUserIdWithCategory(any());
+        then(userLikeFoodRepository).should(never()).findByUserIdWithCategory(any());
+        then(userLikeIngredientRepository).should(never()).findByUserIdWithCategory(any());
     }
 }
