@@ -3,6 +3,7 @@ package com.team8.damo.entity;
 import com.team8.damo.entity.enumeration.GroupRole;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
@@ -39,10 +40,20 @@ public class UserGroup {
     @Column(name = "role", nullable = false, length = 20)
     private GroupRole role;
 
+    @Builder
     public UserGroup(Long id, User user, Group group, GroupRole role) {
         this.id = id;
         this.user = user;
         this.group = group;
         this.role = role;
+    }
+
+    public static UserGroup createLeader(Long id, User user, Group group) {
+        return UserGroup.builder()
+            .id(id)
+            .user(user)
+            .group(group)
+            .role(GroupRole.LEADER)
+            .build();
     }
 }
