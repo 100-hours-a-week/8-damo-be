@@ -20,6 +20,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -65,7 +66,7 @@ class UserControllerTest {
                     .content(requestBody)
             )
             .andDo(print())
-            .andExpect(status().isNoContent());
+            .andExpect(status().isOk());
 
         then(userService).should().updateUserBasic(any(), any());
     }
@@ -212,5 +213,113 @@ class UserControllerTest {
             .andExpect(status().isBadRequest());
 
         then(userService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("사용자 개인 특성을 성공적으로 등록한다.")
+    void createCharacteristics_success() throws Exception {
+        // given
+        String requestBody = """
+            {
+                "allergyIds": [1, 2],
+                "likeFoodIds": [1, 3],
+                "likeIngredientIds": [2, 4],
+                "otherCharacteristics": "매운 음식을 좋아합니다"
+            }
+            """;
+
+        willDoNothing().given(userService).createCharacteristics(any(), any());
+
+        // when // then
+        mockMvc.perform(
+                post("/api/v1/users/me/characteristics")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+            )
+            .andDo(print())
+            .andExpect(status().isOk());
+
+        then(userService).should().createCharacteristics(any(), any());
+    }
+
+    @Test
+    @DisplayName("모든 필드가 비어있어도 특성 등록에 성공한다.")
+    void createCharacteristics_emptyFields() throws Exception {
+        // given
+        String requestBody = """
+            {
+                "allergyIds": [],
+                "likeFoodIds": [],
+                "likeIngredientIds": [],
+                "otherCharacteristics": null
+            }
+            """;
+
+        willDoNothing().given(userService).createCharacteristics(any(), any());
+
+        // when // then
+        mockMvc.perform(
+                post("/api/v1/users/me/characteristics")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+            )
+            .andDo(print())
+            .andExpect(status().isOk());
+
+        then(userService).should().createCharacteristics(any(), any());
+    }
+
+    @Test
+    @DisplayName("기타 특성이 100자를 초과하면 400 에러를 반환한다.")
+    void createCharacteristics_otherCharacteristicsTooLong() throws Exception {
+        // given
+        String longText = "가".repeat(101);
+        String requestBody = """
+            {
+                "allergyIds": [1],
+                "likeFoodIds": [1],
+                "likeIngredientIds": [1],
+                "otherCharacteristics": "%s"
+            }
+            """.formatted(longText);
+
+        // when // then
+        mockMvc.perform(
+                post("/api/v1/users/me/characteristics")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+            )
+            .andDo(print())
+            .andExpect(status().isBadRequest());
+
+        then(userService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("기타 특성이 정확히 100자면 성공한다.")
+    void createCharacteristics_otherCharacteristicsExactly100() throws Exception {
+        // given
+        String exactText = "가".repeat(100);
+        String requestBody = """
+            {
+                "allergyIds": [],
+                "likeFoodIds": [],
+                "likeIngredientIds": [],
+                "otherCharacteristics": "%s"
+            }
+            """.formatted(exactText);
+
+        willDoNothing().given(userService).createCharacteristics(any(), any());
+
+        // when // then
+        mockMvc.perform(
+                post("/api/v1/users/me/characteristics")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+            )
+            .andDo(print())
+            .andExpect(status().isOk());
+
+        then(userService).should().createCharacteristics(any(), any());
     }
 }
