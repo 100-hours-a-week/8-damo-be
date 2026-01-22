@@ -1,0 +1,53 @@
+package com.team8.damo.controller.docs;
+
+import com.team8.damo.controller.request.DiningCreateRequest;
+import com.team8.damo.controller.response.BaseResponse;
+import com.team8.damo.security.jwt.JwtUserDetails;
+import com.team8.damo.swagger.annotation.ApiErrorResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+import static com.team8.damo.exception.errorcode.ErrorCode.*;
+
+@Tag(name = "Dining API", description = "회식 관련 API")
+public interface DiningControllerDocs {
+
+    @Operation(
+        summary = "회식 생성",
+        description = """
+            ### 새로운 회식을 생성합니다.
+            - diningDate: 회식 진행 날짜 (yyyy-MM-dd HH:mm)
+            - voteDueDate: 투표 마감 날짜 (yyyy-MM-dd HH:mm)
+            - budget: 예산 (0 이상)
+
+            **생성 조건**:
+            - 그룹장만 회식을 생성할 수 있습니다.
+            - 회식 진행 날짜는 현재 날짜보다 이후여야 합니다.
+            - 투표 마감 날짜는 회식 진행 날짜 이전이어야 합니다.
+            - 미완료 회식이 3개 이상이면 생성할 수 없습니다.
+
+            **자동 처리**:
+            - 그룹원 전체가 회식 참여자로 자동 등록됩니다.
+            - 그룹원의 참/불참 투표 상태가 PENDING(대기중)으로 설정됩니다.
+            - 초기 회식 상태는 ATTENDANCE_VOTING(참석 투표 중)입니다.
+            """
+    )
+    @ApiResponse(responseCode = "201", description = "성공")
+    @ApiErrorResponses({
+        USER_NOT_FOUND,
+        GROUP_NOT_FOUND,
+        ONLY_GROUP_LEADER_ALLOWED,
+        DINING_DATE_MUST_BE_AFTER_NOW,
+        VOTE_DUE_DATE_MUST_BE_BEFORE_DINING_DATE,
+        DINING_LIMIT_EXCEEDED
+    })
+    BaseResponse<Long> createDining(
+        @Parameter(hidden = true)
+        JwtUserDetails user,
+        @Parameter(description = "그룹 ID", required = true)
+        Long groupId,
+        DiningCreateRequest request
+    );
+}
