@@ -18,8 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static com.team8.damo.exception.errorcode.ErrorCode.USER_NOT_FOUND;
-import static com.team8.damo.exception.errorcode.ErrorCode.USER_NOT_GROUP_MEMBER;
+import static com.team8.damo.exception.errorcode.ErrorCode.*;
 
 @Service
 @RequiredArgsConstructor
@@ -32,8 +31,7 @@ public class GroupService {
 
     @Transactional
     public Long createGroup(Long userId, GroupCreateServiceRequest request) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+        User user = findUserBy(userId);
 
         Group group = request.toEntity(snowflake.nextId());
         UserGroup groupLeader = UserGroup.createLeader(snowflake.nextId(), user, group);
@@ -56,5 +54,31 @@ public class GroupService {
 
         boolean isGroupLeader = userGroup.getRole() == GroupRole.LEADER;
         return GroupDetailResponse.of(userGroup.getGroup(), isGroupLeader);
+    }
+
+    @Transactional
+    public Long attendGroup(Long userId, Long groupId) {
+        if (userGroupRepository.existsByUserIdAndGroupId(userId, groupId)) {
+            throw new CustomException(DUPLICATE_GROUP_MEMBER);
+        }
+
+        User user = findUserBy(userId);
+        Group group = findGroupBy(groupId);
+
+        UserGroup participant = UserGroup.createParticipant(snowflake.nextId(), user, group);
+        userGroupRepository.save(participant);
+
+        groupRepository.increaseTotalMembers(groupId);
+        return groupId;
+    }
+
+    private Group findGroupBy(Long groupId) {
+        return groupRepository.findById(groupId)
+            .orElseThrow(() -> new CustomException(GROUP_NOT_FOUND));
+    }
+
+    private User findUserBy(Long userId) {
+        return userRepository.findById(userId)
+            .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
     }
 }

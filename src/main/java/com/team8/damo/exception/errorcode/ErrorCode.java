@@ -18,6 +18,8 @@ public enum ErrorCode {
     DUPLICATE_LIKE_INGREDIENT_CATEGORY(CONFLICT, "선호 재료 카테고리가 중복 선택 되었습니다."),
 
     // Group
+    GROUP_NOT_FOUND(NOT_FOUND, "그룹을 찾을 수 없습니다."),
+    DUPLICATE_GROUP_MEMBER(CONFLICT, "이미 참여중인 그룹입니다."),
     USER_NOT_GROUP_MEMBER(FORBIDDEN, "그룹에 속하지 않아 접근할 수 없습니다."),
 
     JSON_PARSING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "JSON 파싱 오류입니다."),

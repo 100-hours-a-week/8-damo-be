@@ -46,4 +46,12 @@ public class GroupController implements GroupControllerDocs {
     ) {
         return BaseResponse.ok(groupService.getGroupDetail(user.getUserId(), groupId));
     }
+
+    @PostMapping("/groups/{groupId}/users/me")
+    public BaseResponse<Long> attend(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @PathVariable Long groupId
+    ) {
+        return BaseResponse.created(groupService.attendGroup(user.getUserId(), groupId));
+    }
 }

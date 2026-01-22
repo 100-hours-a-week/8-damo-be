@@ -17,4 +17,6 @@ public interface UserGroupRepository extends JpaRepository<UserGroup, Long> {
 
     @EntityGraph(attributePaths = {"group"})
     Optional<UserGroup> findByUserIdAndGroupId(Long userId, Long groupId);
+
+    boolean existsByUserIdAndGroupId(Long userId, Long groupId);
 }
