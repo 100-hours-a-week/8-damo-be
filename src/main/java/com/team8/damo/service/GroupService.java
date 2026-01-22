@@ -11,6 +11,7 @@ import com.team8.damo.service.request.GroupCreateServiceRequest;
 import com.team8.damo.service.response.GroupDetailResponse;
 import com.team8.damo.entity.enumeration.GroupRole;
 import com.team8.damo.service.response.UserGroupResponse;
+import com.team8.damo.util.QrCodeGenerator;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ import static com.team8.damo.exception.errorcode.ErrorCode.*;
 @Transactional(readOnly = true)
 public class GroupService {
     private final Snowflake snowflake;
+    private final QrCodeGenerator qrCodeGenerator;
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
     private final UserGroupRepository userGroupRepository;
@@ -38,6 +40,8 @@ public class GroupService {
 
         groupRepository.save(group);
         userGroupRepository.save(groupLeader);
+
+        qrCodeGenerator.generateQrCode(group.getId());
         return group.getId();
     }
 
