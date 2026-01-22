@@ -22,6 +22,12 @@ public enum ErrorCode {
     DUPLICATE_GROUP_MEMBER(CONFLICT, "이미 참여중인 그룹입니다."),
     USER_NOT_GROUP_MEMBER(FORBIDDEN, "그룹에 속하지 않아 접근할 수 없습니다."),
 
+    // Dining
+    ONLY_GROUP_LEADER_ALLOWED(FORBIDDEN, "회식 생성은 그룹장만 가능합니다."),
+    DINING_DATE_MUST_BE_AFTER_NOW(BAD_REQUEST, "회식 진행 날짜는 현재 날짜보다 이후여야 합니다."),
+    VOTE_DUE_DATE_MUST_BE_BEFORE_DINING_DATE(BAD_REQUEST, "투표 마감 날짜는 회식 진행 날짜 이전이어야 합니다."),
+    DINING_LIMIT_EXCEEDED(BAD_REQUEST, "회식 완료가 되지 않은 회식이 3개 이상이므로 회식을 생성할 수 없습니다."),
+
     JSON_PARSING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "JSON 파싱 오류입니다."),
     NOT_FOUND_END_POINT(HttpStatus.NOT_FOUND, "존재하지 않는 API 입니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "예상치 못한 서버 오류입니다."),
