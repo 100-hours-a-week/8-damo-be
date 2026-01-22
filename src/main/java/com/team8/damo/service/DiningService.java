@@ -39,13 +39,12 @@ public class DiningService {
     private final DiningParticipantRepository diningParticipantRepository;
 
     @Transactional
-    public Long createDining(Long userId, Long groupId, DiningCreateServiceRequest request) {
+    public Long createDining(Long userId, Long groupId, DiningCreateServiceRequest request, LocalDateTime currentDataTime) {
         User user = findUserBy(userId);
         Group group = findGroupBy(groupId);
-        LocalDateTime now = LocalDateTime.now();
 
         validateGroupLeader(userId, groupId);
-        validateDiningDate(request.diningDate(), now);
+        validateDiningDate(request.diningDate(), currentDataTime);
         validateVoteDueDate(request.voteDueDate(), request.diningDate());
         validateDiningLimit(groupId);
 

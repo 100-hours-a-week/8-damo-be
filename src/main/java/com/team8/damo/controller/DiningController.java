@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1")
@@ -25,7 +27,7 @@ public class DiningController implements DiningControllerDocs {
         @Valid @RequestBody DiningCreateRequest request
     ) {
         return BaseResponse.created(
-            diningService.createDining(user.getUserId(), groupId, request.toServiceRequest())
+            diningService.createDining(user.getUserId(), groupId, request.toServiceRequest(), LocalDateTime.now())
         );
     }
 }
