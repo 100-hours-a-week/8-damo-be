@@ -13,6 +13,7 @@ import com.team8.damo.repository.GroupRepository;
 import com.team8.damo.repository.UserGroupRepository;
 import com.team8.damo.repository.UserRepository;
 import com.team8.damo.service.request.GroupCreateServiceRequest;
+import com.team8.damo.util.QrCodeGenerator;
 import com.team8.damo.util.Snowflake;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,6 +45,9 @@ class GroupServiceTest {
 
     @Mock
     private Snowflake snowflake;
+
+    @Mock
+    private QrCodeGenerator qrCodeGenerator;
 
     @Mock
     private UserRepository userRepository;
