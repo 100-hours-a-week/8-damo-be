@@ -6,13 +6,14 @@ import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.security.jwt.JwtUserDetails;
 import com.team8.damo.service.DiningService;
-import com.team8.damo.service.response.DiningListResponse;
+import com.team8.damo.service.response.DiningResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -35,7 +36,7 @@ public class DiningController implements DiningControllerDocs {
 
     @Override
     @GetMapping("/groups/{groupId}/dining")
-    public BaseResponse<DiningListResponse> getDiningList(
+    public BaseResponse<List<DiningResponse>> getDiningList(
         @AuthenticationPrincipal JwtUserDetails user,
         @PathVariable Long groupId,
         @RequestParam DiningStatus status

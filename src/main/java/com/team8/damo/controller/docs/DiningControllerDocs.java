@@ -4,8 +4,10 @@ import com.team8.damo.controller.request.DiningCreateRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.security.jwt.JwtUserDetails;
-import com.team8.damo.service.response.DiningListResponse;
+import com.team8.damo.service.response.DiningResponse;
 import com.team8.damo.swagger.annotation.ApiErrorResponses;
+
+import java.util.List;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -63,8 +65,8 @@ public interface DiningControllerDocs {
             """
     )
     @ApiResponse(responseCode = "200", description = "성공")
-    @ApiErrorResponses({USER_NOT_FOUND, GROUP_NOT_FOUND, USER_NOT_GROUP_MEMBER})
-    BaseResponse<DiningListResponse> getDiningList(
+    @ApiErrorResponses({USER_NOT_GROUP_MEMBER})
+    BaseResponse<List<DiningResponse>> getDiningList(
         @Parameter(hidden = true)
         JwtUserDetails user,
         @Parameter(description = "그룹 ID", required = true)

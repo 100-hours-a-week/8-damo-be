@@ -6,7 +6,6 @@ import com.team8.damo.entity.enumeration.GroupRole;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.DiningCreateServiceRequest;
-import com.team8.damo.service.response.DiningListResponse;
 import com.team8.damo.service.response.DiningResponse;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
@@ -89,21 +88,19 @@ public class DiningService {
             .toList();
     }
 
-    public DiningListResponse getDiningList(Long userId, Long groupId, DiningStatus status) {
+    public List<DiningResponse> getDiningList(Long userId, Long groupId, DiningStatus status) {
         if (isNotGroupMember(userId, groupId)) {
             throw new CustomException(USER_NOT_GROUP_MEMBER);
         }
 
         List<Dining> dinings = diningRepository.findAllByGroupIdAndDiningStatus(groupId, status);
 
-        List<DiningResponse> responses = dinings.stream()
+        return dinings.stream()
             .map(dining -> {
                 int count = diningParticipantRepository.countByDiningId(dining.getId());
                 return DiningResponse.of(dining, count);
             })
             .toList();
-
-        return DiningListResponse.of(responses);
     }
 
     private User findUserBy(Long userId) {
