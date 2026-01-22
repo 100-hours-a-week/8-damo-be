@@ -2,8 +2,12 @@ package com.team8.damo.controller.docs;
 
 import com.team8.damo.controller.request.DiningCreateRequest;
 import com.team8.damo.controller.response.BaseResponse;
+import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.security.jwt.JwtUserDetails;
+import com.team8.damo.service.response.DiningResponse;
 import com.team8.damo.swagger.annotation.ApiErrorResponses;
+
+import java.util.List;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -49,5 +53,25 @@ public interface DiningControllerDocs {
         @Parameter(description = "그룹 ID", required = true)
         Long groupId,
         DiningCreateRequest request
+    );
+
+    @Operation(
+        summary = "회식 상태별 목록 조회",
+        description = """
+            ### 그룹의 회식 목록을 상태별로 조회합니다.
+            - status: ATTENDANCE_VOTING, RESTAURANT_VOTING, CONFIRMED, COMPLETE
+
+            **접근 권한**: 해당 그룹의 그룹장 또는 참여자만 조회 가능
+            """
+    )
+    @ApiResponse(responseCode = "200", description = "성공")
+    @ApiErrorResponses({USER_NOT_GROUP_MEMBER})
+    BaseResponse<List<DiningResponse>> getDiningList(
+        @Parameter(hidden = true)
+        JwtUserDetails user,
+        @Parameter(description = "그룹 ID", required = true)
+        Long groupId,
+        @Parameter(description = "회식 상태", required = true)
+        DiningStatus status
     );
 }

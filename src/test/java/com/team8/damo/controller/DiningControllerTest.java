@@ -1,6 +1,8 @@
 package com.team8.damo.controller;
 
+import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.service.DiningService;
+import com.team8.damo.service.response.DiningResponse;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
@@ -16,10 +18,14 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -251,5 +257,148 @@ class DiningControllerTest {
             .andExpect(status().isBadRequest());
 
         then(diningService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("회식 상태별 목록을 성공적으로 조회한다.")
+    void getDiningList_success() throws Exception {
+        // given
+        Long groupId = 100L;
+        DiningStatus status = DiningStatus.ATTENDANCE_VOTING;
+
+        List<DiningResponse> responses = List.of(
+            new DiningResponse(200L, LocalDateTime.of(2025, 12, 25, 18, 0), status, 3),
+            new DiningResponse(201L, LocalDateTime.of(2025, 12, 30, 19, 0), status, 5)
+        );
+
+        given(diningService.getDiningList(any(), eq(groupId), eq(status))).willReturn(responses);
+
+        // when // then
+        mockMvc.perform(
+                get("/api/v1/groups/{groupId}/dining", groupId)
+                    .param("status", "ATTENDANCE_VOTING")
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data").isArray())
+            .andExpect(jsonPath("$.data.length()").value(2))
+            .andExpect(jsonPath("$.data[0].diningId").value(200))
+            .andExpect(jsonPath("$.data[0].status").value("ATTENDANCE_VOTING"))
+            .andExpect(jsonPath("$.data[0].diningParticipantsCount").value(3))
+            .andExpect(jsonPath("$.data[1].diningId").value(201))
+            .andExpect(jsonPath("$.data[1].diningParticipantsCount").value(5));
+
+        then(diningService).should().getDiningList(any(), eq(groupId), eq(status));
+    }
+
+    @Test
+    @DisplayName("빈 회식 목록을 조회할 수 있다.")
+    void getDiningList_emptyList() throws Exception {
+        // given
+        Long groupId = 100L;
+        DiningStatus status = DiningStatus.COMPLETE;
+
+        given(diningService.getDiningList(any(), eq(groupId), eq(status))).willReturn(List.of());
+
+        // when // then
+        mockMvc.perform(
+                get("/api/v1/groups/{groupId}/dining", groupId)
+                    .param("status", "COMPLETE")
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data").isArray())
+            .andExpect(jsonPath("$.data.length()").value(0));
+
+        then(diningService).should().getDiningList(any(), eq(groupId), eq(status));
+    }
+
+    @Test
+    @DisplayName("status 파라미터가 없으면 400 에러를 반환한다.")
+    void getDiningList_statusRequired() throws Exception {
+        // given
+        Long groupId = 100L;
+
+        // when // then
+        mockMvc.perform(
+                get("/api/v1/groups/{groupId}/dining", groupId)
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(print())
+            .andExpect(status().isBadRequest());
+
+        then(diningService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("유효하지 않은 status 값이면 400 에러를 반환한다.")
+    void getDiningList_invalidStatus() throws Exception {
+        // given
+        Long groupId = 100L;
+
+        // when // then
+        mockMvc.perform(
+                get("/api/v1/groups/{groupId}/dining", groupId)
+                    .param("status", "INVALID_STATUS")
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(print())
+            .andExpect(status().isBadRequest());
+
+        then(diningService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("RESTAURANT_VOTING 상태로 회식 목록을 조회할 수 있다.")
+    void getDiningList_restaurantVotingStatus() throws Exception {
+        // given
+        Long groupId = 100L;
+        DiningStatus status = DiningStatus.RESTAURANT_VOTING;
+
+        List<DiningResponse> responses = List.of(
+            new DiningResponse(200L, LocalDateTime.of(2025, 12, 25, 18, 0), status, 7)
+        );
+
+        given(diningService.getDiningList(any(), eq(groupId), eq(status))).willReturn(responses);
+
+        // when // then
+        mockMvc.perform(
+                get("/api/v1/groups/{groupId}/dining", groupId)
+                    .param("status", "RESTAURANT_VOTING")
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data[0].status").value("RESTAURANT_VOTING"));
+
+        then(diningService).should().getDiningList(any(), eq(groupId), eq(status));
+    }
+
+    @Test
+    @DisplayName("CONFIRMED 상태로 회식 목록을 조회할 수 있다.")
+    void getDiningList_confirmedStatus() throws Exception {
+        // given
+        Long groupId = 100L;
+        DiningStatus status = DiningStatus.CONFIRMED;
+
+        List<DiningResponse> responses = List.of(
+            new DiningResponse(200L, LocalDateTime.of(2025, 12, 25, 18, 0), status, 10)
+        );
+
+        given(diningService.getDiningList(any(), eq(groupId), eq(status))).willReturn(responses);
+
+        // when // then
+        mockMvc.perform(
+                get("/api/v1/groups/{groupId}/dining", groupId)
+                    .param("status", "CONFIRMED")
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data[0].status").value("CONFIRMED"));
+
+        then(diningService).should().getDiningList(any(), eq(groupId), eq(status));
     }
 }

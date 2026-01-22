@@ -1,19 +1,13 @@
 package com.team8.damo.service;
 
-import com.team8.damo.entity.Dining;
-import com.team8.damo.entity.DiningParticipant;
-import com.team8.damo.entity.Group;
-import com.team8.damo.entity.User;
-import com.team8.damo.entity.UserGroup;
+import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.entity.enumeration.GroupRole;
+import com.team8.damo.entity.enumeration.VotingStatus;
 import com.team8.damo.exception.CustomException;
-import com.team8.damo.repository.DiningParticipantRepository;
-import com.team8.damo.repository.DiningRepository;
-import com.team8.damo.repository.GroupRepository;
-import com.team8.damo.repository.UserGroupRepository;
-import com.team8.damo.repository.UserRepository;
+import com.team8.damo.repository.*;
 import com.team8.damo.service.request.DiningCreateServiceRequest;
+import com.team8.damo.service.response.DiningResponse;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -95,6 +89,21 @@ public class DiningService {
             .toList();
     }
 
+    public List<DiningResponse> getDiningList(Long userId, Long groupId, DiningStatus status) {
+        if (isNotGroupMember(userId, groupId)) {
+            throw new CustomException(USER_NOT_GROUP_MEMBER);
+        }
+
+        List<Dining> dinings = diningRepository.findAllByGroupIdAndDiningStatus(groupId, status);
+
+        return dinings.stream()
+            .map(dining -> {
+                int count = diningParticipantRepository.countByDiningIdAndVotingStatus(dining.getId(), VotingStatus.ATTEND);
+                return DiningResponse.of(dining, count);
+            })
+            .toList();
+    }
+
     private User findUserBy(Long userId) {
         return userRepository.findById(userId)
             .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
@@ -103,5 +112,9 @@ public class DiningService {
     private Group findGroupBy(Long groupId) {
         return groupRepository.findById(groupId)
             .orElseThrow(() -> new CustomException(GROUP_NOT_FOUND));
+    }
+
+    private boolean isNotGroupMember(Long userId, Long groupId) {
+        return !userGroupRepository.existsByUserIdAndGroupId(userId, groupId);
     }
 }
