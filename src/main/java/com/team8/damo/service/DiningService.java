@@ -3,6 +3,7 @@ package com.team8.damo.service;
 import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.entity.enumeration.GroupRole;
+import com.team8.damo.entity.enumeration.VotingStatus;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.DiningCreateServiceRequest;
@@ -97,7 +98,7 @@ public class DiningService {
 
         return dinings.stream()
             .map(dining -> {
-                int count = diningParticipantRepository.countByDiningId(dining.getId());
+                int count = diningParticipantRepository.countByDiningIdAndVotingStatus(dining.getId(), VotingStatus.ATTEND);
                 return DiningResponse.of(dining, count);
             })
             .toList();
