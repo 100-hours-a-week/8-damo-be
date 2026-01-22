@@ -28,6 +28,8 @@ import java.util.Optional;
 
 import static com.team8.damo.exception.errorcode.ErrorCode.USER_NOT_FOUND;
 import static com.team8.damo.exception.errorcode.ErrorCode.USER_NOT_GROUP_MEMBER;
+import static com.team8.damo.exception.errorcode.ErrorCode.GROUP_NOT_FOUND;
+import static com.team8.damo.exception.errorcode.ErrorCode.DUPLICATE_GROUP_MEMBER;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -284,5 +286,103 @@ class GroupServiceTest {
             .hasFieldOrPropertyWithValue("errorCode", USER_NOT_GROUP_MEMBER);
 
         then(userGroupRepository).should().findByUserIdAndGroupId(userId, groupId);
+    }
+
+    @Test
+    @DisplayName("그룹에 성공적으로 참여한다.")
+    void attendGroup_success() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+        Long userGroupId = 200L;
+
+        User user = UserFixture.create(userId);
+        Group group = GroupFixture.create(groupId, "맛집탐방대", "서울 맛집 모임");
+
+        given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(false);
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(groupRepository.findById(groupId)).willReturn(Optional.of(group));
+        given(snowflake.nextId()).willReturn(userGroupId);
+
+        // when
+        Long result = groupService.attendGroup(userId, groupId);
+
+        // then
+        assertThat(result).isEqualTo(groupId);
+
+        ArgumentCaptor<UserGroup> userGroupCaptor = ArgumentCaptor.forClass(UserGroup.class);
+        then(userGroupRepository).should().save(userGroupCaptor.capture());
+
+        UserGroup savedUserGroup = userGroupCaptor.getValue();
+        assertThat(savedUserGroup)
+            .extracting("id", "user", "group", "role")
+            .contains(userGroupId, user, group, GroupRole.PARTICIPANT);
+
+        then(groupRepository).should().increaseTotalMembers(groupId);
+    }
+
+    @Test
+    @DisplayName("이미 참여중인 그룹에는 중복 참여할 수 없다.")
+    void attendGroup_duplicateGroupMember() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+
+        given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
+
+        // when // then
+        assertThatThrownBy(() -> groupService.attendGroup(userId, groupId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", DUPLICATE_GROUP_MEMBER);
+
+        then(userGroupRepository).should().existsByUserIdAndGroupId(userId, groupId);
+        then(userRepository).should(never()).findById(any());
+        then(groupRepository).should(never()).findById(any());
+        then(userGroupRepository).should(never()).save(any());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 사용자는 그룹에 참여할 수 없다.")
+    void attendGroup_userNotFound() {
+        // given
+        Long userId = 999L;
+        Long groupId = 100L;
+
+        given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(false);
+        given(userRepository.findById(userId)).willReturn(Optional.empty());
+
+        // when // then
+        assertThatThrownBy(() -> groupService.attendGroup(userId, groupId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", USER_NOT_FOUND);
+
+        then(userGroupRepository).should().existsByUserIdAndGroupId(userId, groupId);
+        then(userRepository).should().findById(userId);
+        then(groupRepository).should(never()).findById(any());
+        then(userGroupRepository).should(never()).save(any());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 그룹에는 참여할 수 없다.")
+    void attendGroup_groupNotFound() {
+        // given
+        Long userId = 1L;
+        Long groupId = 999L;
+
+        User user = UserFixture.create(userId);
+
+        given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(false);
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(groupRepository.findById(groupId)).willReturn(Optional.empty());
+
+        // when // then
+        assertThatThrownBy(() -> groupService.attendGroup(userId, groupId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", GROUP_NOT_FOUND);
+
+        then(userGroupRepository).should().existsByUserIdAndGroupId(userId, groupId);
+        then(userRepository).should().findById(userId);
+        then(groupRepository).should().findById(groupId);
+        then(userGroupRepository).should(never()).save(any());
     }
 }

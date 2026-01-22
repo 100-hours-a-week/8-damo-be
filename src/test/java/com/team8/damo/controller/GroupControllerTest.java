@@ -421,4 +421,24 @@ class GroupControllerTest {
 
         then(groupService).should().getGroupDetail(any(), any());
     }
+
+    @Test
+    @DisplayName("그룹에 성공적으로 참여한다.")
+    void attend_success() throws Exception {
+        // given
+        Long groupId = 100L;
+
+        given(groupService.attendGroup(any(), any())).willReturn(groupId);
+
+        // when // then
+        mockMvc.perform(
+                post("/api/v1/groups/{groupId}/users/me", groupId)
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data").value(100L));
+
+        then(groupService).should().attendGroup(any(), any());
+    }
 }
