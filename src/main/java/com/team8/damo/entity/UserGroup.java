@@ -56,4 +56,13 @@ public class UserGroup {
             .role(GroupRole.LEADER)
             .build();
     }
+
+    public static UserGroup createParticipant(Long id, User user, Group group) {
+        return UserGroup.builder()
+            .id(id)
+            .user(user)
+            .group(group)
+            .role(GroupRole.PARTICIPANT)
+            .build();
+    }
 }

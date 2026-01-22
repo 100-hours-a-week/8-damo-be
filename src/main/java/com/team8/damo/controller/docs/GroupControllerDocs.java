@@ -89,4 +89,21 @@ public interface GroupControllerDocs {
         @Parameter(description = "그룹 ID", required = true)
         Long groupId
     );
+
+    @Operation(
+        summary = "그룹 참여",
+        description = """
+            ### 그룹에 참여합니다.
+            - 사용자가 해당 그룹의 일반 참여자(PARTICIPANT)로 등록됩니다.
+            - 이미 참여중인 그룹에는 중복 참여할 수 없습니다.
+            """
+    )
+    @ApiResponse(responseCode = "201", description = "성공")
+    @ApiErrorResponses({USER_NOT_FOUND, GROUP_NOT_FOUND, DUPLICATE_GROUP_MEMBER})
+    BaseResponse<Long> attend(
+        @Parameter(hidden = true)
+        JwtUserDetails user,
+        @Parameter(description = "그룹 ID", required = true)
+        Long groupId
+    );
 }
