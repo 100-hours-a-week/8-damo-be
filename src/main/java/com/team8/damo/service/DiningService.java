@@ -87,6 +87,11 @@ public class DiningService {
         }
 
         DiningParticipant participant = findParticipantBy(diningId, userId);
+
+        if (participant.getVotingStatus().isNotPending()) {
+            throw new CustomException(ATTENDANCE_VOTE_ALREADY_COMPLETED);
+        }
+
         participant.updateVotingStatus(votingStatus);
 
         return participant.getVotingStatus();

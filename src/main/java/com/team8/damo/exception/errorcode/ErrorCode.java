@@ -31,6 +31,7 @@ public enum ErrorCode {
     INVALID_VOTE_STATUS(BAD_REQUEST, "유효하지 않은 투표 상태입니다."),
     ATTENDANCE_VOTING_CLOSED(BAD_REQUEST, "참석/불참석 투표가 종료되었습니다."),
     NO_VOTE_PERMISSION(FORBIDDEN, "참석, 불참석 투표 권한이 존재하지 않습니다."),
+    ATTENDANCE_VOTE_ALREADY_COMPLETED(CONFLICT, "참석, 불참석 투표를 이미 완료했습니다."),
 
     JSON_PARSING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "JSON 파싱 오류입니다."),
     NOT_FOUND_END_POINT(HttpStatus.NOT_FOUND, "존재하지 않는 API 입니다."),

@@ -90,7 +90,7 @@ public interface DiningControllerDocs {
             """
     )
     @ApiResponse(responseCode = "200", description = "성공")
-    @ApiErrorResponses({NO_VOTE_PERMISSION, DINING_NOT_FOUND, ATTENDANCE_VOTING_CLOSED, INVALID_VOTE_STATUS})
+    @ApiErrorResponses({NO_VOTE_PERMISSION, DINING_NOT_FOUND, ATTENDANCE_VOTING_CLOSED, INVALID_VOTE_STATUS, ATTENDANCE_VOTE_ALREADY_COMPLETED})
     BaseResponse<VotingStatus> voteAttendance(
         @Parameter(hidden = true)
         JwtUserDetails user,
