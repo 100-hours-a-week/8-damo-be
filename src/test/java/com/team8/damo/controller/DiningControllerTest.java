@@ -1,6 +1,7 @@
 package com.team8.damo.controller;
 
 import com.team8.damo.entity.enumeration.DiningStatus;
+import com.team8.damo.entity.enumeration.VotingStatus;
 import com.team8.damo.service.DiningService;
 import com.team8.damo.service.response.DiningResponse;
 import jakarta.validation.Validation;
@@ -26,6 +27,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -400,5 +402,153 @@ class DiningControllerTest {
             .andExpect(jsonPath("$.data[0].status").value("CONFIRMED"));
 
         then(diningService).should().getDiningList(any(), eq(groupId), eq(status));
+    }
+
+    @Test
+    @DisplayName("참석 투표를 성공적으로 한다.")
+    void voteAttendance_attend_success() throws Exception {
+        // given
+        Long groupId = 100L;
+        Long diningId = 200L;
+        String requestBody = """
+            {
+                "votingStatus": "ATTEND"
+            }
+            """;
+
+        given(diningService.voteAttendance(any(), eq(groupId), eq(diningId), eq(VotingStatus.ATTEND)))
+            .willReturn(VotingStatus.ATTEND);
+
+        // when // then
+        mockMvc.perform(
+                patch("/api/v1/groups/{groupId}/dining/{diningId}/attendance-vote", groupId, diningId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data").value("ATTEND"));
+
+        then(diningService).should().voteAttendance(any(), eq(groupId), eq(diningId), eq(VotingStatus.ATTEND));
+    }
+
+    @Test
+    @DisplayName("불참 투표를 성공적으로 한다.")
+    void voteAttendance_nonAttend_success() throws Exception {
+        // given
+        Long groupId = 100L;
+        Long diningId = 200L;
+        String requestBody = """
+            {
+                "votingStatus": "NON_ATTEND"
+            }
+            """;
+
+        given(diningService.voteAttendance(any(), eq(groupId), eq(diningId), eq(VotingStatus.NON_ATTEND)))
+            .willReturn(VotingStatus.NON_ATTEND);
+
+        // when // then
+        mockMvc.perform(
+                patch("/api/v1/groups/{groupId}/dining/{diningId}/attendance-vote", groupId, diningId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data").value("NON_ATTEND"));
+
+        then(diningService).should().voteAttendance(any(), eq(groupId), eq(diningId), eq(VotingStatus.NON_ATTEND));
+    }
+
+    @Test
+    @DisplayName("투표 상태가 없으면 400 에러를 반환한다.")
+    void voteAttendance_votingStatusRequired() throws Exception {
+        // given
+        Long groupId = 100L;
+        Long diningId = 200L;
+        String requestBody = """
+            {
+                "votingStatus": null
+            }
+            """;
+
+        // when // then
+        mockMvc.perform(
+                patch("/api/v1/groups/{groupId}/dining/{diningId}/attendance-vote", groupId, diningId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+            )
+            .andDo(print())
+            .andExpect(status().isBadRequest());
+
+        then(diningService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("PENDING 상태로는 투표할 수 없다.")
+    void voteAttendance_pendingNotAllowed() throws Exception {
+        // given
+        Long groupId = 100L;
+        Long diningId = 200L;
+        String requestBody = """
+            {
+                "votingStatus": "PENDING"
+            }
+            """;
+
+        // when // then
+        mockMvc.perform(
+                patch("/api/v1/groups/{groupId}/dining/{diningId}/attendance-vote", groupId, diningId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+            )
+            .andDo(print())
+            .andExpect(status().isBadRequest());
+
+        then(diningService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("유효하지 않은 투표 상태이면 400 에러를 반환한다.")
+    void voteAttendance_invalidVotingStatus() throws Exception {
+        // given
+        Long groupId = 100L;
+        Long diningId = 200L;
+        String requestBody = """
+            {
+                "votingStatus": "INVALID_STATUS"
+            }
+            """;
+
+        // when // then
+        mockMvc.perform(
+                patch("/api/v1/groups/{groupId}/dining/{diningId}/attendance-vote", groupId, diningId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+            )
+            .andDo(print())
+            .andExpect(status().isBadRequest());
+
+        then(diningService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("요청 본문이 비어있으면 400 에러를 반환한다.")
+    void voteAttendance_emptyBody() throws Exception {
+        // given
+        Long groupId = 100L;
+        Long diningId = 200L;
+        String requestBody = "{}";
+
+        // when // then
+        mockMvc.perform(
+                patch("/api/v1/groups/{groupId}/dining/{diningId}/attendance-vote", groupId, diningId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+            )
+            .andDo(print())
+            .andExpect(status().isBadRequest());
+
+        then(diningService).shouldHaveNoInteractions();
     }
 }
