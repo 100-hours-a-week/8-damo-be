@@ -33,6 +33,9 @@ public enum ErrorCode {
     NO_VOTE_PERMISSION(FORBIDDEN, "참석, 불참석 투표 권한이 존재하지 않습니다."),
     ATTENDANCE_VOTE_ALREADY_COMPLETED(CONFLICT, "참석, 불참석 투표를 이미 완료했습니다."),
 
+    // S3
+    INVALID_FILE_TYPE(BAD_REQUEST, "허용되지 않은 파일 형식입니다. (허용: PNG, JPEG, JPG, WEBP)"),
+
     JSON_PARSING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "JSON 파싱 오류입니다."),
     NOT_FOUND_END_POINT(HttpStatus.NOT_FOUND, "존재하지 않는 API 입니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "예상치 못한 서버 오류입니다."),
