@@ -4,12 +4,14 @@ import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.entity.enumeration.GroupRole;
 import com.team8.damo.entity.enumeration.VotingStatus;
+import com.team8.damo.event.AttendanceVoteCompletedEvent;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.DiningCreateServiceRequest;
 import com.team8.damo.service.response.DiningResponse;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +33,7 @@ public class DiningService {
     private final UserGroupRepository userGroupRepository;
     private final DiningRepository diningRepository;
     private final DiningParticipantRepository diningParticipantRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public Long createDining(Long userId, Long groupId, DiningCreateServiceRequest request, LocalDateTime currentDataTime) {
@@ -93,8 +96,25 @@ public class DiningService {
         }
 
         participant.updateVotingStatus(votingStatus);
+        diningRepository.increaseAttendanceVoteDoneCount(diningId);
+
+        checkAllParticipantsVoted(diningId, dining);
+        // 투표 진척도를 그룹원들에게 전송하는 sse 구현
 
         return participant.getVotingStatus();
+    }
+
+    private void checkAllParticipantsVoted(Long diningId, Dining dining) {
+        int totalParticipants = diningParticipantRepository.countByDiningId(diningId);
+        int votedCount = dining.getAttendanceVoteDoneCount() + 1;
+
+        // 모두 참석 투표를 완료하면 장소 추천 진행
+        if (votedCount >= totalParticipants) {
+            // AI 추천 요청
+            // aiRecommendationService.requestRestaurantRecommendation(event.diningId(), event.groupId());
+
+            dining.changeStatus(DiningStatus.RESTAURANT_VOTING);
+        }
     }
 
     private void validateGroupLeader(Long userId, Long groupId) {

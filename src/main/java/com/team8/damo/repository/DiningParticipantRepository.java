@@ -14,4 +14,6 @@ public interface DiningParticipantRepository extends JpaRepository<DiningPartici
     List<Integer> countByDiningIdInAndVotingStatus(List<Long> diningIds, VotingStatus votingStatus);
 
     Optional<DiningParticipant> findByDiningIdAndUserId(Long diningId, Long userId);
+
+    int countByDiningId(Long diningId);
 }
