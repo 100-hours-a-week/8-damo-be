@@ -1,8 +1,10 @@
 package com.team8.damo.controller.docs;
 
+import com.team8.damo.controller.request.AttendanceVoteRequest;
 import com.team8.damo.controller.request.DiningCreateRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.entity.enumeration.DiningStatus;
+import com.team8.damo.entity.enumeration.VotingStatus;
 import com.team8.damo.security.jwt.JwtUserDetails;
 import com.team8.damo.service.response.DiningResponse;
 import com.team8.damo.swagger.annotation.ApiErrorResponses;
@@ -73,5 +75,29 @@ public interface DiningControllerDocs {
         Long groupId,
         @Parameter(description = "회식 상태", required = true)
         DiningStatus status
+    );
+
+    @Operation(
+        summary = "회식 참석/불참석 투표",
+        description = """
+            ### 회식 참석/불참석을 투표합니다.
+            - votingStatus: ATTEND(참석), NON_ATTEND(불참)
+
+            **투표 조건**:
+            - 해당 회식의 참여자만 투표할 수 있습니다.
+            - 회식 상태가 ATTENDANCE_VOTING(참석 투표 중)일 때만 투표 가능합니다.
+            - 이미 투표한 경우 재투표하여 상태를 변경할 수 있습니다.
+            """
+    )
+    @ApiResponse(responseCode = "200", description = "성공")
+    @ApiErrorResponses({NO_VOTE_PERMISSION, DINING_NOT_FOUND, ATTENDANCE_VOTING_CLOSED, INVALID_VOTE_STATUS, ATTENDANCE_VOTE_ALREADY_COMPLETED})
+    BaseResponse<VotingStatus> voteAttendance(
+        @Parameter(hidden = true)
+        JwtUserDetails user,
+        @Parameter(description = "그룹 ID", required = true)
+        Long groupId,
+        @Parameter(description = "회식 ID", required = true)
+        Long diningId,
+        AttendanceVoteRequest request
     );
 }

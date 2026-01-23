@@ -11,4 +11,8 @@ public enum VotingStatus {
     ATTEND("참석");
 
     private final String description;
+
+    public boolean isNotPending() {
+        return this != PENDING;
+    }
 }

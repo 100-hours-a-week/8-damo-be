@@ -12,4 +12,8 @@ public enum DiningStatus {
     COMPLETE("회식 완료");
 
     private final String description;
+
+    public boolean isNotAttendanceVoting() {
+        return this != ATTENDANCE_VOTING;
+    }
 }

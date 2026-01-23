@@ -40,6 +40,9 @@ public class Dining extends BaseTimeEntity {
     @Column(name = "dining_status", nullable = false, length = 20)
     private DiningStatus diningStatus;
 
+    @Column(name = "attendance_vote_done_count")
+    private Integer attendanceVoteDoneCount = 0;
+
     @Builder
     public Dining(Long id, Group group, LocalDateTime diningDate, LocalDateTime voteDueDate, Integer budget, DiningStatus diningStatus) {
         this.id = id;
@@ -48,6 +51,10 @@ public class Dining extends BaseTimeEntity {
         this.voteDueDate = voteDueDate;
         this.budget = budget;
         this.diningStatus = diningStatus;
+    }
+
+    public void changeStatus(DiningStatus status) {
+        this.diningStatus = status;
     }
 
     @Override

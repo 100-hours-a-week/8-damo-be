@@ -57,6 +57,10 @@ public class DiningParticipant {
             .build();
     }
 
+    public void updateVotingStatus(VotingStatus votingStatus) {
+        this.votingStatus = votingStatus;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

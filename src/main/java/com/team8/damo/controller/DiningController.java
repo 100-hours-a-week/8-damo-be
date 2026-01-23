@@ -1,9 +1,11 @@
 package com.team8.damo.controller;
 
 import com.team8.damo.controller.docs.DiningControllerDocs;
+import com.team8.damo.controller.request.AttendanceVoteRequest;
 import com.team8.damo.controller.request.DiningCreateRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.entity.enumeration.DiningStatus;
+import com.team8.damo.entity.enumeration.VotingStatus;
 import com.team8.damo.security.jwt.JwtUserDetails;
 import com.team8.damo.service.DiningService;
 import com.team8.damo.service.response.DiningResponse;
@@ -43,6 +45,19 @@ public class DiningController implements DiningControllerDocs {
     ) {
         return BaseResponse.ok(
             diningService.getDiningList(user.getUserId(), groupId, status)
+        );
+    }
+
+    @Override
+    @PatchMapping("/groups/{groupId}/dining/{diningId}/attendance-vote")
+    public BaseResponse<VotingStatus> voteAttendance(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @PathVariable Long groupId,
+        @PathVariable Long diningId,
+        @Valid @RequestBody AttendanceVoteRequest request
+    ) {
+        return BaseResponse.ok(
+            diningService.voteAttendance(user.getUserId(), groupId, diningId, request.getVotingStatus())
         );
     }
 }
