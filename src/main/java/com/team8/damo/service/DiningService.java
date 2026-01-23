@@ -96,17 +96,16 @@ public class DiningService {
         }
 
         participant.updateVotingStatus(votingStatus);
-        diningRepository.increaseAttendanceVoteDoneCount(diningId);
+        int votedCount = diningRepository.increaseAttendanceVoteDoneCount(diningId);
 
-        checkAllParticipantsVoted(diningId, dining);
+        checkAllParticipantsVoted(diningId, dining, votedCount);
         // 투표 진척도를 그룹원들에게 전송하는 sse 구현
 
         return participant.getVotingStatus();
     }
 
-    private void checkAllParticipantsVoted(Long diningId, Dining dining) {
+    private void checkAllParticipantsVoted(Long diningId, Dining dining, int votedCount) {
         int totalParticipants = diningParticipantRepository.countByDiningId(diningId);
-        int votedCount = dining.getAttendanceVoteDoneCount() + 1;
 
         // 모두 참석 투표를 완료하면 장소 추천 진행
         if (votedCount >= totalParticipants) {

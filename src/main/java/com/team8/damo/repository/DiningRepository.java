@@ -5,6 +5,7 @@ import com.team8.damo.entity.enumeration.DiningStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -16,5 +17,5 @@ public interface DiningRepository extends JpaRepository<Dining, Long> {
 
     @Modifying(clearAutomatically = true)
     @Query("update Dining d set d.attendanceVoteDoneCount = d.attendanceVoteDoneCount + 1 where d.id = :diningId")
-    int increaseAttendanceVoteDoneCount(Long diningId);
+    int increaseAttendanceVoteDoneCount(@Param("diningId") Long diningId);
 }
