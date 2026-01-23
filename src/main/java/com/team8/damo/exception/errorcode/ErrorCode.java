@@ -27,6 +27,10 @@ public enum ErrorCode {
     DINING_DATE_MUST_BE_AFTER_NOW(BAD_REQUEST, "회식 진행 날짜는 현재 날짜보다 이후여야 합니다."),
     VOTE_DUE_DATE_MUST_BE_BEFORE_DINING_DATE(BAD_REQUEST, "투표 마감 날짜는 회식 진행 날짜 이전이어야 합니다."),
     DINING_LIMIT_EXCEEDED(BAD_REQUEST, "회식 완료가 되지 않은 회식이 3개 이상이므로 회식을 생성할 수 없습니다."),
+    DINING_NOT_FOUND(NOT_FOUND, "회식을 찾을 수 없습니다."),
+    INVALID_VOTE_STATUS(BAD_REQUEST, "유효하지 않은 투표 상태입니다."),
+    ATTENDANCE_VOTING_CLOSED(BAD_REQUEST, "참석/불참석 투표가 종료되었습니다."),
+    NO_VOTE_PERMISSION(FORBIDDEN, "참석, 불참석 투표 권한이 존재하지 않습니다."),
 
     JSON_PARSING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "JSON 파싱 오류입니다."),
     NOT_FOUND_END_POINT(HttpStatus.NOT_FOUND, "존재하지 않는 API 입니다."),
