@@ -1,5 +1,6 @@
 package com.team8.damo.controller;
 
+import com.team8.damo.controller.docs.AuthControllerDocs;
 import com.team8.damo.controller.request.OAuthLoginRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.service.response.OAuthLoginResponse;
@@ -20,11 +21,12 @@ import static com.team8.damo.entity.enumeration.TokenType.REFRESH;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
-public class AuthController {
+public class AuthController implements AuthControllerDocs {
     private final AuthService authService;
 
+    @Override
     @PostMapping("/oauth")
-    public BaseResponse<?> oauth(
+    public BaseResponse<OAuthLoginResponse> oauth(
         HttpServletResponse response,
         @Valid @RequestBody OAuthLoginRequest request
     ) {

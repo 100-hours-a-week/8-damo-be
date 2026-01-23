@@ -29,7 +29,7 @@ public class CookieUtil {
             .path("/")
             .sameSite(isAccess ? "Lax" : "Strict")
             .httpOnly(true)
-            .secure(false)
+            .secure(true)
             .maxAge(isAccess ? accessTokenExpTime : refreshTokenExpTime)
             .build();
 
