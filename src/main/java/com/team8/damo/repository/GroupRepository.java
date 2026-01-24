@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface GroupRepository extends JpaRepository<Group, Long> {
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("update Group g set g.totalMembers = g.totalMembers + 1 where g.id = :groupId")
     void increaseTotalMembers(@Param("groupId") Long groupId);
 }
