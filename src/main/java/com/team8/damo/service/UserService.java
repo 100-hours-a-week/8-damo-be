@@ -1,6 +1,9 @@
 package com.team8.damo.service;
 
 import com.team8.damo.entity.*;
+import com.team8.damo.entity.enumeration.AllergyType;
+import com.team8.damo.entity.enumeration.FoodType;
+import com.team8.damo.entity.enumeration.IngredientType;
 import com.team8.damo.entity.enumeration.OnboardingStep;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.exception.errorcode.ErrorCode;
@@ -47,36 +50,36 @@ public class UserService {
 
     @Transactional
     public void createCharacteristics(Long userId, UserCharacteristicsCreateServiceRequest request) {
-        validateNoDuplicates(request.allergyIds(), DUPLICATE_ALLERGY_CATEGORY);
-        validateNoDuplicates(request.likeFoodIds(), DUPLICATE_LIKE_FOOD_CATEGORY);
-        validateNoDuplicates(request.likeIngredientIds(), DUPLICATE_LIKE_INGREDIENT_CATEGORY);
+        validateNoDuplicates(request.allergies(), DUPLICATE_ALLERGY_CATEGORY);
+        validateNoDuplicates(request.likeFoods(), DUPLICATE_LIKE_FOOD_CATEGORY);
+        validateNoDuplicates(request.likeIngredients(), DUPLICATE_LIKE_INGREDIENT_CATEGORY);
 
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
-        saveUserAllergies(user, request.allergyIds());
-        saveUserLikeFoods(user, request.likeFoodIds());
-        saveUserLikeIngredients(user, request.likeIngredientIds());
+        saveUserAllergies(user, request.allergies());
+        saveUserLikeFoods(user, request.likeFoods());
+        saveUserLikeIngredients(user, request.likeIngredients());
 
         user.updateOtherCharacteristics(request.otherCharacteristics());
         user.updateOnboardingStep(OnboardingStep.DONE);
     }
 
-    private void validateNoDuplicates(List<Integer> ids, ErrorCode errorCode) {
-        if (ids == null || ids.isEmpty()) {
+    private <T> void validateNoDuplicates(List<T> items, ErrorCode errorCode) {
+        if (items == null || items.isEmpty()) {
             return;
         }
-        if (new HashSet<>(ids).size() != ids.size()) {
+        if (new HashSet<>(items).size() != items.size()) {
             throw new CustomException(errorCode);
         }
     }
 
-    private void saveUserAllergies(User user, List<Integer> allergyIds) {
-        if (allergyIds == null || allergyIds.isEmpty()) {
+    private void saveUserAllergies(User user, List<AllergyType> allergies) {
+        if (allergies == null || allergies.isEmpty()) {
             return;
         }
-        List<AllergyCategory> categories = allergyCategoryRepository.findAllById(allergyIds);
-        if (categories.size() != allergyIds.size()) {
+        List<AllergyCategory> categories = allergyCategoryRepository.findByCategoryIn(allergies);
+        if (categories.size() != allergies.size()) {
             throw new CustomException(INVALID_CATEGORY);
         }
         List<UserAllergy> userAllergies = categories.stream()
@@ -85,12 +88,12 @@ public class UserService {
         userAllergyRepository.saveAll(userAllergies);
     }
 
-    private void saveUserLikeFoods(User user, List<Integer> likeFoodIds) {
-        if (likeFoodIds == null || likeFoodIds.isEmpty()) {
+    private void saveUserLikeFoods(User user, List<FoodType> likeFoods) {
+        if (likeFoods == null || likeFoods.isEmpty()) {
             return;
         }
-        List<LikeFoodCategory> categories = likeFoodCategoryRepository.findAllById(likeFoodIds);
-        if (categories.size() != likeFoodIds.size()) {
+        List<LikeFoodCategory> categories = likeFoodCategoryRepository.findByCategoryIn(likeFoods);
+        if (categories.size() != likeFoods.size()) {
             throw new CustomException(INVALID_CATEGORY);
         }
         List<UserLikeFood> userLikeFoods = categories.stream()
@@ -99,12 +102,12 @@ public class UserService {
         userLikeFoodRepository.saveAll(userLikeFoods);
     }
 
-    private void saveUserLikeIngredients(User user, List<Integer> likeIngredientIds) {
-        if (likeIngredientIds == null || likeIngredientIds.isEmpty()) {
+    private void saveUserLikeIngredients(User user, List<IngredientType> likeIngredients) {
+        if (likeIngredients == null || likeIngredients.isEmpty()) {
             return;
         }
-        List<LikeIngredientCategory> categories = likeIngredientCategoryRepository.findAllById(likeIngredientIds);
-        if (categories.size() != likeIngredientIds.size()) {
+        List<LikeIngredientCategory> categories = likeIngredientCategoryRepository.findByCategoryIn(likeIngredients);
+        if (categories.size() != likeIngredients.size()) {
             throw new CustomException(INVALID_CATEGORY);
         }
         List<UserLikeIngredient> userLikeIngredients = categories.stream()

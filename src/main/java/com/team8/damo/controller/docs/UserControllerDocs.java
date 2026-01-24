@@ -55,9 +55,9 @@ public interface UserControllerDocs {
         summary = "사용자 개인 특성 수집",
         description = """
             ### 사용자의 개인 특성 정보를 수집합니다.
-            - allergyIds: 알레르기 카테고리 ID 목록
-            - likeFoodIds: 선호 음식 카테고리 ID 목록
-            - likeIngredientIds: 선호 재료 카테고리 ID 목록
+            - allergies: 알레르기 타입 목록 (SHRIMP, CRAB, EGG, MILK 등)
+            - likeFoods: 선호 음식 타입 목록 (KOREAN, CHINESE, JAPANESE 등)
+            - likeIngredients: 선호 재료 타입 목록 (MEAT, SEAFOOD, VEGETABLE 등)
             - otherCharacteristics: 기타 특성 (최대 100자)
             """
     )
