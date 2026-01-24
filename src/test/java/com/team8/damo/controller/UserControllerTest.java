@@ -229,9 +229,9 @@ class UserControllerTest {
         // given
         String requestBody = """
             {
-                "allergyIds": [1, 2],
-                "likeFoodIds": [1, 3],
-                "likeIngredientIds": [2, 4],
+                "allergies": ["SHRIMP", "CRAB"],
+                "likeFoods": ["KOREAN", "CHINESE"],
+                "likeIngredients": ["MEAT", "SEAFOOD"],
                 "otherCharacteristics": "매운 음식을 좋아합니다"
             }
             """;
@@ -256,9 +256,9 @@ class UserControllerTest {
         // given
         String requestBody = """
             {
-                "allergyIds": [],
-                "likeFoodIds": [],
-                "likeIngredientIds": [],
+                "allergies": [],
+                "likeFoods": [],
+                "likeIngredients": [],
                 "otherCharacteristics": null
             }
             """;
@@ -284,9 +284,9 @@ class UserControllerTest {
         String longText = "가".repeat(101);
         String requestBody = """
             {
-                "allergyIds": [1],
-                "likeFoodIds": [1],
-                "likeIngredientIds": [1],
+                "allergies": ["SHRIMP"],
+                "likeFoods": ["KOREAN"],
+                "likeIngredients": ["MEAT"],
                 "otherCharacteristics": "%s"
             }
             """.formatted(longText);
@@ -310,9 +310,9 @@ class UserControllerTest {
         String exactText = "가".repeat(100);
         String requestBody = """
             {
-                "allergyIds": [],
-                "likeFoodIds": [],
-                "likeIngredientIds": [],
+                "allergies": [],
+                "likeFoods": [],
+                "likeIngredients": [],
                 "otherCharacteristics": "%s"
             }
             """.formatted(exactText);

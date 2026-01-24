@@ -143,27 +143,27 @@ class UserServiceTest {
     void createCharacteristics_success() {
         // given
         Long userId = 1L;
-        List<Integer> allergyIds = List.of(1, 2);
-        List<Integer> likeFoodIds = List.of(1, 3);
-        List<Integer> likeIngredientIds = List.of(2, 4);
+        List<AllergyType> allergies = List.of(AllergyType.SHRIMP, AllergyType.CRAB);
+        List<FoodType> likeFoods = List.of(FoodType.KOREAN, FoodType.CHINESE);
+        List<IngredientType> likeIngredients = List.of(IngredientType.MEAT, IngredientType.SEAFOOD);
         String otherCharacteristics = "매운 음식을 좋아합니다";
 
         UserCharacteristicsCreateServiceRequest request = new UserCharacteristicsCreateServiceRequest(
-            allergyIds, likeFoodIds, likeIngredientIds, otherCharacteristics
+            allergies, likeFoods, likeIngredients, otherCharacteristics
         );
 
         User user = UserFixture.create(userId);
-        AllergyCategory allergy1 = new AllergyCategory(null);
-        AllergyCategory allergy2 = new AllergyCategory(null);
-        LikeFoodCategory food1 = new LikeFoodCategory(null);
-        LikeFoodCategory food2 = new LikeFoodCategory(null);
-        LikeIngredientCategory ingredient1 = new LikeIngredientCategory(null);
-        LikeIngredientCategory ingredient2 = new LikeIngredientCategory(null);
+        AllergyCategory allergy1 = new AllergyCategory(AllergyType.SHRIMP);
+        AllergyCategory allergy2 = new AllergyCategory(AllergyType.CRAB);
+        LikeFoodCategory food1 = new LikeFoodCategory(FoodType.KOREAN);
+        LikeFoodCategory food2 = new LikeFoodCategory(FoodType.CHINESE);
+        LikeIngredientCategory ingredient1 = new LikeIngredientCategory(IngredientType.MEAT);
+        LikeIngredientCategory ingredient2 = new LikeIngredientCategory(IngredientType.SEAFOOD);
 
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
-        given(allergyCategoryRepository.findAllById(allergyIds)).willReturn(List.of(allergy1, allergy2));
-        given(likeFoodCategoryRepository.findAllById(likeFoodIds)).willReturn(List.of(food1, food2));
-        given(likeIngredientCategoryRepository.findAllById(likeIngredientIds)).willReturn(List.of(ingredient1, ingredient2));
+        given(allergyCategoryRepository.findByCategoryIn(allergies)).willReturn(List.of(allergy1, allergy2));
+        given(likeFoodCategoryRepository.findByCategoryIn(likeFoods)).willReturn(List.of(food1, food2));
+        given(likeIngredientCategoryRepository.findByCategoryIn(likeIngredients)).willReturn(List.of(ingredient1, ingredient2));
         given(snowflake.nextId()).willReturn(100L, 101L, 102L, 103L, 104L, 105L);
 
         // when
@@ -205,14 +205,14 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("알레르기 카테고리 ID가 중복되면 예외가 발생한다.")
-    void createCharacteristics_duplicateAllergyIds() {
+    @DisplayName("알레르기 타입이 중복되면 예외가 발생한다.")
+    void createCharacteristics_duplicateAllergies() {
         // given
         Long userId = 1L;
-        List<Integer> duplicateAllergyIds = List.of(1, 1, 2);
+        List<AllergyType> duplicateAllergies = List.of(AllergyType.SHRIMP, AllergyType.SHRIMP, AllergyType.CRAB);
 
         UserCharacteristicsCreateServiceRequest request = new UserCharacteristicsCreateServiceRequest(
-            duplicateAllergyIds, List.of(), List.of(), null
+            duplicateAllergies, List.of(), List.of(), null
         );
 
         // when // then
@@ -224,14 +224,14 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("선호 음식 카테고리 ID가 중복되면 예외가 발생한다.")
-    void createCharacteristics_duplicateLikeFoodIds() {
+    @DisplayName("선호 음식 타입이 중복되면 예외가 발생한다.")
+    void createCharacteristics_duplicateLikeFoods() {
         // given
         Long userId = 1L;
-        List<Integer> duplicateFoodIds = List.of(1, 2, 2);
+        List<FoodType> duplicateFoods = List.of(FoodType.KOREAN, FoodType.CHINESE, FoodType.CHINESE);
 
         UserCharacteristicsCreateServiceRequest request = new UserCharacteristicsCreateServiceRequest(
-            List.of(), duplicateFoodIds, List.of(), null
+            List.of(), duplicateFoods, List.of(), null
         );
 
         // when // then
@@ -243,14 +243,14 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("선호 재료 카테고리 ID가 중복되면 예외가 발생한다.")
-    void createCharacteristics_duplicateLikeIngredientIds() {
+    @DisplayName("선호 재료 타입이 중복되면 예외가 발생한다.")
+    void createCharacteristics_duplicateLikeIngredients() {
         // given
         Long userId = 1L;
-        List<Integer> duplicateIngredientIds = List.of(3, 3, 4);
+        List<IngredientType> duplicateIngredients = List.of(IngredientType.MEAT, IngredientType.MEAT, IngredientType.SEAFOOD);
 
         UserCharacteristicsCreateServiceRequest request = new UserCharacteristicsCreateServiceRequest(
-            List.of(), List.of(), duplicateIngredientIds, null
+            List.of(), List.of(), duplicateIngredients, null
         );
 
         // when // then
@@ -262,21 +262,21 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("존재하지 않는 알레르기 카테고리 ID면 예외가 발생한다.")
+    @DisplayName("DB에 존재하지 않는 알레르기 타입이면 예외가 발생한다.")
     void createCharacteristics_invalidAllergyCategory() {
         // given
         Long userId = 1L;
-        List<Integer> allergyIds = List.of(1, 999);
+        List<AllergyType> allergies = List.of(AllergyType.SHRIMP, AllergyType.CRAB);
 
         UserCharacteristicsCreateServiceRequest request = new UserCharacteristicsCreateServiceRequest(
-            allergyIds, List.of(), List.of(), null
+            allergies, List.of(), List.of(), null
         );
 
         User user = UserFixture.create(userId);
-        AllergyCategory allergy1 = new AllergyCategory(null);
+        AllergyCategory allergy1 = new AllergyCategory(AllergyType.SHRIMP);
 
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
-        given(allergyCategoryRepository.findAllById(allergyIds)).willReturn(List.of(allergy1));
+        given(allergyCategoryRepository.findByCategoryIn(allergies)).willReturn(List.of(allergy1));
 
         // when // then
         assertThatThrownBy(() -> userService.createCharacteristics(userId, request))
@@ -285,21 +285,21 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("존재하지 않는 선호 음식 카테고리 ID면 예외가 발생한다.")
+    @DisplayName("DB에 존재하지 않는 선호 음식 타입이면 예외가 발생한다.")
     void createCharacteristics_invalidLikeFoodCategory() {
         // given
         Long userId = 1L;
-        List<Integer> likeFoodIds = List.of(1, 999);
+        List<FoodType> likeFoods = List.of(FoodType.KOREAN, FoodType.CHINESE);
 
         UserCharacteristicsCreateServiceRequest request = new UserCharacteristicsCreateServiceRequest(
-            List.of(), likeFoodIds, List.of(), null
+            List.of(), likeFoods, List.of(), null
         );
 
         User user = UserFixture.create(userId);
-        LikeFoodCategory food1 = new LikeFoodCategory(null);
+        LikeFoodCategory food1 = new LikeFoodCategory(FoodType.KOREAN);
 
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
-        given(likeFoodCategoryRepository.findAllById(likeFoodIds)).willReturn(List.of(food1));
+        given(likeFoodCategoryRepository.findByCategoryIn(likeFoods)).willReturn(List.of(food1));
 
         // when // then
         assertThatThrownBy(() -> userService.createCharacteristics(userId, request))
@@ -308,21 +308,21 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("존재하지 않는 선호 재료 카테고리 ID면 예외가 발생한다.")
+    @DisplayName("DB에 존재하지 않는 선호 재료 타입이면 예외가 발생한다.")
     void createCharacteristics_invalidLikeIngredientCategory() {
         // given
         Long userId = 1L;
-        List<Integer> likeIngredientIds = List.of(1, 999);
+        List<IngredientType> likeIngredients = List.of(IngredientType.MEAT, IngredientType.SEAFOOD);
 
         UserCharacteristicsCreateServiceRequest request = new UserCharacteristicsCreateServiceRequest(
-            List.of(), List.of(), likeIngredientIds, null
+            List.of(), List.of(), likeIngredients, null
         );
 
         User user = UserFixture.create(userId);
-        LikeIngredientCategory ingredient1 = new LikeIngredientCategory(null);
+        LikeIngredientCategory ingredient1 = new LikeIngredientCategory(IngredientType.MEAT);
 
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
-        given(likeIngredientCategoryRepository.findAllById(likeIngredientIds)).willReturn(List.of(ingredient1));
+        given(likeIngredientCategoryRepository.findByCategoryIn(likeIngredients)).willReturn(List.of(ingredient1));
 
         // when // then
         assertThatThrownBy(() -> userService.createCharacteristics(userId, request))
