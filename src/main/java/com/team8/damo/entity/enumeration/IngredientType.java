@@ -11,7 +11,7 @@ public enum IngredientType {
     VEGETABLE("채소"),
     DAIRY("유제품"),
     GRAIN("곡물"),
-    FRUIT("과일");
+    POULTRY("가금류");
 
     private final String description;
 }
