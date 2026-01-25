@@ -80,7 +80,7 @@ public class DiningService {
         Map<Long, Long> countMap = createAttendCountingMap(diningIds, VotingStatus.ATTEND);
 
         return dinings.stream()
-            .map(dining -> DiningResponse.of(dining, countMap.get(dining.getId())))
+            .map(dining -> DiningResponse.of(dining, countMap.getOrDefault(dining.getId(), 0L)))
             .toList();
     }
 
@@ -146,7 +146,7 @@ public class DiningService {
     }
 
     private Map<Long, Long> createAttendCountingMap(List<Long> diningIds, VotingStatus votingStatus) {
-        return diningParticipantRepository.findByVotingStatusAndDiningIdIn(diningIds, votingStatus)
+        return diningParticipantRepository.findByDiningIdInAndVotingStatus(diningIds, votingStatus)
             .stream()
             .collect(Collectors.groupingBy(
                 dp -> dp.getDining().getId(),
