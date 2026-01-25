@@ -15,7 +15,7 @@ public interface DiningRepository extends JpaRepository<Dining, Long> {
 
     List<Dining> findAllByGroupIdAndDiningStatus(Long groupId, DiningStatus status);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("update Dining d set d.attendanceVoteDoneCount = d.attendanceVoteDoneCount + 1 where d.id = :diningId")
     int increaseAttendanceVoteDoneCount(@Param("diningId") Long diningId);
 }

@@ -461,11 +461,23 @@ class DiningServiceTest {
         Dining dining1 = DiningFixture.create(200L, group, status);
         Dining dining2 = DiningFixture.create(201L, group, status);
 
+        User user = UserFixture.create(userId);
+        List<DiningParticipant> attendParticipants = List.of(
+            DiningParticipantFixture.create(300L, dining1, user, VotingStatus.ATTEND),
+            DiningParticipantFixture.create(301L, dining1, user, VotingStatus.ATTEND),
+            DiningParticipantFixture.create(302L, dining1, user, VotingStatus.ATTEND),
+            DiningParticipantFixture.create(303L, dining2, user, VotingStatus.ATTEND),
+            DiningParticipantFixture.create(304L, dining2, user, VotingStatus.ATTEND),
+            DiningParticipantFixture.create(305L, dining2, user, VotingStatus.ATTEND),
+            DiningParticipantFixture.create(306L, dining2, user, VotingStatus.ATTEND),
+            DiningParticipantFixture.create(307L, dining2, user, VotingStatus.ATTEND)
+        );
+
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findAllByGroupIdAndDiningStatus(groupId, status))
             .willReturn(List.of(dining1, dining2));
-        given(diningParticipantRepository.countByDiningIdAndVotingStatus(200L, VotingStatus.ATTEND)).willReturn(3);
-        given(diningParticipantRepository.countByDiningIdAndVotingStatus(201L, VotingStatus.ATTEND)).willReturn(5);
+        given(diningParticipantRepository.findByDiningIdInAndVotingStatus(List.of(200L, 201L), VotingStatus.ATTEND))
+            .willReturn(attendParticipants);
 
         // when
         List<DiningResponse> result = diningService.getDiningList(userId, groupId, status);
@@ -474,8 +486,8 @@ class DiningServiceTest {
         assertThat(result).hasSize(2)
             .extracting("diningId", "status", "diningParticipantsCount")
             .containsExactlyInAnyOrder(
-                tuple(200L, DiningStatus.ATTENDANCE_VOTING, 3),
-                tuple(201L, DiningStatus.ATTENDANCE_VOTING, 5)
+                tuple(200L, DiningStatus.ATTENDANCE_VOTING, 3L),
+                tuple(201L, DiningStatus.ATTENDANCE_VOTING, 5L)
             );
 
         then(userGroupRepository).should().existsByUserIdAndGroupId(userId, groupId);
@@ -511,6 +523,8 @@ class DiningServiceTest {
 
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findAllByGroupIdAndDiningStatus(groupId, status)).willReturn(List.of());
+        given(diningParticipantRepository.findByDiningIdInAndVotingStatus(List.of(), VotingStatus.ATTEND))
+            .willReturn(List.of());
 
         // when
         List<DiningResponse> result = diningService.getDiningList(userId, groupId, status);
@@ -520,7 +534,6 @@ class DiningServiceTest {
 
         then(userGroupRepository).should().existsByUserIdAndGroupId(userId, groupId);
         then(diningRepository).should().findAllByGroupIdAndDiningStatus(groupId, status);
-        then(diningParticipantRepository).should(never()).countByDiningIdAndVotingStatus(any(), any());
     }
 
     @Test
@@ -537,7 +550,8 @@ class DiningServiceTest {
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findAllByGroupIdAndDiningStatus(groupId, status))
             .willReturn(List.of(dining));
-        given(diningParticipantRepository.countByDiningIdAndVotingStatus(200L, VotingStatus.ATTEND)).willReturn(0);
+        given(diningParticipantRepository.findByDiningIdInAndVotingStatus(List.of(200L), VotingStatus.ATTEND))
+            .willReturn(List.of());
 
         // when
         List<DiningResponse> result = diningService.getDiningList(userId, groupId, status);
@@ -546,7 +560,7 @@ class DiningServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0))
             .extracting("diningId", "status", "diningParticipantsCount")
-            .contains(200L, DiningStatus.ATTENDANCE_VOTING, 0);
+            .contains(200L, DiningStatus.ATTENDANCE_VOTING, 0L);
     }
 
     @Test
@@ -560,10 +574,23 @@ class DiningServiceTest {
         Group group = GroupFixture.create(groupId, "맛집탐방대");
         Dining dining = DiningFixture.create(200L, group, status);
 
+        User user = UserFixture.create(userId);
+        List<DiningParticipant> attendParticipants = List.of(
+            DiningParticipantFixture.create(300L, dining, user, VotingStatus.ATTEND),
+            DiningParticipantFixture.create(301L, dining, user, VotingStatus.ATTEND),
+            DiningParticipantFixture.create(302L, dining, user, VotingStatus.ATTEND),
+            DiningParticipantFixture.create(303L, dining, user, VotingStatus.ATTEND),
+            DiningParticipantFixture.create(304L, dining, user, VotingStatus.ATTEND),
+            DiningParticipantFixture.create(305L, dining, user, VotingStatus.ATTEND),
+            DiningParticipantFixture.create(306L, dining, user, VotingStatus.ATTEND),
+            DiningParticipantFixture.create(307L, dining, user, VotingStatus.ATTEND)
+        );
+
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findAllByGroupIdAndDiningStatus(groupId, status))
             .willReturn(List.of(dining));
-        given(diningParticipantRepository.countByDiningIdAndVotingStatus(200L, VotingStatus.ATTEND)).willReturn(8);
+        given(diningParticipantRepository.findByDiningIdInAndVotingStatus(List.of(200L), VotingStatus.ATTEND))
+            .willReturn(attendParticipants);
 
         // when
         List<DiningResponse> result = diningService.getDiningList(userId, groupId, status);
@@ -572,7 +599,7 @@ class DiningServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0))
             .extracting("diningId", "status", "diningParticipantsCount")
-            .contains(200L, DiningStatus.COMPLETE, 8);
+            .contains(200L, DiningStatus.COMPLETE, 8L);
     }
 
     @Test
@@ -586,10 +613,23 @@ class DiningServiceTest {
         Group group = GroupFixture.create(groupId, "맛집탐방대");
         Dining dining = DiningFixture.create(200L, group, status);
 
+        User user = UserFixture.create(userId);
+        List<DiningParticipant> attendParticipants = List.of(
+            DiningParticipantFixture.create(300L, dining, user, VotingStatus.ATTEND),
+            DiningParticipantFixture.create(301L, dining, user, VotingStatus.ATTEND),
+            DiningParticipantFixture.create(302L, dining, user, VotingStatus.ATTEND),
+            DiningParticipantFixture.create(303L, dining, user, VotingStatus.ATTEND),
+            DiningParticipantFixture.create(304L, dining, user, VotingStatus.ATTEND),
+            DiningParticipantFixture.create(305L, dining, user, VotingStatus.ATTEND),
+            DiningParticipantFixture.create(306L, dining, user, VotingStatus.ATTEND),
+            DiningParticipantFixture.create(307L, dining, user, VotingStatus.ATTEND)
+        );
+
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findAllByGroupIdAndDiningStatus(groupId, status))
             .willReturn(List.of(dining));
-        given(diningParticipantRepository.countByDiningIdAndVotingStatus(200L, VotingStatus.ATTEND)).willReturn(8);
+        given(diningParticipantRepository.findByDiningIdInAndVotingStatus(List.of(200L), VotingStatus.ATTEND))
+            .willReturn(attendParticipants);
 
         // when
         List<DiningResponse> result = diningService.getDiningList(userId, groupId, status);
@@ -598,7 +638,7 @@ class DiningServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0))
             .extracting("diningId", "status", "diningParticipantsCount")
-            .contains(200L, DiningStatus.RESTAURANT_VOTING, 8);
+            .contains(200L, DiningStatus.RESTAURANT_VOTING, 8L);
     }
 
     @Test

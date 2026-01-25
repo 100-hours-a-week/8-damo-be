@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.team8.damo.exception.errorcode.ErrorCode.*;
 
@@ -71,12 +73,14 @@ public class DiningService {
         }
 
         List<Dining> dinings = diningRepository.findAllByGroupIdAndDiningStatus(groupId, status);
+        List<Long> diningIds = dinings.stream()
+            .map(Dining::getId)
+            .toList();
+
+        Map<Long, Long> countMap = createAttendCountingMap(diningIds, VotingStatus.ATTEND);
 
         return dinings.stream()
-            .map(dining -> {
-                int count = diningParticipantRepository.countByDiningIdAndVotingStatus(dining.getId(), VotingStatus.ATTEND);
-                return DiningResponse.of(dining, count);
-            })
+            .map(dining -> DiningResponse.of(dining, countMap.getOrDefault(dining.getId(), 0L)))
             .toList();
     }
 
@@ -139,6 +143,15 @@ public class DiningService {
         if (incompleteDiningCount >= MAX_INCOMPLETE_DINING_COUNT) {
             throw new CustomException(DINING_LIMIT_EXCEEDED);
         }
+    }
+
+    private Map<Long, Long> createAttendCountingMap(List<Long> diningIds, VotingStatus votingStatus) {
+        return diningParticipantRepository.findByDiningIdInAndVotingStatus(diningIds, votingStatus)
+            .stream()
+            .collect(Collectors.groupingBy(
+                dp -> dp.getDining().getId(),
+                Collectors.counting()
+            ));
     }
 
     private User findUserBy(Long userId) {

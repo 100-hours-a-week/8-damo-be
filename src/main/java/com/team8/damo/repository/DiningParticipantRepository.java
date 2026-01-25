@@ -2,6 +2,7 @@ package com.team8.damo.repository;
 
 import com.team8.damo.entity.DiningParticipant;
 import com.team8.damo.entity.enumeration.VotingStatus;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -16,4 +17,10 @@ public interface DiningParticipantRepository extends JpaRepository<DiningPartici
     Optional<DiningParticipant> findByDiningIdAndUserId(Long diningId, Long userId);
 
     int countByDiningId(Long diningId);
+
+    @EntityGraph(attributePaths = {"dining"})
+    List<DiningParticipant> findByDiningIdInAndVotingStatus(
+        List<Long> diningIds,
+        VotingStatus votingStatus
+    );
 }
