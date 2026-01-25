@@ -11,9 +11,9 @@ public record DiningResponse(
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     LocalDateTime diningDate,
     DiningStatus status,
-    int diningParticipantsCount
+    Long diningParticipantsCount
 ) {
-    public static DiningResponse of(Dining dining, int participantsCount) {
+    public static DiningResponse of(Dining dining, Long participantsCount) {
         return new DiningResponse(
             dining.getId(),
             dining.getDiningDate(),

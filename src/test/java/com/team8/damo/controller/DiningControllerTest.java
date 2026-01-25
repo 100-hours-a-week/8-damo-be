@@ -269,8 +269,8 @@ class DiningControllerTest {
         DiningStatus status = DiningStatus.ATTENDANCE_VOTING;
 
         List<DiningResponse> responses = List.of(
-            new DiningResponse(200L, LocalDateTime.of(2025, 12, 25, 18, 0), status, 3),
-            new DiningResponse(201L, LocalDateTime.of(2025, 12, 30, 19, 0), status, 5)
+            new DiningResponse(200L, LocalDateTime.of(2025, 12, 25, 18, 0), status, 3L),
+            new DiningResponse(201L, LocalDateTime.of(2025, 12, 30, 19, 0), status, 5L)
         );
 
         given(diningService.getDiningList(any(), eq(groupId), eq(status))).willReturn(responses);
@@ -360,7 +360,7 @@ class DiningControllerTest {
         DiningStatus status = DiningStatus.RESTAURANT_VOTING;
 
         List<DiningResponse> responses = List.of(
-            new DiningResponse(200L, LocalDateTime.of(2025, 12, 25, 18, 0), status, 7)
+            new DiningResponse(200L, LocalDateTime.of(2025, 12, 25, 18, 0), status, 7L)
         );
 
         given(diningService.getDiningList(any(), eq(groupId), eq(status))).willReturn(responses);
@@ -386,7 +386,7 @@ class DiningControllerTest {
         DiningStatus status = DiningStatus.CONFIRMED;
 
         List<DiningResponse> responses = List.of(
-            new DiningResponse(200L, LocalDateTime.of(2025, 12, 25, 18, 0), status, 10)
+            new DiningResponse(200L, LocalDateTime.of(2025, 12, 25, 18, 0), status, 10L)
         );
 
         given(diningService.getDiningList(any(), eq(groupId), eq(status))).willReturn(responses);
