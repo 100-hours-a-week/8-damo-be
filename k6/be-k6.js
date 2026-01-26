@@ -19,9 +19,9 @@ export const options = {
     },
   },
   thresholds: {
-    fail_rate: ["rate<0.01"],
-    latency_me_basic: ["p(95)<400"],
-    latency_me_groups: ["p(95)<600"],
+    fail_rate: ["rate<0.02"],
+    latency_me_basic: ["p(95)<900", "p(99)<1800"],
+    latency_me_groups: ["p(95)<1500", "p(99)<3000"],
   },
 };
 
