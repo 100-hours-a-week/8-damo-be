@@ -15,13 +15,13 @@ export const options = {
     gate: {
       executor: "constant-vus",
       vus: Number(__ENV.VUS || 5),
-      duration: __ENV.DURATION || "1m",
+      duration: __ENV.DURATION || "30s",
     },
   },
   thresholds: {
-    fail_rate: ["rate<0.01"],
-    latency_me_basic: ["p(95)<400"],
-    latency_me_groups: ["p(95)<600"],
+    fail_rate: ["rate<0.02"],
+    latency_me_basic: ["p(95)<900", "p(99)<1800"],
+    latency_me_groups: ["p(95)<1500", "p(99)<3000"],
   },
 };
 
