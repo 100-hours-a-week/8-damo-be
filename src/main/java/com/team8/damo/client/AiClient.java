@@ -11,7 +11,7 @@ import org.springframework.web.service.annotation.PostExchange;
 public interface AiClient {
 
     @GetExchange("/health")
-    boolean health();
+    String health();
 
     @PostExchange(url = "/v1/recommendation", contentType = "application/json")
     AiRecommendationResponse recommendation(@RequestBody AiRecommendationRequest request);

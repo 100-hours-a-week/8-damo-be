@@ -23,6 +23,7 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
@@ -73,8 +74,9 @@ class AiClientTest {
 //    @Test
 //    @DisplayName("AI Health check 확인")
 //    void aiHealthCheck() {
-//        boolean health = realAiClient.health();
-//        assertThat(health).isTrue();
+//        String health = realAiClient.health();
+//        System.out.println(health);
+//        assertThat(health).isNotBlank();
 //    }
 
     @Test
@@ -85,8 +87,8 @@ class AiClientTest {
         AiRecommendationResponse expectedResponse = new AiRecommendationResponse(
             2,
             List.of(
-                new RecommendedItem("1", "맛있는 식당", "사용자 취향에 맞는 한식당입니다."),
-                new RecommendedItem("2", "좋은 레스토랑", "예산에 적합한 양식당입니다.")
+                new RecommendedItem("1", "사용자 취향에 맞는 한식당입니다."),
+                new RecommendedItem("2", "예산에 적합한 양식당입니다.")
             )
         );
 
@@ -102,7 +104,6 @@ class AiClientTest {
         assertThat(response.recommendationCount()).isEqualTo(response.recommendedItems().size());
         assertThat(response.recommendedItems()).hasSize(2);
         assertThat(response.recommendedItems().get(0).restaurantId()).isEqualTo("1");
-        assertThat(response.recommendedItems().get(0).restaurantName()).isEqualTo("맛있는 식당");
     }
 
     @Test
@@ -162,15 +163,15 @@ class AiClientTest {
         DiningData diningData = new DiningData(
             1L,
             100L,
-            LocalDate.of(2025, 1, 30),
-            50000L
+            LocalDateTime.of(2025, 1, 30, 12, 12),
+            50000
         );
         List<Long> users = List.of(123L, 124L);
 
         AiRecommendationRequest request = new AiRecommendationRequest(diningData, users);
         AiRecommendationResponse expectedResponse = new AiRecommendationResponse(
             1,
-            List.of(new RecommendedItem("5", "채식 식당", "모든 사용자의 제한사항을 고려한 식당입니다."))
+            List.of(new RecommendedItem("5", "모든 사용자의 제한사항을 고려한 식당입니다."))
         );
 
         mockWebServer.enqueue(new MockResponse()
@@ -249,8 +250,8 @@ class AiClientTest {
         DiningData diningData = new DiningData(
             1L,
             100L,
-            LocalDate.of(2025, 1, 30),
-            30000L
+            LocalDateTime.of(2025, 1, 30, 12, 12),
+            30000
         );
 
         return new AiRecommendationRequest(diningData, List.of(123L, 124L));
