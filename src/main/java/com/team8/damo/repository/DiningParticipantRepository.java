@@ -1,5 +1,6 @@
 package com.team8.damo.repository;
 
+import com.team8.damo.entity.Dining;
 import com.team8.damo.entity.DiningParticipant;
 import com.team8.damo.entity.enumeration.VotingStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -23,4 +24,7 @@ public interface DiningParticipantRepository extends JpaRepository<DiningPartici
         List<Long> diningIds,
         VotingStatus votingStatus
     );
+
+    @EntityGraph(attributePaths = {"user"})
+    List<DiningParticipant> findAllByDiningAndVotingStatus(Dining dining, VotingStatus votingStatus);
 }
