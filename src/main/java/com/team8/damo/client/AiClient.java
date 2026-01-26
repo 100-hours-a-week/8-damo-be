@@ -1,0 +1,18 @@
+package com.team8.damo.client;
+
+import com.team8.damo.client.request.AiRecommendationRequest;
+import com.team8.damo.client.response.AiRecommendationResponse;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.service.annotation.HttpExchange;
+import org.springframework.web.service.annotation.PostExchange;
+
+@HttpExchange("/ai/api")
+public interface AiClient {
+
+    @GetExchange("/health")
+    boolean health();
+
+    @PostExchange(url = "/v1/recommendation", contentType = "application/json")
+    AiRecommendationResponse recommendation(@RequestBody AiRecommendationRequest request);
+}
