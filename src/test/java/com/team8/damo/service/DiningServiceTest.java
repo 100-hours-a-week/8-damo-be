@@ -1,5 +1,6 @@
 package com.team8.damo.service;
 
+import com.team8.damo.client.AiService;
 import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.entity.enumeration.GroupRole;
@@ -58,6 +59,9 @@ class DiningServiceTest {
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private AiService aiService;
 
     @InjectMocks
     private DiningService diningService;
@@ -870,6 +874,8 @@ class DiningServiceTest {
         given(diningParticipantRepository.findByDiningIdAndUserId(diningId, userId)).willReturn(Optional.of(participant));
         given(diningRepository.increaseAttendanceVoteDoneCount(diningId)).willReturn(3);
         given(diningParticipantRepository.countByDiningId(diningId)).willReturn(3);
+        given(diningParticipantRepository.findAllByDiningAndVotingStatus(dining, VotingStatus.ATTEND))
+            .willReturn(List.of(participant));
 
         // when
         VotingStatus result = diningService.voteAttendance(userId, groupId, diningId, VotingStatus.ATTEND);
@@ -924,6 +930,8 @@ class DiningServiceTest {
         given(diningParticipantRepository.findByDiningIdAndUserId(diningId, userId)).willReturn(Optional.of(participant));
         given(diningRepository.increaseAttendanceVoteDoneCount(diningId)).willReturn(1);
         given(diningParticipantRepository.countByDiningId(diningId)).willReturn(1);
+        given(diningParticipantRepository.findAllByDiningAndVotingStatus(dining, VotingStatus.ATTEND))
+            .willReturn(List.of(participant));
 
         // when
         VotingStatus result = diningService.voteAttendance(userId, groupId, diningId, VotingStatus.ATTEND);
