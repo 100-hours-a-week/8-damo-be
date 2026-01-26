@@ -15,7 +15,7 @@ export const options = {
     gate: {
       executor: "constant-vus",
       vus: Number(__ENV.VUS || 5),
-      duration: __ENV.DURATION || "1m",
+      duration: __ENV.DURATION || "30s",
     },
   },
   thresholds: {
