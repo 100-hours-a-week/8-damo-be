@@ -23,6 +23,7 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
@@ -73,8 +74,9 @@ class AiClientTest {
 //    @Test
 //    @DisplayName("AI Health check 확인")
 //    void aiHealthCheck() {
-//        boolean health = realAiClient.health();
-//        assertThat(health).isTrue();
+//        String health = realAiClient.health();
+//        System.out.println(health);
+//        assertThat(health).isNotBlank();
 //    }
 
     @Test
@@ -161,8 +163,8 @@ class AiClientTest {
         DiningData diningData = new DiningData(
             1L,
             100L,
-            LocalDate.of(2025, 1, 30),
-            50000L
+            LocalDateTime.of(2025, 1, 30, 12, 12),
+            50000
         );
         List<Long> users = List.of(123L, 124L);
 
@@ -248,8 +250,8 @@ class AiClientTest {
         DiningData diningData = new DiningData(
             1L,
             100L,
-            LocalDate.of(2025, 1, 30),
-            30000L
+            LocalDateTime.of(2025, 1, 30, 12, 12),
+            30000
         );
 
         return new AiRecommendationRequest(diningData, List.of(123L, 124L));
