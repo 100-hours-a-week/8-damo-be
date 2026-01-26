@@ -126,7 +126,7 @@ class AiClientTest {
         // then
         RecordedRequest recordedRequest = mockWebServer.takeRequest();
         assertThat(recordedRequest.getMethod()).isEqualTo("POST");
-        assertThat(recordedRequest.getPath()).isEqualTo("/ai/api/v1/recommendation");
+        assertThat(recordedRequest.getPath()).isEqualTo("/ai/api/v1/recommendations");
         assertThat(recordedRequest.getHeader(HttpHeaders.CONTENT_TYPE)).contains(MediaType.APPLICATION_JSON_VALUE);
 
         String requestBody = recordedRequest.getBody().readUtf8();
