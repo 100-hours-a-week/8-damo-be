@@ -24,9 +24,8 @@ public class RecommendRestaurant extends BaseTimeEntity {
     @JoinColumn(name = "dining_id", nullable = false)
     private Dining dining;
 
-    @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "restaurants_id", nullable = false)
-    private Restaurant restaurant;
+    @Column(name = "restaurants_id", nullable = false)
+    private String restaurantId;
 
     @Column(name = "confirmed_status", nullable = false)
     private Boolean confirmedStatus = false;
@@ -44,10 +43,10 @@ public class RecommendRestaurant extends BaseTimeEntity {
     private String reasoningDescription;
 
     @Builder
-    public RecommendRestaurant(Long id, Dining dining, Restaurant restaurant, Boolean confirmedStatus, Integer likeCount, Integer dislikeCount, Integer point, String reasoningDescription) {
+    public RecommendRestaurant(Long id, Dining dining, String restaurantId, Boolean confirmedStatus, Integer likeCount, Integer dislikeCount, Integer point, String reasoningDescription) {
         this.id = id;
         this.dining = dining;
-        this.restaurant = restaurant;
+        this.restaurantId = restaurantId;
         this.confirmedStatus = confirmedStatus != null ? confirmedStatus : false;
         this.likeCount = likeCount != null ? likeCount : 0;
         this.dislikeCount = dislikeCount != null ? dislikeCount : 0;

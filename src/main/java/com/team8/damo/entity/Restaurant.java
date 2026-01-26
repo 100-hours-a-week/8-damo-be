@@ -1,61 +1,39 @@
 package com.team8.damo.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
-import java.util.Objects;
-
-@Entity
-@Table(name = "restaurants")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Document(collection = "restaurants")
+@ToString
 public class Restaurant {
 
     @Id
-    @Column(name = "id", nullable = false)
-    private Long id;
+    private String id;
 
-    @Column(name = "name", nullable = false, length = 100)
-    private String name;
+    @Field("phone")
+    private String phone;
 
-    @Column(name = "description", length = 500)
-    private String description;
+    @Field("place_name")
+    private String placeName;
 
-    @Column(name = "phone_number", length = 50)
-    private String phoneNumber;
+    @Field("category_group_name")
+    private String categoryGroupName;
 
-    @Column(name = "latitude", nullable = false)
-    private Double latitude;
+    @Field("road_address_name")
+    private String address;
 
-    @Column(name = "longitude", nullable = false)
-    private Double longitude;
+    @Field("x")
+    private String longitude;
 
-    @Builder
-    public Restaurant(Long id, String name, String description, String phoneNumber, Double latitude, Double longitude) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.phoneNumber = phoneNumber;
-        this.latitude = latitude;
-        this.longitude = longitude;
-    }
+    @Field("y")
+    private String latitude;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Restaurant that = (Restaurant) o;
-        return Objects.equals(id, that.id);
-    }
+    @Field("is_naver_available")
+    private boolean isReservable;
 
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(id);
-    }
+    @Field("naver_url")
+    private String naverUrl;
 }
