@@ -60,12 +60,12 @@ spring:
       host: 127.0.0.1
       port: 6379
 
-    mongodb:
-      uri: ${MONGODB_URI}
-      port: ${MONGODB_PORT}
-      host: ${MONGODB_HOST}
-      database: ${MONGODB_DATABASE}
-      auto-index-creation: true
+  mongodb:
+    uri: ${MONGODB_URI}
+    #port: ${MONGODB_PORT}
+    #host: ${MONGODB_HOST}
+    #database: ${MONGODB_DATABASE}
+    auto-index-creation: true
 
   datasource:
     url: jdbc:mysql://localhost:3306/damo?serverTimezone=UTC
@@ -117,12 +117,9 @@ spring:
       host: 127.0.0.1
       port: 6380
 
-    mongodb:
-      uri: ${MONGODB_URI}
-      port: ${MONGODB_PORT}
-      host: ${MONGODB_HOST}
-      database: ${MONGODB_DATABASE}
-      auto-index-creation: true
+  mongodb:
+    uri: ${MONGODB_URI}
+    auto-index-creation: true
 
   datasource:
     url: jdbc:mysql://localhost:3306/damo_test?serverTimezone=UTC
