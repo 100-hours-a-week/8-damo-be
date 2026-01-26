@@ -1,5 +1,6 @@
 package com.team8.damo.service;
 
+import com.team8.damo.client.AiService;
 import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.entity.enumeration.GroupRole;
@@ -35,6 +36,7 @@ public class DiningService {
     private final DiningRepository diningRepository;
     private final DiningParticipantRepository diningParticipantRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final AiService aiService;
 
     @Transactional
     public Long createDining(Long userId, Long groupId, DiningCreateServiceRequest request, LocalDateTime currentDataTime) {
@@ -99,24 +101,32 @@ public class DiningService {
         }
 
         participant.updateVotingStatus(votingStatus);
+
         int votedCount = diningRepository.increaseAttendanceVoteDoneCount(diningId);
 
-        checkAllParticipantsVoted(diningId, dining, votedCount);
+        triggerRestaurantRecommendation(groupId, dining, votedCount);
         // 투표 진척도를 그룹원들에게 전송하는 sse 구현
 
         return participant.getVotingStatus();
     }
 
-    private void checkAllParticipantsVoted(Long diningId, Dining dining, int votedCount) {
-        int totalParticipants = diningParticipantRepository.countByDiningId(diningId);
+    private void triggerRestaurantRecommendation(Long groupId, Dining dining, int votedCount) {
+        int totalParticipants = diningParticipantRepository.countByDiningId(dining.getId());
 
-        // 모두 참석 투표를 완료하면 장소 추천 진행
-        if (votedCount >= totalParticipants) {
-            // AI 추천 요청
-            // aiRecommendationService.requestRestaurantRecommendation(event.diningId(), event.groupId());
+        if (votedCount < totalParticipants) return;
 
-            dining.changeStatus(DiningStatus.RESTAURANT_VOTING);
-        }
+        // 모두 참석 투표를 완료하면 AI 장소 추천 요청
+        List<Long> userIds = createAttendParticipantIds(dining);
+        aiService.recommendationRestaurant(groupId, dining, userIds);
+
+        dining.changeStatus(DiningStatus.RESTAURANT_VOTING);
+    }
+
+    private List<Long> createAttendParticipantIds(Dining dining) {
+        List<DiningParticipant> attendParticipants = diningParticipantRepository.findAllByDiningAndVotingStatus(dining, VotingStatus.ATTEND);
+        return attendParticipants.stream()
+            .map(participant -> participant.getUser().getId())
+            .toList();
     }
 
     private void validateGroupLeader(Long userId, Long groupId) {

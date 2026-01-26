@@ -13,6 +13,6 @@ public interface AiClient {
     @GetExchange("/health")
     String health();
 
-    @PostExchange(url = "/v1/recommendation", contentType = "application/json")
+    @PostExchange(url = "/v1/recommendations", contentType = "application/json")
     AiRecommendationResponse recommendation(@RequestBody AiRecommendationRequest request);
 }
