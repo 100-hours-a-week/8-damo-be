@@ -4,15 +4,20 @@ import com.team8.damo.client.AiService;
 import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.entity.enumeration.GroupRole;
+import com.team8.damo.entity.enumeration.VoteStatus;
 import com.team8.damo.entity.enumeration.VotingStatus;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.fixture.DiningFixture;
 import com.team8.damo.fixture.DiningParticipantFixture;
 import com.team8.damo.fixture.GroupFixture;
+import com.team8.damo.fixture.RecommendRestaurantFixture;
+import com.team8.damo.fixture.RecommendRestaurantVoteFixture;
 import com.team8.damo.fixture.UserFixture;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.DiningCreateServiceRequest;
+import com.team8.damo.service.request.RestaurantVoteServiceRequest;
 import com.team8.damo.service.response.DiningResponse;
+import com.team8.damo.service.response.RestaurantVoteResponse;
 import com.team8.damo.util.Snowflake;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -56,6 +61,12 @@ class DiningServiceTest {
 
     @Mock
     private DiningParticipantRepository diningParticipantRepository;
+
+    @Mock
+    private RecommendRestaurantRepository recommendRestaurantRepository;
+
+    @Mock
+    private RecommendRestaurantVoteRepository recommendRestaurantVoteRepository;
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
@@ -939,5 +950,363 @@ class DiningServiceTest {
         // then
         assertThat(result).isEqualTo(VotingStatus.ATTEND);
         assertThat(dining.getDiningStatus()).isEqualTo(DiningStatus.RESTAURANT_VOTING);
+    }
+
+    @Test
+    @DisplayName("추천 식당에 LIKE 투표를 성공적으로 한다.")
+    void voteRestaurant_like_success() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+        Long diningId = 200L;
+        Long recommendRestaurantId = 400L;
+
+        Group group = GroupFixture.create(groupId, "맛집탐방대");
+        Dining dining = DiningFixture.create(diningId, group, DiningStatus.RESTAURANT_VOTING);
+        User user = UserFixture.create(userId);
+        RecommendRestaurant restaurant = RecommendRestaurantFixture.create(recommendRestaurantId, dining);
+
+        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(VoteStatus.LIKE);
+
+        given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
+        given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(recommendRestaurantRepository.findById(recommendRestaurantId)).willReturn(Optional.of(restaurant));
+        given(recommendRestaurantVoteRepository.findByUserIdAndRecommendRestaurantId(userId, recommendRestaurantId))
+            .willReturn(Optional.empty());
+        given(snowflake.nextId()).willReturn(500L);
+
+        // when
+        RestaurantVoteResponse result = diningService.voteRestaurant(userId, groupId, diningId, recommendRestaurantId, request);
+
+        // then
+        assertThat(result.recommendRestaurantId()).isEqualTo(recommendRestaurantId);
+        assertThat(result.voteStatus()).isEqualTo(VoteStatus.LIKE);
+
+        then(recommendRestaurantVoteRepository).should().save(any(RecommendRestaurantVote.class));
+        then(recommendRestaurantRepository).should().increaseLikeCount(recommendRestaurantId);
+    }
+
+    @Test
+    @DisplayName("추천 식당에 DISLIKE 투표를 성공적으로 한다.")
+    void voteRestaurant_dislike_success() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+        Long diningId = 200L;
+        Long recommendRestaurantId = 400L;
+
+        Group group = GroupFixture.create(groupId, "맛집탐방대");
+        Dining dining = DiningFixture.create(diningId, group, DiningStatus.RESTAURANT_VOTING);
+        User user = UserFixture.create(userId);
+        RecommendRestaurant restaurant = RecommendRestaurantFixture.create(recommendRestaurantId, dining);
+
+        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(VoteStatus.DISLIKE);
+
+        given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
+        given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(recommendRestaurantRepository.findById(recommendRestaurantId)).willReturn(Optional.of(restaurant));
+        given(recommendRestaurantVoteRepository.findByUserIdAndRecommendRestaurantId(userId, recommendRestaurantId))
+            .willReturn(Optional.empty());
+        given(snowflake.nextId()).willReturn(500L);
+
+        // when
+        RestaurantVoteResponse result = diningService.voteRestaurant(userId, groupId, diningId, recommendRestaurantId, request);
+
+        // then
+        assertThat(result.recommendRestaurantId()).isEqualTo(recommendRestaurantId);
+        assertThat(result.voteStatus()).isEqualTo(VoteStatus.DISLIKE);
+
+        then(recommendRestaurantVoteRepository).should().save(any(RecommendRestaurantVote.class));
+        then(recommendRestaurantRepository).should().increaseDislikeCount(recommendRestaurantId);
+    }
+
+    @Test
+    @DisplayName("LIKE에서 DISLIKE로 투표를 변경한다.")
+    void voteRestaurant_changeLikeToDislike() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+        Long diningId = 200L;
+        Long recommendRestaurantId = 400L;
+        Long voteId = 500L;
+
+        Group group = GroupFixture.create(groupId, "맛집탐방대");
+        Dining dining = DiningFixture.create(diningId, group, DiningStatus.RESTAURANT_VOTING);
+        User user = UserFixture.create(userId);
+        RecommendRestaurant restaurant = RecommendRestaurantFixture.create(recommendRestaurantId, dining);
+        RecommendRestaurantVote existingVote = RecommendRestaurantVoteFixture.create(voteId, user, restaurant, VoteStatus.LIKE);
+
+        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(VoteStatus.DISLIKE);
+
+        given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
+        given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(recommendRestaurantRepository.findById(recommendRestaurantId)).willReturn(Optional.of(restaurant));
+        given(recommendRestaurantVoteRepository.findByUserIdAndRecommendRestaurantId(userId, recommendRestaurantId))
+            .willReturn(Optional.of(existingVote));
+
+        // when
+        RestaurantVoteResponse result = diningService.voteRestaurant(userId, groupId, diningId, recommendRestaurantId, request);
+
+        // then
+        assertThat(result.recommendRestaurantId()).isEqualTo(recommendRestaurantId);
+        assertThat(result.voteStatus()).isEqualTo(VoteStatus.DISLIKE);
+        assertThat(existingVote.getStatus()).isEqualTo(VoteStatus.DISLIKE);
+
+        then(recommendRestaurantRepository).should().decreaseLikeCount(recommendRestaurantId);
+        then(recommendRestaurantRepository).should().increaseDislikeCount(recommendRestaurantId);
+    }
+
+    @Test
+    @DisplayName("DISLIKE에서 LIKE로 투표를 변경한다.")
+    void voteRestaurant_changeDislikeToLike() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+        Long diningId = 200L;
+        Long recommendRestaurantId = 400L;
+        Long voteId = 500L;
+
+        Group group = GroupFixture.create(groupId, "맛집탐방대");
+        Dining dining = DiningFixture.create(diningId, group, DiningStatus.RESTAURANT_VOTING);
+        User user = UserFixture.create(userId);
+        RecommendRestaurant restaurant = RecommendRestaurantFixture.create(recommendRestaurantId, dining);
+        RecommendRestaurantVote existingVote = RecommendRestaurantVoteFixture.create(voteId, user, restaurant, VoteStatus.DISLIKE);
+
+        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(VoteStatus.LIKE);
+
+        given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
+        given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(recommendRestaurantRepository.findById(recommendRestaurantId)).willReturn(Optional.of(restaurant));
+        given(recommendRestaurantVoteRepository.findByUserIdAndRecommendRestaurantId(userId, recommendRestaurantId))
+            .willReturn(Optional.of(existingVote));
+
+        // when
+        RestaurantVoteResponse result = diningService.voteRestaurant(userId, groupId, diningId, recommendRestaurantId, request);
+
+        // then
+        assertThat(result.recommendRestaurantId()).isEqualTo(recommendRestaurantId);
+        assertThat(result.voteStatus()).isEqualTo(VoteStatus.LIKE);
+        assertThat(existingVote.getStatus()).isEqualTo(VoteStatus.LIKE);
+
+        then(recommendRestaurantRepository).should().decreaseDislikeCount(recommendRestaurantId);
+        then(recommendRestaurantRepository).should().increaseLikeCount(recommendRestaurantId);
+    }
+
+    @Test
+    @DisplayName("동일한 LIKE 투표를 하면 투표가 삭제된다.")
+    void voteRestaurant_sameLikeVote_deleteVote() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+        Long diningId = 200L;
+        Long recommendRestaurantId = 400L;
+        Long voteId = 500L;
+        VoteStatus voteStatus = VoteStatus.LIKE;
+
+        Group group = GroupFixture.create(groupId, "맛집탐방대");
+        Dining dining = DiningFixture.create(diningId, group, DiningStatus.RESTAURANT_VOTING);
+        User user = UserFixture.create(userId);
+        RecommendRestaurant restaurant = RecommendRestaurantFixture.create(recommendRestaurantId, dining);
+        RecommendRestaurantVote existingVote = RecommendRestaurantVoteFixture.create(voteId, user, restaurant, voteStatus);
+
+        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(voteStatus);
+
+        given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
+        given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(recommendRestaurantRepository.findById(recommendRestaurantId)).willReturn(Optional.of(restaurant));
+        given(recommendRestaurantVoteRepository.findByUserIdAndRecommendRestaurantId(userId, recommendRestaurantId))
+            .willReturn(Optional.of(existingVote));
+
+        // when
+        RestaurantVoteResponse result = diningService.voteRestaurant(userId, groupId, diningId, recommendRestaurantId, request);
+
+        // then
+        assertThat(result.recommendRestaurantId()).isEqualTo(recommendRestaurantId);
+        assertThat(result.voteStatus()).isEqualTo(voteStatus);
+
+        then(recommendRestaurantVoteRepository).should().delete(existingVote);
+        then(recommendRestaurantRepository).should().decreaseLikeCount(recommendRestaurantId);
+        then(recommendRestaurantRepository).should(never()).increaseLikeCount(any());
+    }
+
+    @Test
+    @DisplayName("동일한 DISLIKE 투표를 하면 투표가 삭제된다.")
+    void voteRestaurant_sameDislikeVote_deleteVote() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+        Long diningId = 200L;
+        Long recommendRestaurantId = 400L;
+        Long voteId = 500L;
+        VoteStatus voteStatus = VoteStatus.DISLIKE;
+
+        Group group = GroupFixture.create(groupId, "맛집탐방대");
+        Dining dining = DiningFixture.create(diningId, group, DiningStatus.RESTAURANT_VOTING);
+        User user = UserFixture.create(userId);
+        RecommendRestaurant restaurant = RecommendRestaurantFixture.create(recommendRestaurantId, dining);
+        RecommendRestaurantVote existingVote = RecommendRestaurantVoteFixture.create(voteId, user, restaurant, voteStatus);
+
+        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(voteStatus);
+
+        given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
+        given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(recommendRestaurantRepository.findById(recommendRestaurantId)).willReturn(Optional.of(restaurant));
+        given(recommendRestaurantVoteRepository.findByUserIdAndRecommendRestaurantId(userId, recommendRestaurantId))
+            .willReturn(Optional.of(existingVote));
+
+        // when
+        RestaurantVoteResponse result = diningService.voteRestaurant(userId, groupId, diningId, recommendRestaurantId, request);
+
+        // then
+        assertThat(result.recommendRestaurantId()).isEqualTo(recommendRestaurantId);
+        assertThat(result.voteStatus()).isEqualTo(voteStatus);
+
+        then(recommendRestaurantVoteRepository).should().delete(existingVote);
+        then(recommendRestaurantRepository).should().decreaseDislikeCount(recommendRestaurantId);
+        then(recommendRestaurantRepository).should(never()).increaseDislikeCount(any());
+    }
+
+    @Test
+    @DisplayName("그룹 멤버가 아닌 사용자는 추천 식당에 투표할 수 없다.")
+    void voteRestaurant_userNotGroupMember() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+        Long diningId = 200L;
+        Long recommendRestaurantId = 400L;
+
+        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(VoteStatus.LIKE);
+
+        given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(false);
+
+        // when // then
+        assertThatThrownBy(() -> diningService.voteRestaurant(userId, groupId, diningId, recommendRestaurantId, request))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", USER_NOT_GROUP_MEMBER);
+
+        then(diningRepository).should(never()).findById(any());
+    }
+
+    @Test
+    @DisplayName("식당 투표 기간이 아닌 회식에는 투표할 수 없다.")
+    void voteRestaurant_restaurantVotingClosed() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+        Long diningId = 200L;
+        Long recommendRestaurantId = 400L;
+
+        Group group = GroupFixture.create(groupId, "맛집탐방대");
+        Dining dining = DiningFixture.create(diningId, group, DiningStatus.CONFIRMED);
+
+        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(VoteStatus.LIKE);
+
+        given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
+        given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
+
+        // when // then
+        assertThatThrownBy(() -> diningService.voteRestaurant(userId, groupId, diningId, recommendRestaurantId, request))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", RESTAURANT_VOTING_CLOSED);
+
+        then(userRepository).should(never()).findById(any());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 회식에는 식당 투표를 할 수 없다.")
+    void voteRestaurant_diningNotFound() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+        Long diningId = 999L;
+        Long recommendRestaurantId = 400L;
+
+        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(VoteStatus.LIKE);
+
+        given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
+        given(diningRepository.findById(diningId)).willReturn(Optional.empty());
+
+        // when // then
+        assertThatThrownBy(() -> diningService.voteRestaurant(userId, groupId, diningId, recommendRestaurantId, request))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", DINING_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 추천 식당에는 투표할 수 없다.")
+    void voteRestaurant_recommendRestaurantNotFound() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+        Long diningId = 200L;
+        Long recommendRestaurantId = 999L;
+
+        Group group = GroupFixture.create(groupId, "맛집탐방대");
+        Dining dining = DiningFixture.create(diningId, group, DiningStatus.RESTAURANT_VOTING);
+        User user = UserFixture.create(userId);
+
+        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(VoteStatus.LIKE);
+
+        given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
+        given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(recommendRestaurantRepository.findById(recommendRestaurantId)).willReturn(Optional.empty());
+
+        // when // then
+        assertThatThrownBy(() -> diningService.voteRestaurant(userId, groupId, diningId, recommendRestaurantId, request))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", RECOMMEND_RESTAURANT_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("참석 투표 중 상태에서는 식당 투표를 할 수 없다.")
+    void voteRestaurant_attendanceVotingStatus_cannotVote() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+        Long diningId = 200L;
+        Long recommendRestaurantId = 400L;
+
+        Group group = GroupFixture.create(groupId, "맛집탐방대");
+        Dining dining = DiningFixture.create(diningId, group, DiningStatus.ATTENDANCE_VOTING);
+
+        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(VoteStatus.LIKE);
+
+        given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
+        given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
+
+        // when // then
+        assertThatThrownBy(() -> diningService.voteRestaurant(userId, groupId, diningId, recommendRestaurantId, request))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", RESTAURANT_VOTING_CLOSED);
+    }
+
+    @Test
+    @DisplayName("회식 완료 상태에서는 식당 투표를 할 수 없다.")
+    void voteRestaurant_completeStatus_cannotVote() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+        Long diningId = 200L;
+        Long recommendRestaurantId = 400L;
+
+        Group group = GroupFixture.create(groupId, "맛집탐방대");
+        Dining dining = DiningFixture.create(diningId, group, DiningStatus.COMPLETE);
+
+        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(VoteStatus.LIKE);
+
+        given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
+        given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
+
+        // when // then
+        assertThatThrownBy(() -> diningService.voteRestaurant(userId, groupId, diningId, recommendRestaurantId, request))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", RESTAURANT_VOTING_CLOSED);
     }
 }
