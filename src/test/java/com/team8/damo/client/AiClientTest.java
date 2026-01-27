@@ -164,7 +164,9 @@ class AiClientTest {
             1L,
             100L,
             LocalDateTime.of(2025, 1, 30, 12, 12),
-            50000
+            50000,
+            "37.123",
+            "127.123"
         );
         List<Long> users = List.of(123L, 124L);
 
@@ -251,7 +253,9 @@ class AiClientTest {
             1L,
             100L,
             LocalDateTime.of(2025, 1, 30, 12, 12),
-            30000
+            30000,
+            "37.123",
+            "127.123"
         );
 
         return new AiRecommendationRequest(diningData, List.of(123L, 124L));
