@@ -23,4 +23,8 @@ public interface RecommendRestaurantRepository extends JpaRepository<RecommendRe
     @Modifying(flushAutomatically = true)
     @Query("update RecommendRestaurant r set r.dislikeCount = r.dislikeCount - 1 where r.id = :id and r.dislikeCount > 0")
     void decreaseDislikeCount(@Param("id") Long id);
+
+    @Modifying(flushAutomatically = true)
+    @Query("update RecommendRestaurant r set r.likeCount = :likeCount, r.dislikeCount = :dislikeCount where r.id = :id")
+    void setVoteCounts(@Param("id") Long id, @Param("likeCount") int likeCount, @Param("dislikeCount") int dislikeCount);
 }
