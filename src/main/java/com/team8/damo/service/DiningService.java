@@ -129,7 +129,7 @@ public class DiningService {
     }
 
     private List<Long> createAttendParticipantIds(Dining dining) {
-        List<DiningParticipant> attendParticipants = diningParticipantRepository.findAllByDiningAndVotingStatus(dining, AttendanceVoteStatus.ATTEND);
+        List<DiningParticipant> attendParticipants = diningParticipantRepository.findAllByDiningAndAttendanceVoteStatus(dining, AttendanceVoteStatus.ATTEND);
         return attendParticipants.stream()
             .map(participant -> participant.getUser().getId())
             .toList();
@@ -162,7 +162,7 @@ public class DiningService {
     }
 
     private Map<Long, Long> createAttendCountingMap(List<Long> diningIds, AttendanceVoteStatus attendanceVoteStatus) {
-        return diningParticipantRepository.findByDiningIdInAndVotingStatus(diningIds, attendanceVoteStatus)
+        return diningParticipantRepository.findByDiningIdInAndAttendanceVoteStatus(diningIds, attendanceVoteStatus)
             .stream()
             .collect(Collectors.groupingBy(
                 dp -> dp.getDining().getId(),

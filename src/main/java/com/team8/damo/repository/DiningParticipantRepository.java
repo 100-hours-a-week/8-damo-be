@@ -11,20 +11,20 @@ import java.util.Optional;
 
 public interface DiningParticipantRepository extends JpaRepository<DiningParticipant, Long> {
 
-    int countByDiningIdAndVotingStatus(Long diningId, AttendanceVoteStatus attendanceVoteStatus);
+    int countByDiningIdAndAttendanceVoteStatus(Long diningId, AttendanceVoteStatus attendanceVoteStatus);
 
-    List<Integer> countByDiningIdInAndVotingStatus(List<Long> diningIds, AttendanceVoteStatus attendanceVoteStatus);
+    List<Integer> countByDiningIdInAndAttendanceVoteStatus(List<Long> diningIds, AttendanceVoteStatus attendanceVoteStatus);
 
     Optional<DiningParticipant> findByDiningIdAndUserId(Long diningId, Long userId);
 
     int countByDiningId(Long diningId);
 
     @EntityGraph(attributePaths = {"dining"})
-    List<DiningParticipant> findByDiningIdInAndVotingStatus(
+    List<DiningParticipant> findByDiningIdInAndAttendanceVoteStatus(
         List<Long> diningIds,
         AttendanceVoteStatus attendanceVoteStatus
     );
 
     @EntityGraph(attributePaths = {"user"})
-    List<DiningParticipant> findAllByDiningAndVotingStatus(Dining dining, AttendanceVoteStatus attendanceVoteStatus);
+    List<DiningParticipant> findAllByDiningAndAttendanceVoteStatus(Dining dining, AttendanceVoteStatus attendanceVoteStatus);
 }

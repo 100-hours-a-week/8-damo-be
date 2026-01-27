@@ -491,7 +491,7 @@ class DiningServiceTest {
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findAllByGroupIdAndDiningStatus(groupId, status))
             .willReturn(List.of(dining1, dining2));
-        given(diningParticipantRepository.findByDiningIdInAndVotingStatus(List.of(200L, 201L), AttendanceVoteStatus.ATTEND))
+        given(diningParticipantRepository.findByDiningIdInAndAttendanceVoteStatus(List.of(200L, 201L), AttendanceVoteStatus.ATTEND))
             .willReturn(attendParticipants);
 
         // when
@@ -538,7 +538,7 @@ class DiningServiceTest {
 
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findAllByGroupIdAndDiningStatus(groupId, status)).willReturn(List.of());
-        given(diningParticipantRepository.findByDiningIdInAndVotingStatus(List.of(), AttendanceVoteStatus.ATTEND))
+        given(diningParticipantRepository.findByDiningIdInAndAttendanceVoteStatus(List.of(), AttendanceVoteStatus.ATTEND))
             .willReturn(List.of());
 
         // when
@@ -565,7 +565,7 @@ class DiningServiceTest {
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findAllByGroupIdAndDiningStatus(groupId, status))
             .willReturn(List.of(dining));
-        given(diningParticipantRepository.findByDiningIdInAndVotingStatus(List.of(200L), AttendanceVoteStatus.ATTEND))
+        given(diningParticipantRepository.findByDiningIdInAndAttendanceVoteStatus(List.of(200L), AttendanceVoteStatus.ATTEND))
             .willReturn(List.of());
 
         // when
@@ -604,7 +604,7 @@ class DiningServiceTest {
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findAllByGroupIdAndDiningStatus(groupId, status))
             .willReturn(List.of(dining));
-        given(diningParticipantRepository.findByDiningIdInAndVotingStatus(List.of(200L), AttendanceVoteStatus.ATTEND))
+        given(diningParticipantRepository.findByDiningIdInAndAttendanceVoteStatus(List.of(200L), AttendanceVoteStatus.ATTEND))
             .willReturn(attendParticipants);
 
         // when
@@ -643,7 +643,7 @@ class DiningServiceTest {
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findAllByGroupIdAndDiningStatus(groupId, status))
             .willReturn(List.of(dining));
-        given(diningParticipantRepository.findByDiningIdInAndVotingStatus(List.of(200L), AttendanceVoteStatus.ATTEND))
+        given(diningParticipantRepository.findByDiningIdInAndAttendanceVoteStatus(List.of(200L), AttendanceVoteStatus.ATTEND))
             .willReturn(attendParticipants);
 
         // when
@@ -885,7 +885,7 @@ class DiningServiceTest {
         given(diningParticipantRepository.findByDiningIdAndUserId(diningId, userId)).willReturn(Optional.of(participant));
         given(diningRepository.increaseAttendanceVoteDoneCount(diningId)).willReturn(3);
         given(diningParticipantRepository.countByDiningId(diningId)).willReturn(3);
-        given(diningParticipantRepository.findAllByDiningAndVotingStatus(dining, AttendanceVoteStatus.ATTEND))
+        given(diningParticipantRepository.findAllByDiningAndAttendanceVoteStatus(dining, AttendanceVoteStatus.ATTEND))
             .willReturn(List.of(participant));
 
         // when
@@ -941,7 +941,7 @@ class DiningServiceTest {
         given(diningParticipantRepository.findByDiningIdAndUserId(diningId, userId)).willReturn(Optional.of(participant));
         given(diningRepository.increaseAttendanceVoteDoneCount(diningId)).willReturn(1);
         given(diningParticipantRepository.countByDiningId(diningId)).willReturn(1);
-        given(diningParticipantRepository.findAllByDiningAndVotingStatus(dining, AttendanceVoteStatus.ATTEND))
+        given(diningParticipantRepository.findAllByDiningAndAttendanceVoteStatus(dining, AttendanceVoteStatus.ATTEND))
             .willReturn(List.of(participant));
 
         // when
