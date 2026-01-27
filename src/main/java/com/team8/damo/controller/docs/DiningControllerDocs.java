@@ -114,10 +114,10 @@ public interface DiningControllerDocs {
             - 회식 상태가 RESTAURANT_VOTING(식당 투표 중)일 때만 투표 가능합니다.
 
             **투표 변경 로직**:
-            - 새 투표: 해당 상태로 투표 생성, count 증가
-            - LIKE → DISLIKE: likeCount 감소, dislikeCount 증가
-            - DISLIKE → LIKE: dislikeCount 감소, likeCount 증가
-            - 같은 투표 시도 시: 투표 삭제, count 감소 (응답의 voteStatus는 요청한 voteStatus와 동일)
+            - 새 투표: 해당 상태로 투표 생성, count 증가, 요청 보낸 상태와 동일한 상태 반환
+            - LIKE → DISLIKE: likeCount 감소, dislikeCount 증가 (DISLIKE 반환)
+            - DISLIKE → LIKE: dislikeCount 감소, likeCount 증가  (LIKE 반환)
+            - 같은 투표 시도 시: 투표 삭제, count 감소 (NONE 반환)
             """
     )
     @ApiResponse(responseCode = "201", description = "투표 성공")
