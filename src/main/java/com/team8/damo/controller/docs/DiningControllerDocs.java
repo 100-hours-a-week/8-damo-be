@@ -7,6 +7,7 @@ import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
 import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.security.jwt.JwtUserDetails;
+import com.team8.damo.service.response.AttendanceVoteDetailResponse;
 import com.team8.damo.service.response.DiningDetailResponse;
 import com.team8.damo.service.response.DiningResponse;
 import com.team8.damo.service.response.RestaurantVoteResponse;
@@ -97,6 +98,30 @@ public interface DiningControllerDocs {
     @ApiResponse(responseCode = "200", description = "성공")
     @ApiErrorResponses({USER_NOT_GROUP_MEMBER, DINING_NOT_FOUND})
     BaseResponse<DiningDetailResponse> getDiningDetail(
+        @Parameter(hidden = true)
+        JwtUserDetails user,
+        @Parameter(description = "그룹 ID", required = true)
+        Long groupId,
+        @Parameter(description = "회식 ID", required = true)
+        Long diningId
+    );
+
+    @Operation(
+        summary = "회식 상세 조회(참석/불참석 투표)",
+        description = """
+            ### 특정 회식의 참석/불참석 투표 현황을 조회합니다.
+
+            **응답 정보**:
+            - attendanceVoteStatus: 요청자의 투표 상태 (PENDING/ATTEND/NON_ATTEND)
+            - completedVoteCount: 투표 완료된 인원 수
+            - totalGroupMemberCount: 그룹 전체 멤버 수
+
+            **접근 권한**: 해당 그룹의 그룹원만 조회 가능
+            """
+    )
+    @ApiResponse(responseCode = "200", description = "성공")
+    @ApiErrorResponses({USER_NOT_GROUP_MEMBER, DINING_NOT_FOUND, NO_VOTE_PERMISSION})
+    BaseResponse<AttendanceVoteDetailResponse> getAttendanceVoteDetail(
         @Parameter(hidden = true)
         JwtUserDetails user,
         @Parameter(description = "그룹 ID", required = true)

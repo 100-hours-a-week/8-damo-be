@@ -16,6 +16,7 @@ import com.team8.damo.exception.CustomException;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.DiningCreateServiceRequest;
 import com.team8.damo.service.request.RestaurantVoteServiceRequest;
+import com.team8.damo.service.response.AttendanceVoteDetailResponse;
 import com.team8.damo.service.response.DiningDetailResponse;
 import com.team8.damo.service.response.DiningParticipantResponse;
 import com.team8.damo.service.response.DiningResponse;
@@ -118,6 +119,15 @@ public class DiningService {
             .toList();
 
         return DiningDetailResponse.of(isGroupLeader, dining, participantResponses);
+    }
+
+    public AttendanceVoteDetailResponse getAttendanceVoteDetail(Long userId, Long groupId, Long diningId) {
+        if (isNotGroupMember(userId, groupId)) {
+            throw new CustomException(USER_NOT_GROUP_MEMBER);
+        }
+        Dining dining = findDiningBy(diningId);
+        DiningParticipant participant = findParticipantBy(diningId, userId);
+        return AttendanceVoteDetailResponse.of(participant, dining);
     }
 
     @Transactional
