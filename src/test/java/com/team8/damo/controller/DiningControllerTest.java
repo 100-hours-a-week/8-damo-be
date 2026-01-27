@@ -3,6 +3,7 @@ package com.team8.damo.controller;
 import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
 import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.service.DiningService;
+import com.team8.damo.service.response.AttendanceVoteDetailResponse;
 import com.team8.damo.service.response.DiningDetailResponse;
 import com.team8.damo.service.response.DiningParticipantResponse;
 import com.team8.damo.service.response.DiningResponse;
@@ -620,5 +621,121 @@ class DiningControllerTest {
             .andExpect(jsonPath("$.data.diningParticipants.length()").value(0));
 
         then(diningService).should().getDiningDetail(any(), eq(groupId), eq(diningId));
+    }
+
+    @Test
+    @DisplayName("회식 참석/불참석 투표 현황을 성공적으로 조회한다.")
+    void getAttendanceVoteDetail_success() throws Exception {
+        // given
+        Long groupId = 100L;
+        Long diningId = 200L;
+
+        AttendanceVoteDetailResponse response = new AttendanceVoteDetailResponse(
+            AttendanceVoteStatus.PENDING,
+            3,
+            10
+        );
+
+        given(diningService.getAttendanceVoteDetail(any(), eq(groupId), eq(diningId))).willReturn(response);
+
+        // when // then
+        mockMvc.perform(
+                get("/api/v1/groups/{groupId}/dining/{diningId}/attendance-vote", groupId, diningId)
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.attendanceVoteStatus").value("PENDING"))
+            .andExpect(jsonPath("$.data.completedVoteCount").value(3))
+            .andExpect(jsonPath("$.data.totalGroupMemberCount").value(10));
+
+        then(diningService).should().getAttendanceVoteDetail(any(), eq(groupId), eq(diningId));
+    }
+
+    @Test
+    @DisplayName("참석 투표를 완료한 사용자의 투표 현황을 조회한다.")
+    void getAttendanceVoteDetail_withAttendStatus() throws Exception {
+        // given
+        Long groupId = 100L;
+        Long diningId = 200L;
+
+        AttendanceVoteDetailResponse response = new AttendanceVoteDetailResponse(
+            AttendanceVoteStatus.ATTEND,
+            5,
+            10
+        );
+
+        given(diningService.getAttendanceVoteDetail(any(), eq(groupId), eq(diningId))).willReturn(response);
+
+        // when // then
+        mockMvc.perform(
+                get("/api/v1/groups/{groupId}/dining/{diningId}/attendance-vote", groupId, diningId)
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.attendanceVoteStatus").value("ATTEND"))
+            .andExpect(jsonPath("$.data.completedVoteCount").value(5))
+            .andExpect(jsonPath("$.data.totalGroupMemberCount").value(10));
+
+        then(diningService).should().getAttendanceVoteDetail(any(), eq(groupId), eq(diningId));
+    }
+
+    @Test
+    @DisplayName("불참 투표를 완료한 사용자의 투표 현황을 조회한다.")
+    void getAttendanceVoteDetail_withNonAttendStatus() throws Exception {
+        // given
+        Long groupId = 100L;
+        Long diningId = 200L;
+
+        AttendanceVoteDetailResponse response = new AttendanceVoteDetailResponse(
+            AttendanceVoteStatus.NON_ATTEND,
+            7,
+            10
+        );
+
+        given(diningService.getAttendanceVoteDetail(any(), eq(groupId), eq(diningId))).willReturn(response);
+
+        // when // then
+        mockMvc.perform(
+                get("/api/v1/groups/{groupId}/dining/{diningId}/attendance-vote", groupId, diningId)
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.attendanceVoteStatus").value("NON_ATTEND"))
+            .andExpect(jsonPath("$.data.completedVoteCount").value(7))
+            .andExpect(jsonPath("$.data.totalGroupMemberCount").value(10));
+
+        then(diningService).should().getAttendanceVoteDetail(any(), eq(groupId), eq(diningId));
+    }
+
+    @Test
+    @DisplayName("모든 그룹원이 투표를 완료한 경우의 투표 현황을 조회한다.")
+    void getAttendanceVoteDetail_allVotesCompleted() throws Exception {
+        // given
+        Long groupId = 100L;
+        Long diningId = 200L;
+
+        AttendanceVoteDetailResponse response = new AttendanceVoteDetailResponse(
+            AttendanceVoteStatus.ATTEND,
+            10,
+            10
+        );
+
+        given(diningService.getAttendanceVoteDetail(any(), eq(groupId), eq(diningId))).willReturn(response);
+
+        // when // then
+        mockMvc.perform(
+                get("/api/v1/groups/{groupId}/dining/{diningId}/attendance-vote", groupId, diningId)
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.attendanceVoteStatus").value("ATTEND"))
+            .andExpect(jsonPath("$.data.completedVoteCount").value(10))
+            .andExpect(jsonPath("$.data.totalGroupMemberCount").value(10));
+
+        then(diningService).should().getAttendanceVoteDetail(any(), eq(groupId), eq(diningId));
     }
 }
