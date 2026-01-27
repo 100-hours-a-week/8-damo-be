@@ -7,6 +7,7 @@ import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
 import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.security.jwt.JwtUserDetails;
+import com.team8.damo.service.response.DiningDetailResponse;
 import com.team8.damo.service.response.DiningResponse;
 import com.team8.damo.service.response.RestaurantVoteResponse;
 import com.team8.damo.swagger.annotation.ApiErrorResponses;
@@ -77,6 +78,31 @@ public interface DiningControllerDocs {
         Long groupId,
         @Parameter(description = "회식 상태", required = true)
         DiningStatus status
+    );
+
+    @Operation(
+        summary = "회식 상세 조회(공통)",
+        description = """
+            ### 특정 회식의 상세 정보를 조회합니다.
+
+            **응답 정보**:
+            - isGroupLeader: 요청자의 그룹장 여부
+            - diningDate: 회식 날짜
+            - diningStatus: 회식 상태 (ATTENDANCE_VOTING, RESTAURANT_VOTING, RECOMMENDATION_PENDING, CONFIRMED, COMPLETE)
+            - diningParticipants: 참석 투표한 참여자 목록 (ATTEND 상태만)
+
+            **접근 권한**: 해당 그룹의 그룹원만 조회 가능
+            """
+    )
+    @ApiResponse(responseCode = "200", description = "성공")
+    @ApiErrorResponses({USER_NOT_GROUP_MEMBER, DINING_NOT_FOUND})
+    BaseResponse<DiningDetailResponse> getDiningDetail(
+        @Parameter(hidden = true)
+        JwtUserDetails user,
+        @Parameter(description = "그룹 ID", required = true)
+        Long groupId,
+        @Parameter(description = "회식 ID", required = true)
+        Long diningId
     );
 
     @Operation(

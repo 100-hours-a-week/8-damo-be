@@ -1,7 +1,13 @@
 package com.team8.damo.service;
 
 import com.team8.damo.client.AiService;
-import com.team8.damo.entity.*;
+import com.team8.damo.entity.Dining;
+import com.team8.damo.entity.DiningParticipant;
+import com.team8.damo.entity.Group;
+import com.team8.damo.entity.RecommendRestaurant;
+import com.team8.damo.entity.RecommendRestaurantVote;
+import com.team8.damo.entity.User;
+import com.team8.damo.entity.UserGroup;
 import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
 import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.entity.enumeration.GroupRole;
@@ -10,6 +16,8 @@ import com.team8.damo.exception.CustomException;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.DiningCreateServiceRequest;
 import com.team8.damo.service.request.RestaurantVoteServiceRequest;
+import com.team8.damo.service.response.DiningDetailResponse;
+import com.team8.damo.service.response.DiningParticipantResponse;
 import com.team8.damo.service.response.DiningResponse;
 import com.team8.damo.service.response.RestaurantVoteResponse;
 import com.team8.damo.util.Snowflake;
@@ -92,6 +100,26 @@ public class DiningService {
             .toList();
     }
 
+    public DiningDetailResponse getDiningDetail(Long userId, Long groupId, Long diningId) {
+        UserGroup userGroup = userGroupRepository.findByUserIdAndGroupId(userId, groupId)
+            .orElseThrow(() -> new CustomException(USER_NOT_GROUP_MEMBER));
+
+        boolean isGroupLeader = userGroup.getRole() == GroupRole.LEADER;
+
+        Dining dining = findDiningBy(diningId);
+
+        List<DiningParticipant> attendParticipants =
+            diningParticipantRepository.findAllByDiningAndAttendanceVoteStatus(
+                dining, AttendanceVoteStatus.ATTEND
+            );
+
+        List<DiningParticipantResponse> participantResponses = attendParticipants.stream()
+            .map(DiningParticipantResponse::from)
+            .toList();
+
+        return DiningDetailResponse.of(isGroupLeader, dining, participantResponses);
+    }
+
     @Transactional
     public AttendanceVoteStatus voteAttendance(Long userId, Long groupId, Long diningId, AttendanceVoteStatus attendanceVoteStatus) {
         Dining dining = findDiningBy(diningId);
@@ -122,8 +150,9 @@ public class DiningService {
         if (votedCount < totalParticipants) return;
 
         // 모두 참석 투표를 완료하면 AI 장소 추천 요청
+        Group group = findGroupBy(groupId);
         List<Long> userIds = createAttendParticipantIds(dining);
-        aiService.recommendationRestaurant(groupId, dining, userIds);
+        aiService.recommendationRestaurant(group, dining, userIds);
 
         dining.startRestaurantVoting();
     }
