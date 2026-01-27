@@ -16,4 +16,8 @@ public enum DiningStatus {
     public boolean isNotAttendanceVoting() {
         return this != ATTENDANCE_VOTING;
     }
+
+    public boolean isNotRestaurantVoting() {
+        return this != RESTAURANT_VOTING;
+    }
 }

@@ -53,8 +53,8 @@ public class Dining extends BaseTimeEntity {
         this.diningStatus = diningStatus;
     }
 
-    public void changeStatus(DiningStatus status) {
-        this.diningStatus = status;
+    public void startRestaurantVoting() {
+        this.diningStatus = DiningStatus.RESTAURANT_VOTING;
     }
 
     @Override
