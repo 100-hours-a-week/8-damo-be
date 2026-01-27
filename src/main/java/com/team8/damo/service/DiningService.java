@@ -4,11 +4,14 @@ import com.team8.damo.client.AiService;
 import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.entity.enumeration.GroupRole;
+import com.team8.damo.entity.enumeration.VoteStatus;
 import com.team8.damo.entity.enumeration.VotingStatus;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.DiningCreateServiceRequest;
+import com.team8.damo.service.request.RestaurantVoteServiceRequest;
 import com.team8.damo.service.response.DiningResponse;
+import com.team8.damo.service.response.RestaurantVoteResponse;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -18,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.team8.damo.exception.errorcode.ErrorCode.*;
@@ -35,6 +39,8 @@ public class DiningService {
     private final UserGroupRepository userGroupRepository;
     private final DiningRepository diningRepository;
     private final DiningParticipantRepository diningParticipantRepository;
+    private final RecommendRestaurantRepository recommendRestaurantRepository;
+    private final RecommendRestaurantVoteRepository recommendRestaurantVoteRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final AiService aiService;
 
@@ -119,7 +125,7 @@ public class DiningService {
         List<Long> userIds = createAttendParticipantIds(dining);
         aiService.recommendationRestaurant(groupId, dining, userIds);
 
-        dining.changeStatus(DiningStatus.RESTAURANT_VOTING);
+        dining.startRestaurantVoting();
     }
 
     private List<Long> createAttendParticipantIds(Dining dining) {
@@ -186,5 +192,73 @@ public class DiningService {
 
     private boolean isNotGroupMember(Long userId, Long groupId) {
         return !userGroupRepository.existsByUserIdAndGroupId(userId, groupId);
+    }
+
+    @Transactional
+    public RestaurantVoteResponse voteRestaurant(
+        Long userId, Long groupId, Long diningId,
+        Long recommendRestaurantId, RestaurantVoteServiceRequest request
+    ) {
+        if (isNotGroupMember(userId, groupId)) {
+            throw new CustomException(USER_NOT_GROUP_MEMBER);
+        }
+
+        Dining dining = findDiningBy(diningId);
+        if (dining.getDiningStatus().isNotRestaurantVoting()) {
+            throw new CustomException(RESTAURANT_VOTING_CLOSED);
+        }
+
+        User user = findUserBy(userId);
+        RecommendRestaurant restaurant = findRecommendRestaurantBy(recommendRestaurantId);
+
+        VoteStatus newStatus = request.voteStatus();
+        Optional<RecommendRestaurantVote> existingVote =
+            recommendRestaurantVoteRepository.findByUserIdAndRecommendRestaurantId(userId, recommendRestaurantId);
+
+        if (existingVote.isPresent()) {
+            RecommendRestaurantVote vote = existingVote.get();
+            VoteStatus oldStatus = vote.getStatus();
+
+            if (oldStatus == newStatus) {
+                // 동일한 투표 상태이면 투표 삭제
+                recommendRestaurantVoteRepository.delete(vote);
+                if (oldStatus == VoteStatus.LIKE) {
+                    recommendRestaurantRepository.decreaseLikeCount(recommendRestaurantId);
+                } else {
+                    recommendRestaurantRepository.decreaseDislikeCount(recommendRestaurantId);
+                }
+                return RestaurantVoteResponse.of(recommendRestaurantId, newStatus);
+            }
+
+            // 다른 투표 상태이면 변경
+            if (oldStatus == VoteStatus.LIKE) {
+                recommendRestaurantRepository.decreaseLikeCount(recommendRestaurantId);
+            } else {
+                recommendRestaurantRepository.decreaseDislikeCount(recommendRestaurantId);
+            }
+
+            vote.changeStatus(newStatus);
+        } else {
+            RecommendRestaurantVote newVote = RecommendRestaurantVote.builder()
+                .id(snowflake.nextId())
+                .user(user)
+                .recommendRestaurant(restaurant)
+                .status(newStatus)
+                .build();
+            recommendRestaurantVoteRepository.save(newVote);
+        }
+
+        if (newStatus == VoteStatus.LIKE) {
+            recommendRestaurantRepository.increaseLikeCount(recommendRestaurantId);
+        } else {
+            recommendRestaurantRepository.increaseDislikeCount(recommendRestaurantId);
+        }
+
+        return RestaurantVoteResponse.of(recommendRestaurantId, newStatus);
+    }
+
+    private RecommendRestaurant findRecommendRestaurantBy(Long id) {
+        return recommendRestaurantRepository.findById(id)
+            .orElseThrow(() -> new CustomException(RECOMMEND_RESTAURANT_NOT_FOUND));
     }
 }

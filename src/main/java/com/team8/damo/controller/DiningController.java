@@ -3,12 +3,14 @@ package com.team8.damo.controller;
 import com.team8.damo.controller.docs.DiningControllerDocs;
 import com.team8.damo.controller.request.AttendanceVoteRequest;
 import com.team8.damo.controller.request.DiningCreateRequest;
+import com.team8.damo.controller.request.RestaurantVoteRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.entity.enumeration.VotingStatus;
 import com.team8.damo.security.jwt.JwtUserDetails;
 import com.team8.damo.service.DiningService;
 import com.team8.damo.service.response.DiningResponse;
+import com.team8.damo.service.response.RestaurantVoteResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -58,6 +60,23 @@ public class DiningController implements DiningControllerDocs {
     ) {
         return BaseResponse.ok(
             diningService.voteAttendance(user.getUserId(), groupId, diningId, request.getVotingStatus())
+        );
+    }
+
+    @Override
+    @PostMapping("/groups/{groupId}/dining/{diningId}/restaurants-vote/{recommendRestaurantsId}")
+    public BaseResponse<RestaurantVoteResponse> voteRestaurant(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @PathVariable Long groupId,
+        @PathVariable Long diningId,
+        @PathVariable Long recommendRestaurantsId,
+        @Valid @RequestBody RestaurantVoteRequest request
+    ) {
+        return BaseResponse.created(
+            diningService.voteRestaurant(
+                user.getUserId(), groupId, diningId,
+                recommendRestaurantsId, request.toServiceRequest()
+            )
         );
     }
 }

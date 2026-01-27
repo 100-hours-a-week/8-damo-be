@@ -2,11 +2,13 @@ package com.team8.damo.controller.docs;
 
 import com.team8.damo.controller.request.AttendanceVoteRequest;
 import com.team8.damo.controller.request.DiningCreateRequest;
+import com.team8.damo.controller.request.RestaurantVoteRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.entity.enumeration.VotingStatus;
 import com.team8.damo.security.jwt.JwtUserDetails;
 import com.team8.damo.service.response.DiningResponse;
+import com.team8.damo.service.response.RestaurantVoteResponse;
 import com.team8.damo.swagger.annotation.ApiErrorResponses;
 
 import java.util.List;
@@ -99,5 +101,41 @@ public interface DiningControllerDocs {
         @Parameter(description = "회식 ID", required = true)
         Long diningId,
         AttendanceVoteRequest request
+    );
+
+    @Operation(
+        summary = "추천 식당 투표",
+        description = """
+            ### 추천 식당에 대해 좋아요/싫어요 투표를 합니다.
+            - voteStatus: LIKE(추천), DISLIKE(비추천)
+
+            **투표 조건**:
+            - 해당 그룹의 멤버만 투표할 수 있습니다.
+            - 회식 상태가 RESTAURANT_VOTING(식당 투표 중)일 때만 투표 가능합니다.
+
+            **투표 변경 로직**:
+            - 새 투표: 해당 상태로 투표 생성, count 증가
+            - LIKE → DISLIKE: likeCount 감소, dislikeCount 증가
+            - DISLIKE → LIKE: dislikeCount 감소, likeCount 증가
+            - 같은 투표 시도 시: 투표 삭제, count 감소 (응답의 voteStatus는 요청한 voteStatus와 동일)
+            """
+    )
+    @ApiResponse(responseCode = "201", description = "투표 성공")
+    @ApiErrorResponses({
+        USER_NOT_GROUP_MEMBER,
+        DINING_NOT_FOUND,
+        RESTAURANT_VOTING_CLOSED,
+        RECOMMEND_RESTAURANT_NOT_FOUND
+    })
+    BaseResponse<RestaurantVoteResponse> voteRestaurant(
+        @Parameter(hidden = true)
+        JwtUserDetails user,
+        @Parameter(description = "그룹 ID", required = true)
+        Long groupId,
+        @Parameter(description = "회식 ID", required = true)
+        Long diningId,
+        @Parameter(description = "추천 식당 ID", required = true)
+        Long recommendRestaurantsId,
+        RestaurantVoteRequest request
     );
 }
