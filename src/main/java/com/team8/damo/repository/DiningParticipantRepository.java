@@ -2,7 +2,7 @@ package com.team8.damo.repository;
 
 import com.team8.damo.entity.Dining;
 import com.team8.damo.entity.DiningParticipant;
-import com.team8.damo.entity.enumeration.VotingStatus;
+import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -11,9 +11,9 @@ import java.util.Optional;
 
 public interface DiningParticipantRepository extends JpaRepository<DiningParticipant, Long> {
 
-    int countByDiningIdAndVotingStatus(Long diningId, VotingStatus votingStatus);
+    int countByDiningIdAndVotingStatus(Long diningId, AttendanceVoteStatus attendanceVoteStatus);
 
-    List<Integer> countByDiningIdInAndVotingStatus(List<Long> diningIds, VotingStatus votingStatus);
+    List<Integer> countByDiningIdInAndVotingStatus(List<Long> diningIds, AttendanceVoteStatus attendanceVoteStatus);
 
     Optional<DiningParticipant> findByDiningIdAndUserId(Long diningId, Long userId);
 
@@ -22,9 +22,9 @@ public interface DiningParticipantRepository extends JpaRepository<DiningPartici
     @EntityGraph(attributePaths = {"dining"})
     List<DiningParticipant> findByDiningIdInAndVotingStatus(
         List<Long> diningIds,
-        VotingStatus votingStatus
+        AttendanceVoteStatus attendanceVoteStatus
     );
 
     @EntityGraph(attributePaths = {"user"})
-    List<DiningParticipant> findAllByDiningAndVotingStatus(Dining dining, VotingStatus votingStatus);
+    List<DiningParticipant> findAllByDiningAndVotingStatus(Dining dining, AttendanceVoteStatus attendanceVoteStatus);
 }

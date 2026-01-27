@@ -3,7 +3,7 @@ package com.team8.damo.fixture;
 import com.team8.damo.entity.Dining;
 import com.team8.damo.entity.DiningParticipant;
 import com.team8.damo.entity.User;
-import com.team8.damo.entity.enumeration.VotingStatus;
+import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
 
 public class DiningParticipantFixture {
 
@@ -12,16 +12,16 @@ public class DiningParticipantFixture {
             .id(id)
             .dining(dining)
             .user(user)
-            .votingStatus(VotingStatus.PENDING)
+            .attendanceVoteStatus(AttendanceVoteStatus.PENDING)
             .build();
     }
 
-    public static DiningParticipant create(Long id, Dining dining, User user, VotingStatus votingStatus) {
+    public static DiningParticipant create(Long id, Dining dining, User user, AttendanceVoteStatus attendanceVoteStatus) {
         return DiningParticipant.builder()
             .id(id)
             .dining(dining)
             .user(user)
-            .votingStatus(votingStatus)
+            .attendanceVoteStatus(attendanceVoteStatus)
             .build();
     }
 }

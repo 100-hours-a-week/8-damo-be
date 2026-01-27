@@ -1,16 +1,16 @@
 package com.team8.damo.validator;
 
-import com.team8.damo.entity.enumeration.VotingStatus;
+import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
-public class VoteStatusValidator implements ConstraintValidator<ValidVoteStatus, VotingStatus> {
+public class VoteStatusValidator implements ConstraintValidator<ValidVoteStatus, AttendanceVoteStatus> {
 
     @Override
-    public boolean isValid(VotingStatus value, ConstraintValidatorContext context) {
+    public boolean isValid(AttendanceVoteStatus value, ConstraintValidatorContext context) {
         if (value == null) {
             return false;
         }
-        return value == VotingStatus.ATTEND || value == VotingStatus.NON_ATTEND;
+        return value == AttendanceVoteStatus.ATTEND || value == AttendanceVoteStatus.NON_ATTEND;
     }
 }

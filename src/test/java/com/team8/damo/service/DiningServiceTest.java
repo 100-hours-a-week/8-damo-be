@@ -2,10 +2,10 @@ package com.team8.damo.service;
 
 import com.team8.damo.client.AiService;
 import com.team8.damo.entity.*;
+import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
 import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.entity.enumeration.GroupRole;
-import com.team8.damo.entity.enumeration.VoteStatus;
-import com.team8.damo.entity.enumeration.VotingStatus;
+import com.team8.damo.entity.enumeration.RestaurantVoteStatus;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.fixture.DiningFixture;
 import com.team8.damo.fixture.DiningParticipantFixture;
@@ -127,10 +127,10 @@ class DiningServiceTest {
 
         List<DiningParticipant> savedParticipants = participantsCaptor.getValue();
         assertThat(savedParticipants).hasSize(2)
-            .extracting("id", "user", "votingStatus")
+            .extracting("id", "user", "attendanceVoteStatus")
             .containsExactlyInAnyOrder(
-                tuple(participantId1, user, VotingStatus.PENDING),
-                tuple(participantId2, user2, VotingStatus.PENDING)
+                tuple(participantId1, user, AttendanceVoteStatus.PENDING),
+                tuple(participantId2, user2, AttendanceVoteStatus.PENDING)
             );
     }
 
@@ -460,8 +460,8 @@ class DiningServiceTest {
         List<DiningParticipant> savedParticipants = participantsCaptor.getValue();
         assertThat(savedParticipants).hasSize(1);
         assertThat(savedParticipants.get(0))
-            .extracting("id", "user", "votingStatus")
-            .contains(participantId, user, VotingStatus.PENDING);
+            .extracting("id", "user", "attendanceVoteStatus")
+            .contains(participantId, user, AttendanceVoteStatus.PENDING);
     }
 
     @Test
@@ -478,20 +478,20 @@ class DiningServiceTest {
 
         User user = UserFixture.create(userId);
         List<DiningParticipant> attendParticipants = List.of(
-            DiningParticipantFixture.create(300L, dining1, user, VotingStatus.ATTEND),
-            DiningParticipantFixture.create(301L, dining1, user, VotingStatus.ATTEND),
-            DiningParticipantFixture.create(302L, dining1, user, VotingStatus.ATTEND),
-            DiningParticipantFixture.create(303L, dining2, user, VotingStatus.ATTEND),
-            DiningParticipantFixture.create(304L, dining2, user, VotingStatus.ATTEND),
-            DiningParticipantFixture.create(305L, dining2, user, VotingStatus.ATTEND),
-            DiningParticipantFixture.create(306L, dining2, user, VotingStatus.ATTEND),
-            DiningParticipantFixture.create(307L, dining2, user, VotingStatus.ATTEND)
+            DiningParticipantFixture.create(300L, dining1, user, AttendanceVoteStatus.ATTEND),
+            DiningParticipantFixture.create(301L, dining1, user, AttendanceVoteStatus.ATTEND),
+            DiningParticipantFixture.create(302L, dining1, user, AttendanceVoteStatus.ATTEND),
+            DiningParticipantFixture.create(303L, dining2, user, AttendanceVoteStatus.ATTEND),
+            DiningParticipantFixture.create(304L, dining2, user, AttendanceVoteStatus.ATTEND),
+            DiningParticipantFixture.create(305L, dining2, user, AttendanceVoteStatus.ATTEND),
+            DiningParticipantFixture.create(306L, dining2, user, AttendanceVoteStatus.ATTEND),
+            DiningParticipantFixture.create(307L, dining2, user, AttendanceVoteStatus.ATTEND)
         );
 
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findAllByGroupIdAndDiningStatus(groupId, status))
             .willReturn(List.of(dining1, dining2));
-        given(diningParticipantRepository.findByDiningIdInAndVotingStatus(List.of(200L, 201L), VotingStatus.ATTEND))
+        given(diningParticipantRepository.findByDiningIdInAndVotingStatus(List.of(200L, 201L), AttendanceVoteStatus.ATTEND))
             .willReturn(attendParticipants);
 
         // when
@@ -538,7 +538,7 @@ class DiningServiceTest {
 
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findAllByGroupIdAndDiningStatus(groupId, status)).willReturn(List.of());
-        given(diningParticipantRepository.findByDiningIdInAndVotingStatus(List.of(), VotingStatus.ATTEND))
+        given(diningParticipantRepository.findByDiningIdInAndVotingStatus(List.of(), AttendanceVoteStatus.ATTEND))
             .willReturn(List.of());
 
         // when
@@ -565,7 +565,7 @@ class DiningServiceTest {
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findAllByGroupIdAndDiningStatus(groupId, status))
             .willReturn(List.of(dining));
-        given(diningParticipantRepository.findByDiningIdInAndVotingStatus(List.of(200L), VotingStatus.ATTEND))
+        given(diningParticipantRepository.findByDiningIdInAndVotingStatus(List.of(200L), AttendanceVoteStatus.ATTEND))
             .willReturn(List.of());
 
         // when
@@ -591,20 +591,20 @@ class DiningServiceTest {
 
         User user = UserFixture.create(userId);
         List<DiningParticipant> attendParticipants = List.of(
-            DiningParticipantFixture.create(300L, dining, user, VotingStatus.ATTEND),
-            DiningParticipantFixture.create(301L, dining, user, VotingStatus.ATTEND),
-            DiningParticipantFixture.create(302L, dining, user, VotingStatus.ATTEND),
-            DiningParticipantFixture.create(303L, dining, user, VotingStatus.ATTEND),
-            DiningParticipantFixture.create(304L, dining, user, VotingStatus.ATTEND),
-            DiningParticipantFixture.create(305L, dining, user, VotingStatus.ATTEND),
-            DiningParticipantFixture.create(306L, dining, user, VotingStatus.ATTEND),
-            DiningParticipantFixture.create(307L, dining, user, VotingStatus.ATTEND)
+            DiningParticipantFixture.create(300L, dining, user, AttendanceVoteStatus.ATTEND),
+            DiningParticipantFixture.create(301L, dining, user, AttendanceVoteStatus.ATTEND),
+            DiningParticipantFixture.create(302L, dining, user, AttendanceVoteStatus.ATTEND),
+            DiningParticipantFixture.create(303L, dining, user, AttendanceVoteStatus.ATTEND),
+            DiningParticipantFixture.create(304L, dining, user, AttendanceVoteStatus.ATTEND),
+            DiningParticipantFixture.create(305L, dining, user, AttendanceVoteStatus.ATTEND),
+            DiningParticipantFixture.create(306L, dining, user, AttendanceVoteStatus.ATTEND),
+            DiningParticipantFixture.create(307L, dining, user, AttendanceVoteStatus.ATTEND)
         );
 
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findAllByGroupIdAndDiningStatus(groupId, status))
             .willReturn(List.of(dining));
-        given(diningParticipantRepository.findByDiningIdInAndVotingStatus(List.of(200L), VotingStatus.ATTEND))
+        given(diningParticipantRepository.findByDiningIdInAndVotingStatus(List.of(200L), AttendanceVoteStatus.ATTEND))
             .willReturn(attendParticipants);
 
         // when
@@ -630,20 +630,20 @@ class DiningServiceTest {
 
         User user = UserFixture.create(userId);
         List<DiningParticipant> attendParticipants = List.of(
-            DiningParticipantFixture.create(300L, dining, user, VotingStatus.ATTEND),
-            DiningParticipantFixture.create(301L, dining, user, VotingStatus.ATTEND),
-            DiningParticipantFixture.create(302L, dining, user, VotingStatus.ATTEND),
-            DiningParticipantFixture.create(303L, dining, user, VotingStatus.ATTEND),
-            DiningParticipantFixture.create(304L, dining, user, VotingStatus.ATTEND),
-            DiningParticipantFixture.create(305L, dining, user, VotingStatus.ATTEND),
-            DiningParticipantFixture.create(306L, dining, user, VotingStatus.ATTEND),
-            DiningParticipantFixture.create(307L, dining, user, VotingStatus.ATTEND)
+            DiningParticipantFixture.create(300L, dining, user, AttendanceVoteStatus.ATTEND),
+            DiningParticipantFixture.create(301L, dining, user, AttendanceVoteStatus.ATTEND),
+            DiningParticipantFixture.create(302L, dining, user, AttendanceVoteStatus.ATTEND),
+            DiningParticipantFixture.create(303L, dining, user, AttendanceVoteStatus.ATTEND),
+            DiningParticipantFixture.create(304L, dining, user, AttendanceVoteStatus.ATTEND),
+            DiningParticipantFixture.create(305L, dining, user, AttendanceVoteStatus.ATTEND),
+            DiningParticipantFixture.create(306L, dining, user, AttendanceVoteStatus.ATTEND),
+            DiningParticipantFixture.create(307L, dining, user, AttendanceVoteStatus.ATTEND)
         );
 
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findAllByGroupIdAndDiningStatus(groupId, status))
             .willReturn(List.of(dining));
-        given(diningParticipantRepository.findByDiningIdInAndVotingStatus(List.of(200L), VotingStatus.ATTEND))
+        given(diningParticipantRepository.findByDiningIdInAndVotingStatus(List.of(200L), AttendanceVoteStatus.ATTEND))
             .willReturn(attendParticipants);
 
         // when
@@ -668,7 +668,7 @@ class DiningServiceTest {
         Group group = GroupFixture.create(groupId, "맛집탐방대");
         Dining dining = DiningFixture.create(diningId, group, DiningStatus.ATTENDANCE_VOTING);
         User user = UserFixture.create(userId);
-        DiningParticipant participant = DiningParticipantFixture.create(participantId, dining, user, VotingStatus.PENDING);
+        DiningParticipant participant = DiningParticipantFixture.create(participantId, dining, user, AttendanceVoteStatus.PENDING);
 
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
         given(diningParticipantRepository.findByDiningIdAndUserId(diningId, userId)).willReturn(Optional.of(participant));
@@ -676,11 +676,11 @@ class DiningServiceTest {
         given(diningParticipantRepository.countByDiningId(diningId)).willReturn(3);
 
         // when
-        VotingStatus result = diningService.voteAttendance(userId, groupId, diningId, VotingStatus.ATTEND);
+        AttendanceVoteStatus result = diningService.voteAttendance(userId, groupId, diningId, AttendanceVoteStatus.ATTEND);
 
         // then
-        assertThat(result).isEqualTo(VotingStatus.ATTEND);
-        assertThat(participant.getVotingStatus()).isEqualTo(VotingStatus.ATTEND);
+        assertThat(result).isEqualTo(AttendanceVoteStatus.ATTEND);
+        assertThat(participant.getAttendanceVoteStatus()).isEqualTo(AttendanceVoteStatus.ATTEND);
 
         then(diningRepository).should().findById(diningId);
         then(diningParticipantRepository).should().findByDiningIdAndUserId(diningId, userId);
@@ -699,7 +699,7 @@ class DiningServiceTest {
         Group group = GroupFixture.create(groupId, "맛집탐방대");
         Dining dining = DiningFixture.create(diningId, group, DiningStatus.ATTENDANCE_VOTING);
         User user = UserFixture.create(userId);
-        DiningParticipant participant = DiningParticipantFixture.create(participantId, dining, user, VotingStatus.PENDING);
+        DiningParticipant participant = DiningParticipantFixture.create(participantId, dining, user, AttendanceVoteStatus.PENDING);
 
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
         given(diningParticipantRepository.findByDiningIdAndUserId(diningId, userId)).willReturn(Optional.of(participant));
@@ -707,11 +707,11 @@ class DiningServiceTest {
         given(diningParticipantRepository.countByDiningId(diningId)).willReturn(3);
 
         // when
-        VotingStatus result = diningService.voteAttendance(userId, groupId, diningId, VotingStatus.NON_ATTEND);
+        AttendanceVoteStatus result = diningService.voteAttendance(userId, groupId, diningId, AttendanceVoteStatus.NON_ATTEND);
 
         // then
-        assertThat(result).isEqualTo(VotingStatus.NON_ATTEND);
-        assertThat(participant.getVotingStatus()).isEqualTo(VotingStatus.NON_ATTEND);
+        assertThat(result).isEqualTo(AttendanceVoteStatus.NON_ATTEND);
+        assertThat(participant.getAttendanceVoteStatus()).isEqualTo(AttendanceVoteStatus.NON_ATTEND);
     }
 
     @Test
@@ -725,7 +725,7 @@ class DiningServiceTest {
         given(diningRepository.findById(diningId)).willReturn(Optional.empty());
 
         // when // then
-        assertThatThrownBy(() -> diningService.voteAttendance(userId, groupId, diningId, VotingStatus.ATTEND))
+        assertThatThrownBy(() -> diningService.voteAttendance(userId, groupId, diningId, AttendanceVoteStatus.ATTEND))
             .isInstanceOf(CustomException.class)
             .hasFieldOrPropertyWithValue("errorCode", DINING_NOT_FOUND);
 
@@ -747,7 +747,7 @@ class DiningServiceTest {
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
 
         // when // then
-        assertThatThrownBy(() -> diningService.voteAttendance(userId, groupId, diningId, VotingStatus.ATTEND))
+        assertThatThrownBy(() -> diningService.voteAttendance(userId, groupId, diningId, AttendanceVoteStatus.ATTEND))
             .isInstanceOf(CustomException.class)
             .hasFieldOrPropertyWithValue("errorCode", ATTENDANCE_VOTING_CLOSED);
 
@@ -769,7 +769,7 @@ class DiningServiceTest {
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
 
         // when // then
-        assertThatThrownBy(() -> diningService.voteAttendance(userId, groupId, diningId, VotingStatus.ATTEND))
+        assertThatThrownBy(() -> diningService.voteAttendance(userId, groupId, diningId, AttendanceVoteStatus.ATTEND))
             .isInstanceOf(CustomException.class)
             .hasFieldOrPropertyWithValue("errorCode", ATTENDANCE_VOTING_CLOSED);
     }
@@ -788,7 +788,7 @@ class DiningServiceTest {
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
 
         // when // then
-        assertThatThrownBy(() -> diningService.voteAttendance(userId, groupId, diningId, VotingStatus.ATTEND))
+        assertThatThrownBy(() -> diningService.voteAttendance(userId, groupId, diningId, AttendanceVoteStatus.ATTEND))
             .isInstanceOf(CustomException.class)
             .hasFieldOrPropertyWithValue("errorCode", ATTENDANCE_VOTING_CLOSED);
     }
@@ -808,7 +808,7 @@ class DiningServiceTest {
         given(diningParticipantRepository.findByDiningIdAndUserId(diningId, userId)).willReturn(Optional.empty());
 
         // when // then
-        assertThatThrownBy(() -> diningService.voteAttendance(userId, groupId, diningId, VotingStatus.ATTEND))
+        assertThatThrownBy(() -> diningService.voteAttendance(userId, groupId, diningId, AttendanceVoteStatus.ATTEND))
             .isInstanceOf(CustomException.class)
             .hasFieldOrPropertyWithValue("errorCode", NO_VOTE_PERMISSION);
 
@@ -829,13 +829,13 @@ class DiningServiceTest {
         Group group = GroupFixture.create(groupId, "맛집탐방대");
         Dining dining = DiningFixture.create(diningId, group, DiningStatus.ATTENDANCE_VOTING);
         User user = UserFixture.create(userId);
-        DiningParticipant participant = DiningParticipantFixture.create(participantId, dining, user, VotingStatus.ATTEND);
+        DiningParticipant participant = DiningParticipantFixture.create(participantId, dining, user, AttendanceVoteStatus.ATTEND);
 
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
         given(diningParticipantRepository.findByDiningIdAndUserId(diningId, userId)).willReturn(Optional.of(participant));
 
         // when // then
-        assertThatThrownBy(() -> diningService.voteAttendance(userId, groupId, diningId, VotingStatus.NON_ATTEND))
+        assertThatThrownBy(() -> diningService.voteAttendance(userId, groupId, diningId, AttendanceVoteStatus.NON_ATTEND))
             .isInstanceOf(CustomException.class)
             .hasFieldOrPropertyWithValue("errorCode", ATTENDANCE_VOTE_ALREADY_COMPLETED);
 
@@ -856,13 +856,13 @@ class DiningServiceTest {
         Group group = GroupFixture.create(groupId, "맛집탐방대");
         Dining dining = DiningFixture.create(diningId, group, DiningStatus.ATTENDANCE_VOTING);
         User user = UserFixture.create(userId);
-        DiningParticipant participant = DiningParticipantFixture.create(participantId, dining, user, VotingStatus.NON_ATTEND);
+        DiningParticipant participant = DiningParticipantFixture.create(participantId, dining, user, AttendanceVoteStatus.NON_ATTEND);
 
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
         given(diningParticipantRepository.findByDiningIdAndUserId(diningId, userId)).willReturn(Optional.of(participant));
 
         // when // then
-        assertThatThrownBy(() -> diningService.voteAttendance(userId, groupId, diningId, VotingStatus.ATTEND))
+        assertThatThrownBy(() -> diningService.voteAttendance(userId, groupId, diningId, AttendanceVoteStatus.ATTEND))
             .isInstanceOf(CustomException.class)
             .hasFieldOrPropertyWithValue("errorCode", ATTENDANCE_VOTE_ALREADY_COMPLETED);
     }
@@ -879,20 +879,20 @@ class DiningServiceTest {
         Group group = GroupFixture.create(groupId, "맛집탐방대");
         Dining dining = DiningFixture.create(diningId, group, DiningStatus.ATTENDANCE_VOTING);
         User user = UserFixture.create(userId);
-        DiningParticipant participant = DiningParticipantFixture.create(participantId, dining, user, VotingStatus.PENDING);
+        DiningParticipant participant = DiningParticipantFixture.create(participantId, dining, user, AttendanceVoteStatus.PENDING);
 
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
         given(diningParticipantRepository.findByDiningIdAndUserId(diningId, userId)).willReturn(Optional.of(participant));
         given(diningRepository.increaseAttendanceVoteDoneCount(diningId)).willReturn(3);
         given(diningParticipantRepository.countByDiningId(diningId)).willReturn(3);
-        given(diningParticipantRepository.findAllByDiningAndVotingStatus(dining, VotingStatus.ATTEND))
+        given(diningParticipantRepository.findAllByDiningAndVotingStatus(dining, AttendanceVoteStatus.ATTEND))
             .willReturn(List.of(participant));
 
         // when
-        VotingStatus result = diningService.voteAttendance(userId, groupId, diningId, VotingStatus.ATTEND);
+        AttendanceVoteStatus result = diningService.voteAttendance(userId, groupId, diningId, AttendanceVoteStatus.ATTEND);
 
         // then
-        assertThat(result).isEqualTo(VotingStatus.ATTEND);
+        assertThat(result).isEqualTo(AttendanceVoteStatus.ATTEND);
         assertThat(dining.getDiningStatus()).isEqualTo(DiningStatus.RESTAURANT_VOTING);
     }
 
@@ -908,7 +908,7 @@ class DiningServiceTest {
         Group group = GroupFixture.create(groupId, "맛집탐방대");
         Dining dining = DiningFixture.create(diningId, group, DiningStatus.ATTENDANCE_VOTING);
         User user = UserFixture.create(userId);
-        DiningParticipant participant = DiningParticipantFixture.create(participantId, dining, user, VotingStatus.PENDING);
+        DiningParticipant participant = DiningParticipantFixture.create(participantId, dining, user, AttendanceVoteStatus.PENDING);
 
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
         given(diningParticipantRepository.findByDiningIdAndUserId(diningId, userId)).willReturn(Optional.of(participant));
@@ -916,10 +916,10 @@ class DiningServiceTest {
         given(diningParticipantRepository.countByDiningId(diningId)).willReturn(5);
 
         // when
-        VotingStatus result = diningService.voteAttendance(userId, groupId, diningId, VotingStatus.ATTEND);
+        AttendanceVoteStatus result = diningService.voteAttendance(userId, groupId, diningId, AttendanceVoteStatus.ATTEND);
 
         // then
-        assertThat(result).isEqualTo(VotingStatus.ATTEND);
+        assertThat(result).isEqualTo(AttendanceVoteStatus.ATTEND);
         assertThat(dining.getDiningStatus()).isEqualTo(DiningStatus.ATTENDANCE_VOTING);
     }
 
@@ -935,20 +935,20 @@ class DiningServiceTest {
         Group group = GroupFixture.create(groupId, "맛집탐방대");
         Dining dining = DiningFixture.create(diningId, group, DiningStatus.ATTENDANCE_VOTING);
         User user = UserFixture.create(userId);
-        DiningParticipant participant = DiningParticipantFixture.create(participantId, dining, user, VotingStatus.PENDING);
+        DiningParticipant participant = DiningParticipantFixture.create(participantId, dining, user, AttendanceVoteStatus.PENDING);
 
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
         given(diningParticipantRepository.findByDiningIdAndUserId(diningId, userId)).willReturn(Optional.of(participant));
         given(diningRepository.increaseAttendanceVoteDoneCount(diningId)).willReturn(1);
         given(diningParticipantRepository.countByDiningId(diningId)).willReturn(1);
-        given(diningParticipantRepository.findAllByDiningAndVotingStatus(dining, VotingStatus.ATTEND))
+        given(diningParticipantRepository.findAllByDiningAndVotingStatus(dining, AttendanceVoteStatus.ATTEND))
             .willReturn(List.of(participant));
 
         // when
-        VotingStatus result = diningService.voteAttendance(userId, groupId, diningId, VotingStatus.ATTEND);
+        AttendanceVoteStatus result = diningService.voteAttendance(userId, groupId, diningId, AttendanceVoteStatus.ATTEND);
 
         // then
-        assertThat(result).isEqualTo(VotingStatus.ATTEND);
+        assertThat(result).isEqualTo(AttendanceVoteStatus.ATTEND);
         assertThat(dining.getDiningStatus()).isEqualTo(DiningStatus.RESTAURANT_VOTING);
     }
 
@@ -966,7 +966,7 @@ class DiningServiceTest {
         User user = UserFixture.create(userId);
         RecommendRestaurant restaurant = RecommendRestaurantFixture.create(recommendRestaurantId, dining);
 
-        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(VoteStatus.LIKE);
+        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(RestaurantVoteStatus.LIKE);
 
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
@@ -981,7 +981,7 @@ class DiningServiceTest {
 
         // then
         assertThat(result.recommendRestaurantId()).isEqualTo(recommendRestaurantId);
-        assertThat(result.voteStatus()).isEqualTo(VoteStatus.LIKE);
+        assertThat(result.restaurantVoteStatus()).isEqualTo(RestaurantVoteStatus.LIKE);
 
         then(recommendRestaurantVoteRepository).should().save(any(RecommendRestaurantVote.class));
         then(recommendRestaurantRepository).should().increaseLikeCount(recommendRestaurantId);
@@ -1001,7 +1001,7 @@ class DiningServiceTest {
         User user = UserFixture.create(userId);
         RecommendRestaurant restaurant = RecommendRestaurantFixture.create(recommendRestaurantId, dining);
 
-        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(VoteStatus.DISLIKE);
+        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(RestaurantVoteStatus.DISLIKE);
 
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
@@ -1016,7 +1016,7 @@ class DiningServiceTest {
 
         // then
         assertThat(result.recommendRestaurantId()).isEqualTo(recommendRestaurantId);
-        assertThat(result.voteStatus()).isEqualTo(VoteStatus.DISLIKE);
+        assertThat(result.restaurantVoteStatus()).isEqualTo(RestaurantVoteStatus.DISLIKE);
 
         then(recommendRestaurantVoteRepository).should().save(any(RecommendRestaurantVote.class));
         then(recommendRestaurantRepository).should().increaseDislikeCount(recommendRestaurantId);
@@ -1036,9 +1036,9 @@ class DiningServiceTest {
         Dining dining = DiningFixture.create(diningId, group, DiningStatus.RESTAURANT_VOTING);
         User user = UserFixture.create(userId);
         RecommendRestaurant restaurant = RecommendRestaurantFixture.create(recommendRestaurantId, dining);
-        RecommendRestaurantVote existingVote = RecommendRestaurantVoteFixture.create(voteId, user, restaurant, VoteStatus.LIKE);
+        RecommendRestaurantVote existingVote = RecommendRestaurantVoteFixture.create(voteId, user, restaurant, RestaurantVoteStatus.LIKE);
 
-        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(VoteStatus.DISLIKE);
+        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(RestaurantVoteStatus.DISLIKE);
 
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
@@ -1052,8 +1052,8 @@ class DiningServiceTest {
 
         // then
         assertThat(result.recommendRestaurantId()).isEqualTo(recommendRestaurantId);
-        assertThat(result.voteStatus()).isEqualTo(VoteStatus.DISLIKE);
-        assertThat(existingVote.getStatus()).isEqualTo(VoteStatus.DISLIKE);
+        assertThat(result.restaurantVoteStatus()).isEqualTo(RestaurantVoteStatus.DISLIKE);
+        assertThat(existingVote.getStatus()).isEqualTo(RestaurantVoteStatus.DISLIKE);
 
         then(recommendRestaurantRepository).should().decreaseLikeCount(recommendRestaurantId);
         then(recommendRestaurantRepository).should().increaseDislikeCount(recommendRestaurantId);
@@ -1073,9 +1073,9 @@ class DiningServiceTest {
         Dining dining = DiningFixture.create(diningId, group, DiningStatus.RESTAURANT_VOTING);
         User user = UserFixture.create(userId);
         RecommendRestaurant restaurant = RecommendRestaurantFixture.create(recommendRestaurantId, dining);
-        RecommendRestaurantVote existingVote = RecommendRestaurantVoteFixture.create(voteId, user, restaurant, VoteStatus.DISLIKE);
+        RecommendRestaurantVote existingVote = RecommendRestaurantVoteFixture.create(voteId, user, restaurant, RestaurantVoteStatus.DISLIKE);
 
-        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(VoteStatus.LIKE);
+        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(RestaurantVoteStatus.LIKE);
 
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
@@ -1089,8 +1089,8 @@ class DiningServiceTest {
 
         // then
         assertThat(result.recommendRestaurantId()).isEqualTo(recommendRestaurantId);
-        assertThat(result.voteStatus()).isEqualTo(VoteStatus.LIKE);
-        assertThat(existingVote.getStatus()).isEqualTo(VoteStatus.LIKE);
+        assertThat(result.restaurantVoteStatus()).isEqualTo(RestaurantVoteStatus.LIKE);
+        assertThat(existingVote.getStatus()).isEqualTo(RestaurantVoteStatus.LIKE);
 
         then(recommendRestaurantRepository).should().decreaseDislikeCount(recommendRestaurantId);
         then(recommendRestaurantRepository).should().increaseLikeCount(recommendRestaurantId);
@@ -1105,15 +1105,15 @@ class DiningServiceTest {
         Long diningId = 200L;
         Long recommendRestaurantId = 400L;
         Long voteId = 500L;
-        VoteStatus voteStatus = VoteStatus.LIKE;
+        RestaurantVoteStatus restaurantVoteStatus = RestaurantVoteStatus.LIKE;
 
         Group group = GroupFixture.create(groupId, "맛집탐방대");
         Dining dining = DiningFixture.create(diningId, group, DiningStatus.RESTAURANT_VOTING);
         User user = UserFixture.create(userId);
         RecommendRestaurant restaurant = RecommendRestaurantFixture.create(recommendRestaurantId, dining);
-        RecommendRestaurantVote existingVote = RecommendRestaurantVoteFixture.create(voteId, user, restaurant, voteStatus);
+        RecommendRestaurantVote existingVote = RecommendRestaurantVoteFixture.create(voteId, user, restaurant, restaurantVoteStatus);
 
-        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(voteStatus);
+        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(restaurantVoteStatus);
 
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
@@ -1127,7 +1127,7 @@ class DiningServiceTest {
 
         // then
         assertThat(result.recommendRestaurantId()).isEqualTo(recommendRestaurantId);
-        assertThat(result.voteStatus()).isEqualTo(voteStatus);
+        assertThat(result.restaurantVoteStatus()).isEqualTo(restaurantVoteStatus);
 
         then(recommendRestaurantVoteRepository).should().delete(existingVote);
         then(recommendRestaurantRepository).should().decreaseLikeCount(recommendRestaurantId);
@@ -1143,15 +1143,15 @@ class DiningServiceTest {
         Long diningId = 200L;
         Long recommendRestaurantId = 400L;
         Long voteId = 500L;
-        VoteStatus voteStatus = VoteStatus.DISLIKE;
+        RestaurantVoteStatus restaurantVoteStatus = RestaurantVoteStatus.DISLIKE;
 
         Group group = GroupFixture.create(groupId, "맛집탐방대");
         Dining dining = DiningFixture.create(diningId, group, DiningStatus.RESTAURANT_VOTING);
         User user = UserFixture.create(userId);
         RecommendRestaurant restaurant = RecommendRestaurantFixture.create(recommendRestaurantId, dining);
-        RecommendRestaurantVote existingVote = RecommendRestaurantVoteFixture.create(voteId, user, restaurant, voteStatus);
+        RecommendRestaurantVote existingVote = RecommendRestaurantVoteFixture.create(voteId, user, restaurant, restaurantVoteStatus);
 
-        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(voteStatus);
+        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(restaurantVoteStatus);
 
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
@@ -1165,7 +1165,7 @@ class DiningServiceTest {
 
         // then
         assertThat(result.recommendRestaurantId()).isEqualTo(recommendRestaurantId);
-        assertThat(result.voteStatus()).isEqualTo(voteStatus);
+        assertThat(result.restaurantVoteStatus()).isEqualTo(restaurantVoteStatus);
 
         then(recommendRestaurantVoteRepository).should().delete(existingVote);
         then(recommendRestaurantRepository).should().decreaseDislikeCount(recommendRestaurantId);
@@ -1181,7 +1181,7 @@ class DiningServiceTest {
         Long diningId = 200L;
         Long recommendRestaurantId = 400L;
 
-        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(VoteStatus.LIKE);
+        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(RestaurantVoteStatus.LIKE);
 
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(false);
 
@@ -1205,7 +1205,7 @@ class DiningServiceTest {
         Group group = GroupFixture.create(groupId, "맛집탐방대");
         Dining dining = DiningFixture.create(diningId, group, DiningStatus.CONFIRMED);
 
-        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(VoteStatus.LIKE);
+        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(RestaurantVoteStatus.LIKE);
 
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
@@ -1227,7 +1227,7 @@ class DiningServiceTest {
         Long diningId = 999L;
         Long recommendRestaurantId = 400L;
 
-        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(VoteStatus.LIKE);
+        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(RestaurantVoteStatus.LIKE);
 
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findById(diningId)).willReturn(Optional.empty());
@@ -1251,7 +1251,7 @@ class DiningServiceTest {
         Dining dining = DiningFixture.create(diningId, group, DiningStatus.RESTAURANT_VOTING);
         User user = UserFixture.create(userId);
 
-        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(VoteStatus.LIKE);
+        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(RestaurantVoteStatus.LIKE);
 
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
@@ -1276,7 +1276,7 @@ class DiningServiceTest {
         Group group = GroupFixture.create(groupId, "맛집탐방대");
         Dining dining = DiningFixture.create(diningId, group, DiningStatus.ATTENDANCE_VOTING);
 
-        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(VoteStatus.LIKE);
+        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(RestaurantVoteStatus.LIKE);
 
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
@@ -1299,7 +1299,7 @@ class DiningServiceTest {
         Group group = GroupFixture.create(groupId, "맛집탐방대");
         Dining dining = DiningFixture.create(diningId, group, DiningStatus.COMPLETE);
 
-        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(VoteStatus.LIKE);
+        RestaurantVoteServiceRequest request = new RestaurantVoteServiceRequest(RestaurantVoteStatus.LIKE);
 
         given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
