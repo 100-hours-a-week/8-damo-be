@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum VotingStatus {
+public enum AttendanceVoteStatus {
     PENDING("투표 전"),
     NON_ATTEND("불참"),
     ATTEND("참석");

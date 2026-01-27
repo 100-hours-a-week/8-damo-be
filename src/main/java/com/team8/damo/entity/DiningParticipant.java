@@ -1,6 +1,6 @@
 package com.team8.damo.entity;
 
-import com.team8.damo.entity.enumeration.VotingStatus;
+import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -38,14 +38,14 @@ public class DiningParticipant {
 
     @Enumerated(STRING)
     @Column(name = "voting_status", nullable = false, length = 20)
-    private VotingStatus votingStatus;
+    private AttendanceVoteStatus attendanceVoteStatus;
 
     @Builder
-    public DiningParticipant(Long id, Dining dining, User user, VotingStatus votingStatus) {
+    public DiningParticipant(Long id, Dining dining, User user, AttendanceVoteStatus attendanceVoteStatus) {
         this.id = id;
         this.dining = dining;
         this.user = user;
-        this.votingStatus = votingStatus;
+        this.attendanceVoteStatus = attendanceVoteStatus;
     }
 
     public static DiningParticipant createPendingParticipant(Long id, Dining dining, User user) {
@@ -53,12 +53,12 @@ public class DiningParticipant {
             .id(id)
             .dining(dining)
             .user(user)
-            .votingStatus(VotingStatus.PENDING)
+            .attendanceVoteStatus(AttendanceVoteStatus.PENDING)
             .build();
     }
 
-    public void updateVotingStatus(VotingStatus votingStatus) {
-        this.votingStatus = votingStatus;
+    public void updateVotingStatus(AttendanceVoteStatus attendanceVoteStatus) {
+        this.attendanceVoteStatus = attendanceVoteStatus;
     }
 
     @Override

@@ -4,8 +4,8 @@ import com.team8.damo.controller.request.AttendanceVoteRequest;
 import com.team8.damo.controller.request.DiningCreateRequest;
 import com.team8.damo.controller.request.RestaurantVoteRequest;
 import com.team8.damo.controller.response.BaseResponse;
+import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
 import com.team8.damo.entity.enumeration.DiningStatus;
-import com.team8.damo.entity.enumeration.VotingStatus;
 import com.team8.damo.security.jwt.JwtUserDetails;
 import com.team8.damo.service.response.DiningResponse;
 import com.team8.damo.service.response.RestaurantVoteResponse;
@@ -83,7 +83,7 @@ public interface DiningControllerDocs {
         summary = "회식 참석/불참석 투표",
         description = """
             ### 회식 참석/불참석을 투표합니다.
-            - votingStatus: ATTEND(참석), NON_ATTEND(불참)
+            - attendanceVoteStatus: ATTEND(참석), NON_ATTEND(불참)
 
             **투표 조건**:
             - 해당 회식의 참여자만 투표할 수 있습니다.
@@ -93,7 +93,7 @@ public interface DiningControllerDocs {
     )
     @ApiResponse(responseCode = "200", description = "성공")
     @ApiErrorResponses({NO_VOTE_PERMISSION, DINING_NOT_FOUND, ATTENDANCE_VOTING_CLOSED, INVALID_VOTE_STATUS, ATTENDANCE_VOTE_ALREADY_COMPLETED})
-    BaseResponse<VotingStatus> voteAttendance(
+    BaseResponse<AttendanceVoteStatus> voteAttendance(
         @Parameter(hidden = true)
         JwtUserDetails user,
         @Parameter(description = "그룹 ID", required = true)
@@ -107,17 +107,17 @@ public interface DiningControllerDocs {
         summary = "추천 식당 투표",
         description = """
             ### 추천 식당에 대해 좋아요/싫어요 투표를 합니다.
-            - voteStatus: LIKE(추천), DISLIKE(비추천)
+            - restaurantVoteStatus: LIKE(추천), DISLIKE(비추천)
 
             **투표 조건**:
             - 해당 그룹의 멤버만 투표할 수 있습니다.
             - 회식 상태가 RESTAURANT_VOTING(식당 투표 중)일 때만 투표 가능합니다.
 
             **투표 변경 로직**:
-            - 새 투표: 해당 상태로 투표 생성, count 증가
-            - LIKE → DISLIKE: likeCount 감소, dislikeCount 증가
-            - DISLIKE → LIKE: dislikeCount 감소, likeCount 증가
-            - 같은 투표 시도 시: 투표 삭제, count 감소 (응답의 voteStatus는 요청한 voteStatus와 동일)
+            - 새 투표: 해당 상태로 투표 생성, count 증가, 요청 보낸 상태와 동일한 상태 반환
+            - LIKE → DISLIKE: likeCount 감소, dislikeCount 증가 (DISLIKE 반환)
+            - DISLIKE → LIKE: dislikeCount 감소, likeCount 증가  (LIKE 반환)
+            - 같은 투표 시도 시: 투표 삭제, count 감소 (NONE 반환)
             """
     )
     @ApiResponse(responseCode = "201", description = "투표 성공")

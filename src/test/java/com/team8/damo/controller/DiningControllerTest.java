@@ -1,7 +1,7 @@
 package com.team8.damo.controller;
 
+import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
 import com.team8.damo.entity.enumeration.DiningStatus;
-import com.team8.damo.entity.enumeration.VotingStatus;
 import com.team8.damo.service.DiningService;
 import com.team8.damo.service.response.DiningResponse;
 import jakarta.validation.Validation;
@@ -412,12 +412,12 @@ class DiningControllerTest {
         Long diningId = 200L;
         String requestBody = """
             {
-                "votingStatus": "ATTEND"
+                "attendanceVoteStatus": "ATTEND"
             }
             """;
 
-        given(diningService.voteAttendance(any(), eq(groupId), eq(diningId), eq(VotingStatus.ATTEND)))
-            .willReturn(VotingStatus.ATTEND);
+        given(diningService.voteAttendance(any(), eq(groupId), eq(diningId), eq(AttendanceVoteStatus.ATTEND)))
+            .willReturn(AttendanceVoteStatus.ATTEND);
 
         // when // then
         mockMvc.perform(
@@ -429,7 +429,7 @@ class DiningControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data").value("ATTEND"));
 
-        then(diningService).should().voteAttendance(any(), eq(groupId), eq(diningId), eq(VotingStatus.ATTEND));
+        then(diningService).should().voteAttendance(any(), eq(groupId), eq(diningId), eq(AttendanceVoteStatus.ATTEND));
     }
 
     @Test
@@ -440,12 +440,12 @@ class DiningControllerTest {
         Long diningId = 200L;
         String requestBody = """
             {
-                "votingStatus": "NON_ATTEND"
+                "attendanceVoteStatus": "NON_ATTEND"
             }
             """;
 
-        given(diningService.voteAttendance(any(), eq(groupId), eq(diningId), eq(VotingStatus.NON_ATTEND)))
-            .willReturn(VotingStatus.NON_ATTEND);
+        given(diningService.voteAttendance(any(), eq(groupId), eq(diningId), eq(AttendanceVoteStatus.NON_ATTEND)))
+            .willReturn(AttendanceVoteStatus.NON_ATTEND);
 
         // when // then
         mockMvc.perform(
@@ -457,7 +457,7 @@ class DiningControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data").value("NON_ATTEND"));
 
-        then(diningService).should().voteAttendance(any(), eq(groupId), eq(diningId), eq(VotingStatus.NON_ATTEND));
+        then(diningService).should().voteAttendance(any(), eq(groupId), eq(diningId), eq(AttendanceVoteStatus.NON_ATTEND));
     }
 
     @Test
@@ -468,7 +468,7 @@ class DiningControllerTest {
         Long diningId = 200L;
         String requestBody = """
             {
-                "votingStatus": null
+                "attendanceVoteStatus": null
             }
             """;
 
@@ -492,7 +492,7 @@ class DiningControllerTest {
         Long diningId = 200L;
         String requestBody = """
             {
-                "votingStatus": "PENDING"
+                "attendanceVoteStatus": "PENDING"
             }
             """;
 
@@ -516,7 +516,7 @@ class DiningControllerTest {
         Long diningId = 200L;
         String requestBody = """
             {
-                "votingStatus": "INVALID_STATUS"
+                "attendanceVoteStatus": "INVALID_STATUS"
             }
             """;
 

@@ -6,7 +6,7 @@ import com.team8.damo.controller.request.DiningCreateRequest;
 import com.team8.damo.controller.request.RestaurantVoteRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.entity.enumeration.DiningStatus;
-import com.team8.damo.entity.enumeration.VotingStatus;
+import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
 import com.team8.damo.security.jwt.JwtUserDetails;
 import com.team8.damo.service.DiningService;
 import com.team8.damo.service.response.DiningResponse;
@@ -52,14 +52,14 @@ public class DiningController implements DiningControllerDocs {
 
     @Override
     @PatchMapping("/groups/{groupId}/dining/{diningId}/attendance-vote")
-    public BaseResponse<VotingStatus> voteAttendance(
+    public BaseResponse<AttendanceVoteStatus> voteAttendance(
         @AuthenticationPrincipal JwtUserDetails user,
         @PathVariable Long groupId,
         @PathVariable Long diningId,
         @Valid @RequestBody AttendanceVoteRequest request
     ) {
         return BaseResponse.ok(
-            diningService.voteAttendance(user.getUserId(), groupId, diningId, request.getVotingStatus())
+            diningService.voteAttendance(user.getUserId(), groupId, diningId, request.getAttendanceVoteStatus())
         );
     }
 

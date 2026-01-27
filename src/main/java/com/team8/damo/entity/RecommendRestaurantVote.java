@@ -1,6 +1,6 @@
 package com.team8.damo.entity;
 
-import com.team8.damo.entity.enumeration.VoteStatus;
+import com.team8.damo.entity.enumeration.RestaurantVoteStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -38,17 +38,17 @@ public class RecommendRestaurantVote {
 
     @Enumerated(STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private VoteStatus status;
+    private RestaurantVoteStatus status;
 
     @Builder
-    public RecommendRestaurantVote(Long id, User user, RecommendRestaurant recommendRestaurant, VoteStatus status) {
+    public RecommendRestaurantVote(Long id, User user, RecommendRestaurant recommendRestaurant, RestaurantVoteStatus status) {
         this.id = id;
         this.user = user;
         this.recommendRestaurant = recommendRestaurant;
         this.status = status;
     }
 
-    public void changeStatus(VoteStatus status) {
+    public void changeStatus(RestaurantVoteStatus status) {
         this.status = status;
     }
 
