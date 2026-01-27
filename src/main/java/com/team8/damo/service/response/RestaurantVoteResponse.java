@@ -4,9 +4,9 @@ import com.team8.damo.entity.enumeration.RestaurantVoteStatus;
 
 public record RestaurantVoteResponse(
     Long recommendRestaurantId,
-    RestaurantVoteStatus restaurantVoteStatus
+    String restaurantVoteStatus
 ) {
-    public static RestaurantVoteResponse of(Long id, RestaurantVoteStatus status) {
+    public static RestaurantVoteResponse of(Long id, String status) {
         return new RestaurantVoteResponse(id, status);
     }
 }

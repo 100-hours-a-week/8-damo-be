@@ -2,10 +2,10 @@ package com.team8.damo.service;
 
 import com.team8.damo.client.AiService;
 import com.team8.damo.entity.*;
+import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
 import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.entity.enumeration.GroupRole;
-import com.team8.damo.entity.enumeration.VoteStatus;
-import com.team8.damo.entity.enumeration.VotingStatus;
+import com.team8.damo.entity.enumeration.RestaurantVoteStatus;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.DiningCreateServiceRequest;
@@ -21,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.team8.damo.exception.errorcode.ErrorCode.*;
@@ -31,6 +30,7 @@ import static com.team8.damo.exception.errorcode.ErrorCode.*;
 @Transactional(readOnly = true)
 public class DiningService {
 
+    private static final String VOTE_CANCELLED = "NONE";
     private static final int MAX_INCOMPLETE_DINING_COUNT = 3;
 
     private final Snowflake snowflake;
@@ -85,7 +85,7 @@ public class DiningService {
             .map(Dining::getId)
             .toList();
 
-        Map<Long, Long> countMap = createAttendCountingMap(diningIds, VotingStatus.ATTEND);
+        Map<Long, Long> countMap = createAttendCountingMap(diningIds, AttendanceVoteStatus.ATTEND);
 
         return dinings.stream()
             .map(dining -> DiningResponse.of(dining, countMap.getOrDefault(dining.getId(), 0L)))
@@ -93,7 +93,7 @@ public class DiningService {
     }
 
     @Transactional
-    public VotingStatus voteAttendance(Long userId, Long groupId, Long diningId, VotingStatus votingStatus) {
+    public AttendanceVoteStatus voteAttendance(Long userId, Long groupId, Long diningId, AttendanceVoteStatus attendanceVoteStatus) {
         Dining dining = findDiningBy(diningId);
 
         if (dining.getDiningStatus().isNotAttendanceVoting()) {
@@ -102,18 +102,18 @@ public class DiningService {
 
         DiningParticipant participant = findParticipantBy(diningId, userId);
 
-        if (participant.getVotingStatus().isNotPending()) {
+        if (participant.getAttendanceVoteStatus().isNotPending()) {
             throw new CustomException(ATTENDANCE_VOTE_ALREADY_COMPLETED);
         }
 
-        participant.updateVotingStatus(votingStatus);
+        participant.updateVotingStatus(attendanceVoteStatus);
 
         int votedCount = diningRepository.increaseAttendanceVoteDoneCount(diningId);
 
         triggerRestaurantRecommendation(groupId, dining, votedCount);
         // 투표 진척도를 그룹원들에게 전송하는 sse 구현
 
-        return participant.getVotingStatus();
+        return participant.getAttendanceVoteStatus();
     }
 
     private void triggerRestaurantRecommendation(Long groupId, Dining dining, int votedCount) {
@@ -129,7 +129,7 @@ public class DiningService {
     }
 
     private List<Long> createAttendParticipantIds(Dining dining) {
-        List<DiningParticipant> attendParticipants = diningParticipantRepository.findAllByDiningAndVotingStatus(dining, VotingStatus.ATTEND);
+        List<DiningParticipant> attendParticipants = diningParticipantRepository.findAllByDiningAndVotingStatus(dining, AttendanceVoteStatus.ATTEND);
         return attendParticipants.stream()
             .map(participant -> participant.getUser().getId())
             .toList();
@@ -161,8 +161,8 @@ public class DiningService {
         }
     }
 
-    private Map<Long, Long> createAttendCountingMap(List<Long> diningIds, VotingStatus votingStatus) {
-        return diningParticipantRepository.findByDiningIdInAndVotingStatus(diningIds, votingStatus)
+    private Map<Long, Long> createAttendCountingMap(List<Long> diningIds, AttendanceVoteStatus attendanceVoteStatus) {
+        return diningParticipantRepository.findByDiningIdInAndVotingStatus(diningIds, attendanceVoteStatus)
             .stream()
             .collect(Collectors.groupingBy(
                 dp -> dp.getDining().getId(),
@@ -211,50 +211,45 @@ public class DiningService {
         User user = findUserBy(userId);
         RecommendRestaurant restaurant = findRecommendRestaurantBy(recommendRestaurantId);
 
-        VoteStatus newStatus = request.voteStatus();
-        Optional<RecommendRestaurantVote> existingVote =
-            recommendRestaurantVoteRepository.findByUserIdAndRecommendRestaurantId(userId, recommendRestaurantId);
+        RestaurantVoteStatus newStatus = request.restaurantVoteStatus();
 
-        if (existingVote.isPresent()) {
-            RecommendRestaurantVote vote = existingVote.get();
-            VoteStatus oldStatus = vote.getStatus();
+        String resultStatus = recommendRestaurantVoteRepository
+            .findByUserIdAndRecommendRestaurantId(userId, recommendRestaurantId)
+            .map(previousVote -> handlePreviousVote(previousVote, newStatus, recommendRestaurantId))
+            .orElseGet(() -> createNewVote(user, restaurant, newStatus));
 
-            if (oldStatus == newStatus) {
-                // 동일한 투표 상태이면 투표 삭제
-                recommendRestaurantVoteRepository.delete(vote);
-                if (oldStatus == VoteStatus.LIKE) {
-                    recommendRestaurantRepository.decreaseLikeCount(recommendRestaurantId);
-                } else {
-                    recommendRestaurantRepository.decreaseDislikeCount(recommendRestaurantId);
-                }
-                return RestaurantVoteResponse.of(recommendRestaurantId, newStatus);
-            }
+        return RestaurantVoteResponse.of(recommendRestaurantId, resultStatus);
+    }
 
-            // 다른 투표 상태이면 변경
-            if (oldStatus == VoteStatus.LIKE) {
-                recommendRestaurantRepository.decreaseLikeCount(recommendRestaurantId);
-            } else {
-                recommendRestaurantRepository.decreaseDislikeCount(recommendRestaurantId);
-            }
+    private String handlePreviousVote(
+        RecommendRestaurantVote previousVote,
+        RestaurantVoteStatus newStatus,
+        Long recommendRestaurantId
+    ) {
+        RestaurantVoteStatus previousStatus = previousVote.getStatus();
 
-            vote.changeStatus(newStatus);
-        } else {
-            RecommendRestaurantVote newVote = RecommendRestaurantVote.builder()
-                .id(snowflake.nextId())
-                .user(user)
-                .recommendRestaurant(restaurant)
-                .status(newStatus)
-                .build();
-            recommendRestaurantVoteRepository.save(newVote);
+        if (previousStatus == newStatus) {
+            recommendRestaurantVoteRepository.delete(previousVote);
+            previousStatus.decreaseCount(recommendRestaurantId, recommendRestaurantRepository);
+            return VOTE_CANCELLED;
         }
 
-        if (newStatus == VoteStatus.LIKE) {
-            recommendRestaurantRepository.increaseLikeCount(recommendRestaurantId);
-        } else {
-            recommendRestaurantRepository.increaseDislikeCount(recommendRestaurantId);
-        }
+        previousStatus.decreaseCount(recommendRestaurantId, recommendRestaurantRepository);
+        newStatus.increaseCount(recommendRestaurantId, recommendRestaurantRepository);
+        previousVote.changeStatus(newStatus);
+        return newStatus.name();
+    }
 
-        return RestaurantVoteResponse.of(recommendRestaurantId, newStatus);
+    private String createNewVote(User user, RecommendRestaurant restaurant, RestaurantVoteStatus newStatus) {
+        RecommendRestaurantVote newVote = RecommendRestaurantVote.builder()
+            .id(snowflake.nextId())
+            .user(user)
+            .recommendRestaurant(restaurant)
+            .status(newStatus)
+            .build();
+        recommendRestaurantVoteRepository.save(newVote);
+        newStatus.increaseCount(restaurant.getId(), recommendRestaurantRepository);
+        return newStatus.name();
     }
 
     private RecommendRestaurant findRecommendRestaurantBy(Long id) {
