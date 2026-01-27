@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 public enum DiningStatus {
     ATTENDANCE_VOTING("참석 투표 중"),
     RESTAURANT_VOTING("식당 투표 중"),
+    RECOMMENDATION_PENDING("장소 추천 대기 중"),
     CONFIRMED("회식 확정"),
     COMPLETE("회식 완료");
 

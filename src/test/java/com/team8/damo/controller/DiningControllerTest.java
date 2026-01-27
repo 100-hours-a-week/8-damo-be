@@ -3,6 +3,8 @@ package com.team8.damo.controller;
 import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
 import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.service.DiningService;
+import com.team8.damo.service.response.DiningDetailResponse;
+import com.team8.damo.service.response.DiningParticipantResponse;
 import com.team8.damo.service.response.DiningResponse;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -550,5 +552,73 @@ class DiningControllerTest {
             .andExpect(status().isBadRequest());
 
         then(diningService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("회식 상세를 성공적으로 조회한다.")
+    void getDiningDetail_success() throws Exception {
+        // given
+        Long groupId = 100L;
+        Long diningId = 200L;
+
+        DiningDetailResponse response = new DiningDetailResponse(
+            true,
+            LocalDateTime.of(2025, 12, 25, 18, 0),
+            DiningStatus.RESTAURANT_VOTING,
+            List.of(
+                new DiningParticipantResponse(1L, "김철수"),
+                new DiningParticipantResponse(2L, "이영희")
+            )
+        );
+
+        given(diningService.getDiningDetail(any(), eq(groupId), eq(diningId))).willReturn(response);
+
+        // when // then
+        mockMvc.perform(
+                get("/api/v1/groups/{groupId}/dining/{diningId}", groupId, diningId)
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.isGroupLeader").value(true))
+            .andExpect(jsonPath("$.data.diningDate").value("2025-12-25 18:00"))
+            .andExpect(jsonPath("$.data.diningStatus").value("RESTAURANT_VOTING"))
+            .andExpect(jsonPath("$.data.diningParticipants").isArray())
+            .andExpect(jsonPath("$.data.diningParticipants.length()").value(2))
+            .andExpect(jsonPath("$.data.diningParticipants[0].userId").value(1))
+            .andExpect(jsonPath("$.data.diningParticipants[0].nickname").value("김철수"));
+
+        then(diningService).should().getDiningDetail(any(), eq(groupId), eq(diningId));
+    }
+
+    @Test
+    @DisplayName("참석자가 없는 회식 상세를 조회한다.")
+    void getDiningDetail_withEmptyParticipants() throws Exception {
+        // given
+        Long groupId = 100L;
+        Long diningId = 200L;
+
+        DiningDetailResponse response = new DiningDetailResponse(
+            false,
+            LocalDateTime.of(2025, 12, 25, 18, 0),
+            DiningStatus.ATTENDANCE_VOTING,
+            List.of()
+        );
+
+        given(diningService.getDiningDetail(any(), eq(groupId), eq(diningId))).willReturn(response);
+
+        // when // then
+        mockMvc.perform(
+                get("/api/v1/groups/{groupId}/dining/{diningId}", groupId, diningId)
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.isGroupLeader").value(false))
+            .andExpect(jsonPath("$.data.diningStatus").value("ATTENDANCE_VOTING"))
+            .andExpect(jsonPath("$.data.diningParticipants").isArray())
+            .andExpect(jsonPath("$.data.diningParticipants.length()").value(0));
+
+        then(diningService).should().getDiningDetail(any(), eq(groupId), eq(diningId));
     }
 }
