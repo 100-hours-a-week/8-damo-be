@@ -981,7 +981,7 @@ class DiningServiceTest {
 
         // then
         assertThat(result.recommendRestaurantId()).isEqualTo(recommendRestaurantId);
-        assertThat(result.restaurantVoteStatus()).isEqualTo(RestaurantVoteStatus.LIKE);
+        assertThat(result.restaurantVoteStatus()).isEqualTo("LIKE");
 
         then(recommendRestaurantVoteRepository).should().save(any(RecommendRestaurantVote.class));
         then(recommendRestaurantRepository).should().increaseLikeCount(recommendRestaurantId);
@@ -1016,7 +1016,7 @@ class DiningServiceTest {
 
         // then
         assertThat(result.recommendRestaurantId()).isEqualTo(recommendRestaurantId);
-        assertThat(result.restaurantVoteStatus()).isEqualTo(RestaurantVoteStatus.DISLIKE);
+        assertThat(result.restaurantVoteStatus()).isEqualTo("DISLIKE");
 
         then(recommendRestaurantVoteRepository).should().save(any(RecommendRestaurantVote.class));
         then(recommendRestaurantRepository).should().increaseDislikeCount(recommendRestaurantId);
@@ -1052,7 +1052,7 @@ class DiningServiceTest {
 
         // then
         assertThat(result.recommendRestaurantId()).isEqualTo(recommendRestaurantId);
-        assertThat(result.restaurantVoteStatus()).isEqualTo(RestaurantVoteStatus.DISLIKE);
+        assertThat(result.restaurantVoteStatus()).isEqualTo("DISLIKE");
         assertThat(existingVote.getStatus()).isEqualTo(RestaurantVoteStatus.DISLIKE);
 
         then(recommendRestaurantRepository).should().decreaseLikeCount(recommendRestaurantId);
@@ -1089,7 +1089,7 @@ class DiningServiceTest {
 
         // then
         assertThat(result.recommendRestaurantId()).isEqualTo(recommendRestaurantId);
-        assertThat(result.restaurantVoteStatus()).isEqualTo(RestaurantVoteStatus.LIKE);
+        assertThat(result.restaurantVoteStatus()).isEqualTo("LIKE");
         assertThat(existingVote.getStatus()).isEqualTo(RestaurantVoteStatus.LIKE);
 
         then(recommendRestaurantRepository).should().decreaseDislikeCount(recommendRestaurantId);
@@ -1127,7 +1127,7 @@ class DiningServiceTest {
 
         // then
         assertThat(result.recommendRestaurantId()).isEqualTo(recommendRestaurantId);
-        assertThat(result.restaurantVoteStatus()).isEqualTo(restaurantVoteStatus);
+        assertThat(result.restaurantVoteStatus()).isEqualTo("NONE");
 
         then(recommendRestaurantVoteRepository).should().delete(existingVote);
         then(recommendRestaurantRepository).should().decreaseLikeCount(recommendRestaurantId);
@@ -1165,7 +1165,7 @@ class DiningServiceTest {
 
         // then
         assertThat(result.recommendRestaurantId()).isEqualTo(recommendRestaurantId);
-        assertThat(result.restaurantVoteStatus()).isEqualTo(restaurantVoteStatus);
+        assertThat(result.restaurantVoteStatus()).isEqualTo("NONE");
 
         then(recommendRestaurantVoteRepository).should().delete(existingVote);
         then(recommendRestaurantRepository).should().decreaseDislikeCount(recommendRestaurantId);
