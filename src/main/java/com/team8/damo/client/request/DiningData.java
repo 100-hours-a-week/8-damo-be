@@ -6,6 +6,8 @@ public record DiningData(
     Long diningId,
     Long groupsId,
     LocalDateTime diningDate,
-    Integer budget
+    Integer budget,
+    String x,
+    String y
 ) {
 }
