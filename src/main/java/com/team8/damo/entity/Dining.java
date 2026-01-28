@@ -60,6 +60,10 @@ public class Dining extends BaseTimeEntity {
         this.diningStatus = DiningStatus.RESTAURANT_VOTING;
     }
 
+    public void changeRecommendationCount(Integer count) {
+        this.recommendationCount = count;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

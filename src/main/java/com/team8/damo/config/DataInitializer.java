@@ -286,13 +286,21 @@ public class DataInitializer implements ApplicationRunner {
         // Update attendanceVoteDoneCount (all 10 voted)
         diningRepository.setAttendanceVoteDoneCount(dining.getId(), MEMBERS_PER_GROUP);
 
+        List<String> recommendationRestaurantIds = List.of(
+            "6976b54010e1fa815903d4ce",
+            "6976b57f10e1fa815903d4cf",
+            "6976b58610e1fa815903d4d0",
+            "6976b8b9fb8d6fe1764695b6",
+            "6976b8bafb8d6fe1764695b7"
+        );
+
         // Create 5 recommended restaurants
         List<RecommendRestaurant> restaurants = new ArrayList<>();
         for (int i = 1; i <= RESTAURANTS_PER_DINING; i++) {
             RecommendRestaurant restaurant = RecommendRestaurant.builder()
                 .id(snowflake.nextId())
                 .dining(dining)
-                .restaurantId(String.valueOf(snowflake.nextId()))
+                .restaurantId(recommendationRestaurantIds.get(i - 1))
                 .confirmedStatus(false)
                 .likeCount(0)
                 .dislikeCount(0)
