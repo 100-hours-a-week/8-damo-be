@@ -369,7 +369,7 @@ public class DiningService {
             throw new CustomException(RECOMMEND_RESTAURANT_ALREADY_CONFIRMED);
         }
 
-        if (recommendRestaurantRepository.existsByDiningIdAndRecommendationCountAndConfirmedTrue(diningId, dining.getRecommendationCount())) {
+        if (recommendRestaurantRepository.existsByDiningIdAndRecommendationCountAndConfirmedStatusTrue(diningId, dining.getRecommendationCount())) {
             throw new CustomException(ANOTHER_RESTAURANT_ALREADY_CONFIRMED);
         }
 
