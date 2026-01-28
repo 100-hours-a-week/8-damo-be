@@ -34,6 +34,8 @@ public class AiService {
 
         List<RecommendRestaurant> recommendRestaurants = createRecommendRestaurantsBy(dining, recommendation);
         recommendRestaurantRepository.saveAll(recommendRestaurants);
+
+        dining.changeRecommendationCount(recommendation.recommendationCount());
     }
 
     private List<RecommendRestaurant> createRecommendRestaurantsBy(Dining dining, AiRecommendationResponse recommendation) {
@@ -44,6 +46,7 @@ public class AiService {
                 .dining(dining)
                 .point(0)
                 .reasoningDescription(recommendedItem.reasoningDescription())
+                .recommendationCount(recommendation.recommendationCount())
                 .build()
             )
             .toList();

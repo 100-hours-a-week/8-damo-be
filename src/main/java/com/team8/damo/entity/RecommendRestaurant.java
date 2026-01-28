@@ -42,8 +42,11 @@ public class RecommendRestaurant extends BaseTimeEntity {
     @Column(name = "reasoning_description", nullable = false, length = 500)
     private String reasoningDescription;
 
+    @Column(name = "recommendation_count")
+    private Integer recommendationCount;
+
     @Builder
-    public RecommendRestaurant(Long id, Dining dining, String restaurantId, Boolean confirmedStatus, Integer likeCount, Integer dislikeCount, Integer point, String reasoningDescription) {
+    public RecommendRestaurant(Long id, Dining dining, String restaurantId, Boolean confirmedStatus, Integer likeCount, Integer dislikeCount, Integer point, String reasoningDescription,  Integer recommendationCount) {
         this.id = id;
         this.dining = dining;
         this.restaurantId = restaurantId;
@@ -52,6 +55,7 @@ public class RecommendRestaurant extends BaseTimeEntity {
         this.dislikeCount = dislikeCount != null ? dislikeCount : 0;
         this.point = point;
         this.reasoningDescription = reasoningDescription;
+        this.recommendationCount = recommendationCount;
     }
 
     @Override

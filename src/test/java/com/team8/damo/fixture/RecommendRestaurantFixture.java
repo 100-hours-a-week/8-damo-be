@@ -30,4 +30,39 @@ public class RecommendRestaurantFixture {
             .reasoningDescription("AI가 추천한 식당입니다.")
             .build();
     }
+
+    public static RecommendRestaurant create(Long id, Dining dining, String restaurantId, Integer recommendationCount) {
+        return RecommendRestaurant.builder()
+            .id(id)
+            .dining(dining)
+            .restaurantId(restaurantId)
+            .confirmedStatus(false)
+            .likeCount(0)
+            .dislikeCount(0)
+            .point(85)
+            .reasoningDescription("AI가 추천한 식당입니다.")
+            .recommendationCount(recommendationCount)
+            .build();
+    }
+
+    public static RecommendRestaurant create(
+        Long id,
+        Dining dining,
+        String restaurantId,
+        Integer recommendationCount,
+        Integer likeCount,
+        Integer dislikeCount
+    ) {
+        return RecommendRestaurant.builder()
+            .id(id)
+            .dining(dining)
+            .restaurantId(restaurantId)
+            .confirmedStatus(false)
+            .likeCount(likeCount)
+            .dislikeCount(dislikeCount)
+            .point(85)
+            .reasoningDescription("AI가 추천한 식당입니다.")
+            .recommendationCount(recommendationCount)
+            .build();
+    }
 }

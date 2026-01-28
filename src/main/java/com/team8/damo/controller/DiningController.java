@@ -12,6 +12,7 @@ import com.team8.damo.service.DiningService;
 import com.team8.damo.service.response.AttendanceVoteDetailResponse;
 import com.team8.damo.service.response.DiningDetailResponse;
 import com.team8.damo.service.response.DiningResponse;
+import com.team8.damo.service.response.RestaurantVoteDetailResponse;
 import com.team8.damo.service.response.RestaurantVoteResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -103,6 +104,18 @@ public class DiningController implements DiningControllerDocs {
                 user.getUserId(), groupId, diningId,
                 recommendRestaurantsId, request.toServiceRequest()
             )
+        );
+    }
+
+    @Override
+    @GetMapping("/groups/{groupId}/dining/{diningId}/restaurant-vote")
+    public BaseResponse<List<RestaurantVoteDetailResponse>> getRestaurantVoteDetail(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @PathVariable Long groupId,
+        @PathVariable Long diningId
+    ) {
+        return BaseResponse.ok(
+            diningService.getRestaurantVoteDetail(user.getUserId(), groupId, diningId)
         );
     }
 }

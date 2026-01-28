@@ -10,6 +10,7 @@ import com.team8.damo.security.jwt.JwtUserDetails;
 import com.team8.damo.service.response.AttendanceVoteDetailResponse;
 import com.team8.damo.service.response.DiningDetailResponse;
 import com.team8.damo.service.response.DiningResponse;
+import com.team8.damo.service.response.RestaurantVoteDetailResponse;
 import com.team8.damo.service.response.RestaurantVoteResponse;
 import com.team8.damo.swagger.annotation.ApiErrorResponses;
 
@@ -188,5 +189,35 @@ public interface DiningControllerDocs {
         @Parameter(description = "추천 식당 ID", required = true)
         Long recommendRestaurantsId,
         RestaurantVoteRequest request
+    );
+
+    @Operation(
+        summary = "회식 상세 조회(장소 투표)",
+        description = """
+            ### 특정 회식의 장소 투표 현황을 조회합니다.
+
+            **응답 정보**:
+            - recommendRestaurantsId: 추천 식당 ID
+            - restaurantsName: 식당 이름
+            - reasoningDescription: AI 추천 이유
+            - restaurantVoteStatus: 요청자의 투표 상태 (LIKE/DISLIKE/NONE)
+            - phoneNumber: 식당 전화번호
+            - latitude: 위도
+            - longitude: 경도
+            - likeCount: 추천 수
+            - dislikeCount: 비추천 수
+
+            **접근 권한**: 해당 그룹의 그룹원만 조회 가능
+            """
+    )
+    @ApiResponse(responseCode = "200", description = "성공")
+    @ApiErrorResponses({USER_NOT_GROUP_MEMBER, DINING_NOT_FOUND, NO_VOTE_PERMISSION})
+    BaseResponse<List<RestaurantVoteDetailResponse>> getRestaurantVoteDetail(
+        @Parameter(hidden = true)
+        JwtUserDetails user,
+        @Parameter(description = "그룹 ID", required = true)
+        Long groupId,
+        @Parameter(description = "회식 ID", required = true)
+        Long diningId
     );
 }

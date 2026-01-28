@@ -6,7 +6,11 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 public interface RecommendRestaurantRepository extends JpaRepository<RecommendRestaurant, Long> {
+
+    List<RecommendRestaurant> findByDiningIdAndRecommendationCount(Long diningId, Integer recommendationCount);
 
     @Modifying(flushAutomatically = true)
     @Query("update RecommendRestaurant r set r.likeCount = r.likeCount + 1 where r.id = :id")
