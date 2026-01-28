@@ -46,4 +46,22 @@ public class DiningFixture {
             .diningStatus(DiningStatus.ATTENDANCE_VOTING)
             .build();
     }
+
+    public static Dining createWithRecommendationCount(
+        Long id,
+        Group group,
+        DiningStatus status,
+        Integer recommendationCount
+    ) {
+        Dining dining = Dining.builder()
+            .id(id)
+            .group(group)
+            .diningDate(LocalDateTime.of(2025, 12, 25, 18, 0))
+            .voteDueDate(LocalDateTime.of(2025, 12, 20, 23, 59))
+            .budget(30000)
+            .diningStatus(status)
+            .build();
+        dining.changeRecommendationCount(recommendationCount);
+        return dining;
+    }
 }
