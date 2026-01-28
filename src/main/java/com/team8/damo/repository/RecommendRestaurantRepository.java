@@ -7,10 +7,20 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface RecommendRestaurantRepository extends JpaRepository<RecommendRestaurant, Long> {
 
     List<RecommendRestaurant> findByDiningIdAndRecommendationCount(Long diningId, Integer recommendationCount);
+
+    @Query("select rr from RecommendRestaurant rr " +
+        "where rr.dining.id = :diningId " +
+        "and rr.recommendationCount = :recommendationCount " +
+        "and rr.confirmedStatus = true")
+    Optional<RecommendRestaurant> findConfirmedRecommendRestaurant(
+        Long diningId,
+        Integer recommendationCount
+    );
 
     @Modifying(flushAutomatically = true)
     @Query("update RecommendRestaurant r set r.likeCount = r.likeCount + 1 where r.id = :id")

@@ -22,6 +22,7 @@ import com.team8.damo.service.response.DiningDetailResponse;
 import com.team8.damo.service.response.DiningParticipantResponse;
 import com.team8.damo.service.response.DiningResponse;
 import com.team8.damo.service.response.RestaurantVoteDetailResponse;
+import com.team8.damo.service.response.DiningConfirmedResponse;
 import com.team8.damo.service.response.RestaurantVoteResponse;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
@@ -329,5 +330,27 @@ public class DiningService {
     private RecommendRestaurant findRecommendRestaurantBy(Long id) {
         return recommendRestaurantRepository.findById(id)
             .orElseThrow(() -> new CustomException(RECOMMEND_RESTAURANT_NOT_FOUND));
+    }
+
+    public DiningConfirmedResponse getDiningConfirmed(Long userId, Long groupId, Long diningId) {
+        if (isNotGroupMember(userId, groupId)) {
+            throw new CustomException(USER_NOT_GROUP_MEMBER);
+        }
+
+        Dining dining = findDiningBy(diningId);
+        if (dining.isNotRestaurantConfirmed()) {
+            throw new CustomException(DINING_NOT_CONFIRMED);
+        }
+
+        RecommendRestaurant confirmedRestaurant =
+            recommendRestaurantRepository.findConfirmedRecommendRestaurant(
+                diningId,
+                dining.getRecommendationCount()
+            ).orElseThrow(() -> new CustomException(RECOMMEND_RESTAURANT_NOT_FOUND));
+
+        Restaurant restaurant = restaurantRepository.findById(confirmedRestaurant.getRestaurantId())
+            .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+
+        return DiningConfirmedResponse.of(confirmedRestaurant, restaurant);
     }
 }
