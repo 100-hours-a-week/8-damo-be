@@ -1,5 +1,6 @@
 package com.team8.damo.client;
 
+import com.team8.damo.client.request.AiRecommendationRefreshRequest;
 import com.team8.damo.client.request.AiRecommendationRequest;
 import com.team8.damo.client.response.AiRecommendationResponse;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,4 +16,7 @@ public interface AiClient {
 
     @PostExchange(url = "/v1/recommendations", contentType = "application/json")
     AiRecommendationResponse recommendation(@RequestBody AiRecommendationRequest request);
+
+    @PostExchange(url = "/v1/analyze_refresh", contentType = "application/json")
+    AiRecommendationResponse recommendationRefresh(@RequestBody AiRecommendationRefreshRequest request);
 }

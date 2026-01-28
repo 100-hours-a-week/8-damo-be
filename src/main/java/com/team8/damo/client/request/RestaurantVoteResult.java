@@ -6,7 +6,7 @@ public record RestaurantVoteResult(
     String restaurantId,
     int likeCount,
     int dislikeCount,
-    List<Long> likeUserIds,
-    List<Long> dislikeUserIds
+    List<Long> likedUserIds,
+    List<Long> dislikedUserIds
 ) {
 }
