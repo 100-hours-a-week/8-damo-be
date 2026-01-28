@@ -65,7 +65,7 @@ class S3ServiceTest {
             .containsExactly("https://test-bucket.s3.amazonaws.com/test-key", 300);
         assertThat(response.objectKey())
             .startsWith(directory + "/")
-            .endsWith("_" + fileName);
+            .endsWith(fileName);
 
         then(s3Presigner).should().presignPutObject(any(PutObjectPresignRequest.class));
     }
@@ -93,7 +93,7 @@ class S3ServiceTest {
         // then
         assertThat(response.objectKey())
             .doesNotContain("/")
-            .endsWith("_" + fileName);
+            .endsWith(fileName);
 
         then(s3Presigner).should().presignPutObject(any(PutObjectPresignRequest.class));
     }
@@ -121,7 +121,7 @@ class S3ServiceTest {
         // then
         assertThat(response.objectKey())
             .doesNotContain("/")
-            .endsWith("_" + fileName);
+            .endsWith(fileName);
 
         then(s3Presigner).should().presignPutObject(any(PutObjectPresignRequest.class));
     }
@@ -217,7 +217,7 @@ class S3ServiceTest {
 
         // then
         assertThat(response.objectKey())
-            .endsWith("_test_file___.jpg")
+            .endsWith("test_file___.jpg")
             .doesNotContain("@", "#", "$", " ");
 
         then(s3Presigner).should().presignPutObject(any(PutObjectPresignRequest.class));
@@ -247,7 +247,7 @@ class S3ServiceTest {
         assertThat(response)
             .extracting("objectKey")
             .asString()
-            .endsWith("_프로필사진.png");
+            .endsWith("프로필사진.png");
 
         then(s3Presigner).should().presignPutObject(any(PutObjectPresignRequest.class));
     }
