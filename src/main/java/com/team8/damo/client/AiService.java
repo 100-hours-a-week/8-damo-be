@@ -44,6 +44,7 @@ public class AiService {
                 .dining(dining)
                 .point(0)
                 .reasoningDescription(recommendedItem.reasoningDescription())
+                .recommendationCount(recommendation.recommendationCount())
                 .build()
             )
             .toList();
