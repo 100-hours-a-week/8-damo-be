@@ -68,6 +68,10 @@ public class Dining extends BaseTimeEntity {
         return this.diningStatus != DiningStatus.CONFIRMED;
     }
 
+    public void confirmed() {
+        this.diningStatus = DiningStatus.CONFIRMED;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

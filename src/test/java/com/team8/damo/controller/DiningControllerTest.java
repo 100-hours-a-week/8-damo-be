@@ -774,4 +774,42 @@ class DiningControllerTest {
 
         then(diningService).should().getDiningConfirmed(any(), eq(groupId), eq(diningId));
     }
+
+    @Test
+    @DisplayName("회식 장소를 확정한다.")
+    void confirmDiningRestaurant_success() throws Exception {
+        // given
+        Long groupId = 100L;
+        Long diningId = 200L;
+        Long recommendRestaurantsId = 500L;
+
+        DiningConfirmedResponse response = new DiningConfirmedResponse(
+            recommendRestaurantsId,
+            "확정할 맛집",
+            "AI가 추천한 식당입니다.",
+            "02-1234-5678",
+            "37.5012",
+            "127.0396"
+        );
+
+        given(diningService.confirmDiningRestaurant(any(), eq(groupId), eq(diningId), eq(recommendRestaurantsId)))
+            .willReturn(response);
+
+        // when // then
+        mockMvc.perform(
+                patch("/api/v1/groups/{groupId}/dining/{diningId}/recommend-restaurants/{recommendRestaurantsId}/confirmed",
+                    groupId, diningId, recommendRestaurantsId)
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.recommendRestaurantsId").value(recommendRestaurantsId))
+            .andExpect(jsonPath("$.data.restaurantsName").value("확정할 맛집"))
+            .andExpect(jsonPath("$.data.reasoningDescription").value("AI가 추천한 식당입니다."))
+            .andExpect(jsonPath("$.data.phoneNumber").value("02-1234-5678"))
+            .andExpect(jsonPath("$.data.latitude").value("37.5012"))
+            .andExpect(jsonPath("$.data.longitude").value("127.0396"));
+
+        then(diningService).should().confirmDiningRestaurant(any(), eq(groupId), eq(diningId), eq(recommendRestaurantsId));
+    }
 }
