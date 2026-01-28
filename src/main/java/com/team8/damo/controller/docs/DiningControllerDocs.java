@@ -250,4 +250,39 @@ public interface DiningControllerDocs {
         @Parameter(description = "회식 ID", required = true)
         Long diningId
     );
+
+    @Operation(
+        summary = "회식 장소 확정하기",
+        description = """
+            ### 그룹장이 추천된 식당 중 하나를 회식 장소로 확정합니다.
+
+            **확정 조건**:
+            - 그룹장만 장소를 확정할 수 있습니다.
+            - 이미 확정된 식당은 다시 확정할 수 없습니다.
+            - 한 회식에 하나의 식당만 확정 가능합니다.
+
+            **상태 변경**:
+            - RecommendRestaurant: `confirmedStatus = true`
+            - Dining: `diningStatus = CONFIRMED`
+            """
+    )
+    @ApiResponse(responseCode = "200", description = "성공")
+    @ApiErrorResponses({
+        ONLY_GROUP_LEADER_CAN_CONFIRM,
+        DINING_NOT_FOUND,
+        RECOMMEND_RESTAURANT_NOT_FOUND,
+        RESTAURANT_NOT_FOUND,
+        RECOMMEND_RESTAURANT_ALREADY_CONFIRMED,
+        ANOTHER_RESTAURANT_ALREADY_CONFIRMED
+    })
+    BaseResponse<DiningConfirmedResponse> confirmDiningRestaurant(
+        @Parameter(hidden = true)
+        JwtUserDetails user,
+        @Parameter(description = "그룹 ID", required = true)
+        Long groupId,
+        @Parameter(description = "회식 ID", required = true)
+        Long diningId,
+        @Parameter(description = "추천 식당 ID", required = true)
+        Long recommendRestaurantsId
+    );
 }

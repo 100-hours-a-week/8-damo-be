@@ -353,4 +353,36 @@ public class DiningService {
 
         return DiningConfirmedResponse.of(confirmedRestaurant, restaurant);
     }
+
+    @Transactional
+    public DiningConfirmedResponse confirmDiningRestaurant(
+        Long userId, Long groupId, Long diningId, Long recommendRestaurantId
+    ) {
+        if (isNotGroupLeader(userId, groupId)) {
+            throw new CustomException(ONLY_GROUP_LEADER_CAN_CONFIRM);
+        }
+
+        Dining dining = findDiningBy(diningId);
+        RecommendRestaurant recommendRestaurant = findRecommendRestaurantBy(recommendRestaurantId);
+
+        if (recommendRestaurant.isConfirmed()) {
+            throw new CustomException(RECOMMEND_RESTAURANT_ALREADY_CONFIRMED);
+        }
+
+        if (recommendRestaurantRepository.existsByDiningIdAndRecommendationCountAndConfirmedTrue(diningId, dining.getRecommendationCount())) {
+            throw new CustomException(ANOTHER_RESTAURANT_ALREADY_CONFIRMED);
+        }
+
+        recommendRestaurant.confirmed();
+        dining.confirmed();
+
+        Restaurant restaurant = restaurantRepository.findById(recommendRestaurant.getRestaurantId())
+            .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+
+        return DiningConfirmedResponse.of(recommendRestaurant, restaurant);
+    }
+
+    private boolean isNotGroupLeader(Long userId, Long groupId) {
+        return !userGroupRepository.existsByUserIdAndGroupIdAndRole(userId, groupId, GroupRole.LEADER);
+    }
 }

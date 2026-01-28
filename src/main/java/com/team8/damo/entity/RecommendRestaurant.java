@@ -58,6 +58,14 @@ public class RecommendRestaurant extends BaseTimeEntity {
         this.recommendationCount = recommendationCount;
     }
 
+    public void confirmed() {
+        this.confirmedStatus = true;
+    }
+
+    public boolean isConfirmed() {
+        return this.confirmedStatus;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

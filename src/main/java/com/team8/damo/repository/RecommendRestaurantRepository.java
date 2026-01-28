@@ -22,6 +22,8 @@ public interface RecommendRestaurantRepository extends JpaRepository<RecommendRe
         Integer recommendationCount
     );
 
+    boolean existsByDiningIdAndRecommendationCountAndConfirmedTrue(Long diningId, Integer recommendationCount);
+
     @Modifying(flushAutomatically = true)
     @Query("update RecommendRestaurant r set r.likeCount = r.likeCount + 1 where r.id = :id")
     void increaseLikeCount(@Param("id") Long id);

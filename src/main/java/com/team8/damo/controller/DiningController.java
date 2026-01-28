@@ -131,4 +131,19 @@ public class DiningController implements DiningControllerDocs {
             diningService.getDiningConfirmed(user.getUserId(), groupId, diningId)
         );
     }
+
+    @Override
+    @PatchMapping("/groups/{groupId}/dining/{diningId}/recommend-restaurants/{recommendRestaurantsId}/confirmed")
+    public BaseResponse<DiningConfirmedResponse> confirmDiningRestaurant(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @PathVariable Long groupId,
+        @PathVariable Long diningId,
+        @PathVariable Long recommendRestaurantsId
+    ) {
+        return BaseResponse.ok(
+            diningService.confirmDiningRestaurant(
+                user.getUserId(), groupId, diningId, recommendRestaurantsId
+            )
+        );
+    }
 }
