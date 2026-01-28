@@ -9,7 +9,7 @@ public class RecommendRestaurantFixture {
         return RecommendRestaurant.builder()
             .id(id)
             .dining(dining)
-            .restaurantId("restaurant-123")
+            .restaurantId("6976b54010e1fa815903d4ce")
             .confirmedStatus(false)
             .likeCount(0)
             .dislikeCount(0)
@@ -22,7 +22,7 @@ public class RecommendRestaurantFixture {
         return RecommendRestaurant.builder()
             .id(id)
             .dining(dining)
-            .restaurantId("restaurant-123")
+            .restaurantId("6976b54010e1fa815903d4ce")
             .confirmedStatus(false)
             .likeCount(likeCount)
             .dislikeCount(dislikeCount)
@@ -62,6 +62,25 @@ public class RecommendRestaurantFixture {
             .dislikeCount(dislikeCount)
             .point(85)
             .reasoningDescription("AI가 추천한 식당입니다.")
+            .recommendationCount(recommendationCount)
+            .build();
+    }
+
+    public static RecommendRestaurant createConfirmed(
+        Long id,
+        Dining dining,
+        String restaurantId,
+        Integer recommendationCount
+    ) {
+        return RecommendRestaurant.builder()
+            .id(id)
+            .dining(dining)
+            .restaurantId(restaurantId)
+            .confirmedStatus(true)
+            .likeCount(10)
+            .dislikeCount(2)
+            .point(90)
+            .reasoningDescription("AI가 추천한 최고의 식당입니다.")
             .recommendationCount(recommendationCount)
             .build();
     }

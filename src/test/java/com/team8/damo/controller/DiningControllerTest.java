@@ -4,6 +4,7 @@ import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
 import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.service.DiningService;
 import com.team8.damo.service.response.AttendanceVoteDetailResponse;
+import com.team8.damo.service.response.DiningConfirmedResponse;
 import com.team8.damo.service.response.DiningDetailResponse;
 import com.team8.damo.service.response.DiningParticipantResponse;
 import com.team8.damo.service.response.DiningResponse;
@@ -737,5 +738,40 @@ class DiningControllerTest {
             .andExpect(jsonPath("$.data.totalGroupMemberCount").value(10));
 
         then(diningService).should().getAttendanceVoteDetail(any(), eq(groupId), eq(diningId));
+    }
+
+    @Test
+    @DisplayName("확정된 회식 장소를 조회한다.")
+    void getDiningConfirmed_success() throws Exception {
+        // given
+        Long groupId = 100L;
+        Long diningId = 200L;
+
+        DiningConfirmedResponse response = new DiningConfirmedResponse(
+            500L,
+            "확정된 맛집",
+            "AI가 추천한 최고의 식당입니다.",
+            "02-1234-5678",
+            "37.5012",
+            "127.0396"
+        );
+
+        given(diningService.getDiningConfirmed(any(), eq(groupId), eq(diningId))).willReturn(response);
+
+        // when // then
+        mockMvc.perform(
+                get("/api/v1/groups/{groupId}/dining/{diningId}/confirmed", groupId, diningId)
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.recommendRestaurantsId").value(500L))
+            .andExpect(jsonPath("$.data.restaurantsName").value("확정된 맛집"))
+            .andExpect(jsonPath("$.data.reasoningDescription").value("AI가 추천한 최고의 식당입니다."))
+            .andExpect(jsonPath("$.data.phoneNumber").value("02-1234-5678"))
+            .andExpect(jsonPath("$.data.latitude").value("37.5012"))
+            .andExpect(jsonPath("$.data.longitude").value("127.0396"));
+
+        then(diningService).should().getDiningConfirmed(any(), eq(groupId), eq(diningId));
     }
 }
