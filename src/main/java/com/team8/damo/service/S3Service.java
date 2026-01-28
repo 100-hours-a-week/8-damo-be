@@ -57,13 +57,12 @@ public class S3Service {
     }
 
     private String generateObjectKey(String directory, String fileName) {
-        String timestamp = String.valueOf(System.currentTimeMillis());
         String sanitizedFileName = sanitizeFileName(fileName);
 
         if (directory != null && !directory.isBlank()) {
-            return directory + "/" + timestamp + "_" + sanitizedFileName;
+            return directory + "/" + sanitizedFileName;
         }
-        return timestamp + "_" + sanitizedFileName;
+        return sanitizedFileName;
     }
 
     private String sanitizeFileName(String fileName) {
