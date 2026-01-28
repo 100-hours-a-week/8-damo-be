@@ -21,12 +21,11 @@ public interface S3ControllerDocs {
             ### S3 업로드용 Presigned URL을 발급합니다.
             - fileName: 업로드할 파일명 (userId or groupId)
             - contentType: 파일의 MIME 타입 (허용: image/png, image/jpeg, image/jpg, image/webp)
-            - directory: S3 내 저장 경로 (ex. group/qr or user/profile)
+            - directory: S3 내 저장 경로 (ex. groups/profile or users/profile)
 
             **사용 방법**:
             1. 이 API로 presigned URL 발급
             2. 발급받은 URL로 PUT 요청하여 파일 업로드
-            3. objectKey를 서버에 저장
 
             **유효시간**: 5분
             """

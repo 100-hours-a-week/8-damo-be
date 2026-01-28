@@ -39,8 +39,7 @@ public class QrCodeGenerator {
 
     public void generateQrCode(Long groupId) {
         try {
-            String datetimeStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-            String objectKey = "group/qr/" + groupId;
+            String objectKey = "groups/qr/" + groupId;
 
             BitMatrix bitMatrix = new QRCodeWriter()
                 .encode(redirectUrl + groupId, BarcodeFormat.QR_CODE, 100, 100);
