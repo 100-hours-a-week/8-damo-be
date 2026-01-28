@@ -36,6 +36,7 @@ public enum ErrorCode {
     RESTAURANT_NOT_FOUND(NOT_FOUND, "식당 정보를 찾을 수 없습니다."),
     DINING_PARTICIPANT_NOT_FOUND(NOT_FOUND, "회식 참석자를 찾을 수 없습니다."),
     ONLY_ATTEND_PARTICIPANT_CAN_VOTE(FORBIDDEN, "참석 상태인 사용자만 장소 투표가 가능합니다."),
+    DINING_NOT_CONFIRMED(BAD_REQUEST, "장소 확정이 되지 않은 회식입니다."),
 
     // S3
     INVALID_FILE_TYPE(BAD_REQUEST, "허용되지 않은 파일 형식입니다. (허용: PNG, JPEG, JPG, WEBP)"),

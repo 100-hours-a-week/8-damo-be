@@ -20,6 +20,7 @@ import com.team8.damo.service.request.RestaurantVoteServiceRequest;
 import com.team8.damo.service.response.AttendanceVoteDetailResponse;
 import com.team8.damo.service.response.DiningDetailResponse;
 import com.team8.damo.service.response.DiningResponse;
+import com.team8.damo.service.response.DiningConfirmedResponse;
 import com.team8.damo.service.response.RestaurantVoteDetailResponse;
 import com.team8.damo.service.response.RestaurantVoteResponse;
 import com.team8.damo.util.Snowflake;
@@ -2108,5 +2109,206 @@ class DiningServiceTest {
         assertThat(result.get(0))
             .extracting("recommendRestaurantsId", "restaurantsName", "likeCount", "dislikeCount")
             .contains(recommendRestaurantId, "확정된 식당", 7, 1);
+    }
+
+    @Test
+    @DisplayName("확정된 회식 장소를 조회한다.")
+    void getDiningConfirmed_success() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+        Long diningId = 200L;
+        Long recommendRestaurantId = 500L;
+        String restaurantId = "6976b54010e1fa815903d4ce";
+        Integer recommendationCount = 1;
+
+        Group group = GroupFixture.create(groupId, "맛집탐방대");
+        Dining dining = DiningFixture.createWithRecommendationCount(diningId, group, DiningStatus.CONFIRMED, recommendationCount);
+        RecommendRestaurant confirmedRestaurant = RecommendRestaurantFixture.createConfirmed(
+            recommendRestaurantId, dining, restaurantId, recommendationCount
+        );
+        Restaurant restaurant = RestaurantFixture.create(restaurantId, "확정된 맛집");
+
+        given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
+        given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
+        given(recommendRestaurantRepository.findConfirmedRecommendRestaurant(diningId, recommendationCount))
+            .willReturn(Optional.of(confirmedRestaurant));
+        given(restaurantRepository.findById(restaurantId)).willReturn(Optional.of(restaurant));
+
+        // when
+        DiningConfirmedResponse result = diningService.getDiningConfirmed(userId, groupId, diningId);
+
+        // then
+        assertThat(result)
+            .extracting(
+                "recommendRestaurantsId",
+                "restaurantsName",
+                "reasoningDescription",
+                "phoneNumber",
+                "latitude",
+                "longitude"
+            )
+            .contains(
+                recommendRestaurantId,
+                "확정된 맛집",
+                "AI가 추천한 최고의 식당입니다.",
+                "02-1234-5678",
+                "37.5012",
+                "127.0396"
+            );
+
+        then(userGroupRepository).should().existsByUserIdAndGroupId(userId, groupId);
+        then(diningRepository).should().findById(diningId);
+        then(recommendRestaurantRepository).should().findConfirmedRecommendRestaurant(diningId, recommendationCount);
+        then(restaurantRepository).should().findById(restaurantId);
+    }
+
+    @Test
+    @DisplayName("그룹 멤버가 아닌 사용자는 확정된 회식 장소를 조회할 수 없다.")
+    void getDiningConfirmed_userNotGroupMember() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+        Long diningId = 200L;
+
+        given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(false);
+
+        // when // then
+        assertThatThrownBy(() -> diningService.getDiningConfirmed(userId, groupId, diningId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", USER_NOT_GROUP_MEMBER);
+
+        then(userGroupRepository).should().existsByUserIdAndGroupId(userId, groupId);
+        then(diningRepository).should(never()).findById(any());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 회식의 확정 장소를 조회할 수 없다.")
+    void getDiningConfirmed_diningNotFound() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+        Long diningId = 999L;
+
+        given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
+        given(diningRepository.findById(diningId)).willReturn(Optional.empty());
+
+        // when // then
+        assertThatThrownBy(() -> diningService.getDiningConfirmed(userId, groupId, diningId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", DINING_NOT_FOUND);
+
+        then(userGroupRepository).should().existsByUserIdAndGroupId(userId, groupId);
+        then(diningRepository).should().findById(diningId);
+        then(recommendRestaurantRepository).should(never()).findConfirmedRecommendRestaurant(any(), any());
+    }
+
+    @Test
+    @DisplayName("장소 확정이 되지 않은 회식의 확정 장소를 조회할 수 없다.")
+    void getDiningConfirmed_diningNotConfirmed() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+        Long diningId = 200L;
+
+        Group group = GroupFixture.create(groupId, "맛집탐방대");
+        Dining dining = DiningFixture.create(diningId, group, DiningStatus.RESTAURANT_VOTING);
+
+        given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
+        given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
+
+        // when // then
+        assertThatThrownBy(() -> diningService.getDiningConfirmed(userId, groupId, diningId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", DINING_NOT_CONFIRMED);
+
+        then(userGroupRepository).should().existsByUserIdAndGroupId(userId, groupId);
+        then(diningRepository).should().findById(diningId);
+        then(recommendRestaurantRepository).should(never()).findConfirmedRecommendRestaurant(any(), any());
+    }
+
+    @Test
+    @DisplayName("참석 투표 중인 회식의 확정 장소를 조회할 수 없다.")
+    void getDiningConfirmed_attendanceVotingStatusCannotView() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+        Long diningId = 200L;
+
+        Group group = GroupFixture.create(groupId, "맛집탐방대");
+        Dining dining = DiningFixture.create(diningId, group, DiningStatus.ATTENDANCE_VOTING);
+
+        given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
+        given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
+
+        // when // then
+        assertThatThrownBy(() -> diningService.getDiningConfirmed(userId, groupId, diningId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", DINING_NOT_CONFIRMED);
+
+        then(userGroupRepository).should().existsByUserIdAndGroupId(userId, groupId);
+        then(diningRepository).should().findById(diningId);
+    }
+
+    @Test
+    @DisplayName("확정된 추천 식당이 없으면 조회할 수 없다.")
+    void getDiningConfirmed_recommendRestaurantNotFound() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+        Long diningId = 200L;
+        Integer recommendationCount = 1;
+
+        Group group = GroupFixture.create(groupId, "맛집탐방대");
+        Dining dining = DiningFixture.createWithRecommendationCount(diningId, group, DiningStatus.CONFIRMED, recommendationCount);
+
+        given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
+        given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
+        given(recommendRestaurantRepository.findConfirmedRecommendRestaurant(diningId, recommendationCount))
+            .willReturn(Optional.empty());
+
+        // when // then
+        assertThatThrownBy(() -> diningService.getDiningConfirmed(userId, groupId, diningId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", RECOMMEND_RESTAURANT_NOT_FOUND);
+
+        then(userGroupRepository).should().existsByUserIdAndGroupId(userId, groupId);
+        then(diningRepository).should().findById(diningId);
+        then(recommendRestaurantRepository).should().findConfirmedRecommendRestaurant(diningId, recommendationCount);
+        then(restaurantRepository).should(never()).findById(any());
+    }
+
+    @Test
+    @DisplayName("식당 정보가 없으면 확정 장소를 조회할 수 없다.")
+    void getDiningConfirmed_restaurantNotFound() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+        Long diningId = 200L;
+        Long recommendRestaurantId = 500L;
+        String restaurantId = "6976b54010e1fa815903d4ce";
+        Integer recommendationCount = 1;
+
+        Group group = GroupFixture.create(groupId, "맛집탐방대");
+        Dining dining = DiningFixture.createWithRecommendationCount(diningId, group, DiningStatus.CONFIRMED, recommendationCount);
+        RecommendRestaurant confirmedRestaurant = RecommendRestaurantFixture.createConfirmed(
+            recommendRestaurantId, dining, restaurantId, recommendationCount
+        );
+
+        given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(true);
+        given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
+        given(recommendRestaurantRepository.findConfirmedRecommendRestaurant(diningId, recommendationCount))
+            .willReturn(Optional.of(confirmedRestaurant));
+        given(restaurantRepository.findById(restaurantId)).willReturn(Optional.empty());
+
+        // when // then
+        assertThatThrownBy(() -> diningService.getDiningConfirmed(userId, groupId, diningId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", RESTAURANT_NOT_FOUND);
+
+        then(userGroupRepository).should().existsByUserIdAndGroupId(userId, groupId);
+        then(diningRepository).should().findById(diningId);
+        then(recommendRestaurantRepository).should().findConfirmedRecommendRestaurant(diningId, recommendationCount);
+        then(restaurantRepository).should().findById(restaurantId);
     }
 }
