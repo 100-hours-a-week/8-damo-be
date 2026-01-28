@@ -6,6 +6,7 @@ import com.team8.damo.entity.DiningParticipant;
 import com.team8.damo.entity.Group;
 import com.team8.damo.entity.RecommendRestaurant;
 import com.team8.damo.entity.RecommendRestaurantVote;
+import com.team8.damo.entity.Restaurant;
 import com.team8.damo.entity.User;
 import com.team8.damo.entity.UserGroup;
 import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
@@ -20,6 +21,7 @@ import com.team8.damo.service.response.AttendanceVoteDetailResponse;
 import com.team8.damo.service.response.DiningDetailResponse;
 import com.team8.damo.service.response.DiningParticipantResponse;
 import com.team8.damo.service.response.DiningResponse;
+import com.team8.damo.service.response.RestaurantVoteDetailResponse;
 import com.team8.damo.service.response.RestaurantVoteResponse;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
@@ -50,6 +52,7 @@ public class DiningService {
     private final DiningParticipantRepository diningParticipantRepository;
     private final RecommendRestaurantRepository recommendRestaurantRepository;
     private final RecommendRestaurantVoteRepository recommendRestaurantVoteRepository;
+    private final RestaurantRepository restaurantRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final AiService aiService;
 
@@ -128,6 +131,38 @@ public class DiningService {
         Dining dining = findDiningBy(diningId);
         DiningParticipant participant = findParticipantBy(diningId, userId);
         return AttendanceVoteDetailResponse.of(participant, dining);
+    }
+
+    public List<RestaurantVoteDetailResponse> getRestaurantVoteDetail(Long userId, Long groupId, Long diningId) {
+        if (isNotGroupMember(userId, groupId)) {
+            throw new CustomException(USER_NOT_GROUP_MEMBER);
+        }
+
+        Dining dining = findDiningBy(diningId);
+
+        List<RecommendRestaurant> recommendRestaurants =
+            recommendRestaurantRepository.findByDiningIdAndRecommendationCount(
+                diningId, dining.getRecommendationCount()
+            );
+
+        DiningParticipant participant = findParticipantBy(diningId, userId);
+        if (participant.getAttendanceVoteStatus() != AttendanceVoteStatus.ATTEND) {
+            throw new CustomException(ONLY_ATTEND_PARTICIPANT_CAN_VOTE);
+        }
+
+        return recommendRestaurants.stream()
+            .map(recommendRestaurant -> {
+                Restaurant restaurant = restaurantRepository.findById(recommendRestaurant.getRestaurantId())
+                    .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+
+                RestaurantVoteStatus userVoteStatus = recommendRestaurantVoteRepository
+                    .findByUserIdAndRecommendRestaurantId(userId, recommendRestaurant.getId())
+                    .map(RecommendRestaurantVote::getStatus)
+                    .orElse(null);
+
+                return RestaurantVoteDetailResponse.of(recommendRestaurant, restaurant, userVoteStatus);
+            })
+            .toList();
     }
 
     @Transactional
@@ -226,7 +261,7 @@ public class DiningService {
 
     private DiningParticipant findParticipantBy(Long diningId, Long userId) {
         return diningParticipantRepository.findByDiningIdAndUserId(diningId, userId)
-            .orElseThrow(() -> new CustomException(NO_VOTE_PERMISSION));
+            .orElseThrow(() -> new CustomException(DINING_PARTICIPANT_NOT_FOUND));
     }
 
     private boolean isNotGroupMember(Long userId, Long groupId) {

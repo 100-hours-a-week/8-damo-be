@@ -33,6 +33,9 @@ public enum ErrorCode {
     ATTENDANCE_VOTE_ALREADY_COMPLETED(CONFLICT, "참석, 불참석 투표를 이미 완료했습니다."),
     RESTAURANT_VOTING_CLOSED(BAD_REQUEST, "식당 투표가 마감되었습니다."),
     RECOMMEND_RESTAURANT_NOT_FOUND(NOT_FOUND, "추천 식당을 찾을 수 없습니다."),
+    RESTAURANT_NOT_FOUND(NOT_FOUND, "식당 정보를 찾을 수 없습니다."),
+    DINING_PARTICIPANT_NOT_FOUND(NOT_FOUND, "회식 참석자를 찾을 수 없습니다."),
+    ONLY_ATTEND_PARTICIPANT_CAN_VOTE(FORBIDDEN, "참석 상태인 사용자만 장소 투표가 가능합니다."),
 
     // S3
     INVALID_FILE_TYPE(BAD_REQUEST, "허용되지 않은 파일 형식입니다. (허용: PNG, JPEG, JPG, WEBP)"),
