@@ -64,6 +64,10 @@ public class Dining extends BaseTimeEntity {
         this.recommendationCount = count;
     }
 
+    public boolean isNotRestaurantVoting() {
+        return this.diningStatus != DiningStatus.RESTAURANT_VOTING;
+    }
+
     public boolean isNotRestaurantConfirmed() {
         return this.diningStatus != DiningStatus.CONFIRMED;
     }

@@ -151,6 +151,10 @@ public class DiningService {
             throw new CustomException(ONLY_ATTEND_PARTICIPANT_CAN_VOTE);
         }
 
+        return mapToVoteDetailResponses(userId, recommendRestaurants);
+    }
+
+    private List<RestaurantVoteDetailResponse> mapToVoteDetailResponses(Long userId, List<RecommendRestaurant> recommendRestaurants) {
         return recommendRestaurants.stream()
             .map(recommendRestaurant -> {
                 Restaurant restaurant = restaurantRepository.findById(recommendRestaurant.getRestaurantId())
@@ -384,5 +388,27 @@ public class DiningService {
 
     private boolean isNotGroupLeader(Long userId, Long groupId) {
         return !userGroupRepository.existsByUserIdAndGroupIdAndRole(userId, groupId, GroupRole.LEADER);
+    }
+
+    @Transactional
+    public List<RestaurantVoteDetailResponse> refreshRecommendRestaurants(
+        Long userId, Long groupId, Long diningId
+    ) {
+        if (isNotGroupLeader(userId, groupId)) {
+            throw new CustomException(ONLY_GROUP_LEADER_CAN_REFRESH);
+        }
+
+        Dining dining = findDiningBy(diningId);
+        if (dining.isNotRestaurantVoting()) {
+            throw new CustomException(RECOMMEND_REFRESH_ONLY_IN_RESTAURANT_VOTING);
+        }
+
+        Group group = findGroupBy(groupId);
+
+        List<Long> userIds = createAttendParticipantIds(dining);
+        List<RecommendRestaurant> recommendRestaurants =
+            aiService.recommendationRefreshRestaurant(group, dining, userIds);
+
+        return mapToVoteDetailResponses(userId, recommendRestaurants);
     }
 }

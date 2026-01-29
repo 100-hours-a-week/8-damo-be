@@ -38,8 +38,10 @@ public enum ErrorCode {
     ONLY_ATTEND_PARTICIPANT_CAN_VOTE(FORBIDDEN, "참석 상태인 사용자만 장소 투표가 가능합니다."),
     DINING_NOT_CONFIRMED(BAD_REQUEST, "장소 확정이 되지 않은 회식입니다."),
     ONLY_GROUP_LEADER_CAN_CONFIRM(FORBIDDEN, "회식 확정은 그룹장만 가능합니다."),
+    ONLY_GROUP_LEADER_CAN_REFRESH(FORBIDDEN, "장소 재추천은 그룹장만 가능합니다."),
     RECOMMEND_RESTAURANT_ALREADY_CONFIRMED(CONFLICT, "이미 확정 완료된 추천 식당입니다."),
     ANOTHER_RESTAURANT_ALREADY_CONFIRMED(CONFLICT, "이미 다른 추천 식당이 확정 완료되었습니다."),
+    RECOMMEND_REFRESH_ONLY_IN_RESTAURANT_VOTING(BAD_REQUEST, "장소 재추천은 장소 투표 상태에서만 가능합니다."),
 
     // S3
     INVALID_FILE_TYPE(BAD_REQUEST, "허용되지 않은 파일 형식입니다. (허용: PNG, JPEG, JPG, WEBP)"),

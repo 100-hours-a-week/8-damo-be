@@ -47,7 +47,7 @@ public class AiService {
     }
 
     @Transactional
-    public void recommendationRefreshRestaurant(Group group, Dining dining, List<Long> userIds) {
+    public List<RecommendRestaurant> recommendationRefreshRestaurant(Group group, Dining dining, List<Long> userIds) {
         DiningData diningData = new DiningData(dining.getId(), group.getId(), dining.getDiningDate(), dining.getBudget(), String.valueOf(group.getLongitude()), String.valueOf(group.getLatitude()));
 
         List<RecommendRestaurant> restaurants = recommendRestaurantRepository
@@ -60,14 +60,14 @@ public class AiService {
         AiRecommendationRefreshRequest refreshRequest = new AiRecommendationRefreshRequest(diningData, userIds, voteResultList);
         AiRecommendationResponse recommendation = aiClient.recommendationRefresh(refreshRequest);
 
-        List<RecommendRestaurant> recommendRestaurants = createRecommendRestaurantsBy(dining, recommendation);
-        recommendRestaurantRepository.saveAll(recommendRestaurants);
-
         dining.changeRecommendationCount(recommendation.recommendationCount());
 
         recommendation.recommendedItems().forEach(
             recommendedItem -> log.info("recommendedItem: {}", recommendedItem)
         );
+
+        List<RecommendRestaurant> recommendRestaurants = createRecommendRestaurantsBy(dining, recommendation);
+        return recommendRestaurantRepository.saveAll(recommendRestaurants);
     }
 
     private RestaurantVoteResult createVoteResult(RecommendRestaurant restaurant) {

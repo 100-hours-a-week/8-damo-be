@@ -146,4 +146,16 @@ public class DiningController implements DiningControllerDocs {
             )
         );
     }
+
+    @Override
+    @PostMapping("/groups/{groupId}/dining/{diningId}/recommend-restaurant/refresh")
+    public BaseResponse<List<RestaurantVoteDetailResponse>> refreshRecommendRestaurants(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @PathVariable Long groupId,
+        @PathVariable Long diningId
+    ) {
+        return BaseResponse.ok(
+            diningService.refreshRecommendRestaurants(user.getUserId(), groupId, diningId)
+        );
+    }
 }
