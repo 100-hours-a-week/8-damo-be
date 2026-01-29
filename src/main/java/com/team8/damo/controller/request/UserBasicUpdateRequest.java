@@ -23,7 +23,10 @@ public class UserBasicUpdateRequest {
     @NotNull(message = "연령대는 필수입니다.")
     private AgeGroup ageGroup;
 
+    @NotNull
+    private String imagePath;
+
     public UserBasicUpdateServiceRequest toServiceRequest() {
-        return new UserBasicUpdateServiceRequest(nickname, gender, ageGroup);
+        return new UserBasicUpdateServiceRequest(nickname, gender, ageGroup, imagePath);
     }
 }

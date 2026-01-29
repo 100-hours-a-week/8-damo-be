@@ -45,6 +45,13 @@ public class GroupService {
         return group.getId();
     }
 
+    @Transactional
+    public void changeImagePath(Long userId, Long groupId, String imagePath) {
+        Group group = findGroupBy(groupId);
+        group.changeImagePath(imagePath);
+        // 기존 이미지 삭제
+    }
+
     public List<UserGroupResponse> getGroupList(Long userId) {
         List<UserGroup> userGroups = userGroupRepository.findAllByUserIdWithGroup(userId);
         return userGroups.stream()

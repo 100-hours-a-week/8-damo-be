@@ -34,16 +34,24 @@ public class Group extends BaseTimeEntity {
     @Column(name = "longitude", nullable = false)
     private double longitude;
 
+    @Column(name = "image_path", length = 200)
+    private String imagePath;
+
     @Builder
-    public Group(Long id, String name, String introduction, double latitude, double longitude) {
+    public Group(Long id, String name, String introduction, double latitude, double longitude, String imagePath) {
         this.id = id;
         this.name = name;
         this.introduction = introduction;
         this.latitude = latitude;
         this.longitude = longitude;
+        this.imagePath = imagePath;
     }
 
     public void incrementTotalMembers() {
         this.totalMembers++;
+    }
+
+    public void changeImagePath(String imagePath) {
+        this.imagePath = imagePath;
     }
 }

@@ -1,6 +1,7 @@
 package com.team8.damo.controller.docs;
 
 import com.team8.damo.controller.request.GroupCreateRequest;
+import com.team8.damo.controller.request.ImagePathUpdateRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.service.response.GroupDetailResponse;
 import com.team8.damo.security.jwt.JwtUserDetails;
@@ -38,6 +39,23 @@ public interface GroupControllerDocs {
         @Parameter(hidden = true)
         JwtUserDetails user,
         GroupCreateRequest request
+    );
+
+    @Operation(
+        summary = "그룹 프로필 이미지 경로 수정",
+        description = """
+            ### 그룹 프로필 이미지 경로를 수정합니다.
+            - imagePath: S3 업로드 후 반환된 objectKey
+            """
+    )
+    @ApiResponse(responseCode = "204", description = "성공")
+    @ApiErrorResponses({GROUP_NOT_FOUND})
+    BaseResponse<Void> updateImagePath(
+        @Parameter(hidden = true)
+        JwtUserDetails user,
+        @Parameter(description = "그룹 ID", required = true)
+        Long groupId,
+        ImagePathUpdateRequest request
     );
 
     @Operation(

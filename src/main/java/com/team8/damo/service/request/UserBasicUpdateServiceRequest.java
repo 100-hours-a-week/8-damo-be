@@ -6,5 +6,6 @@ import com.team8.damo.entity.enumeration.Gender;
 public record UserBasicUpdateServiceRequest(
     String nickname,
     Gender gender,
-    AgeGroup ageGroup
+    AgeGroup ageGroup,
+    String imagePath
 ) {}

@@ -2,6 +2,7 @@ package com.team8.damo.controller.docs;
 
 import com.team8.damo.controller.request.UserBasicUpdateRequest;
 import com.team8.damo.controller.request.UserCharacteristicsCreateRequest;
+import com.team8.damo.controller.request.ImagePathUpdateRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.service.response.UserBasicResponse;
 import com.team8.damo.service.response.UserProfileResponse;
@@ -49,6 +50,21 @@ public interface UserControllerDocs {
         @Parameter(hidden = true)
         JwtUserDetails user,
         UserBasicUpdateRequest request
+    );
+
+    @Operation(
+        summary = "사용자 프로필 이미지 경로 수정",
+        description = """
+            ### 사용자의 프로필 이미지 경로를 수정합니다.
+            - imagePath: S3 업로드 후 반환된 objectKey
+            """
+    )
+    @ApiResponse(responseCode = "204", description = "성공")
+    @ApiErrorResponses({USER_NOT_FOUND})
+    BaseResponse<Void> updateImagePath(
+        @Parameter(hidden = true)
+        JwtUserDetails user,
+        ImagePathUpdateRequest request
     );
 
     @Operation(

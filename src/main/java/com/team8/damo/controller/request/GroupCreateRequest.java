@@ -2,6 +2,7 @@ package com.team8.damo.controller.request;
 
 import com.team8.damo.service.request.GroupCreateServiceRequest;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 
@@ -19,7 +20,10 @@ public class GroupCreateRequest {
 
     private double longitude;
 
+    @NotNull
+    private String imagePath;
+
     public GroupCreateServiceRequest toServiceRequest() {
-        return new GroupCreateServiceRequest(name, introduction, latitude, longitude);
+        return new GroupCreateServiceRequest(name, introduction, latitude, longitude, imagePath);
     }
 }

@@ -59,6 +59,9 @@ public class User extends BaseTimeEntity {
     @Column(name = "fcm_token", length = 255)
     private String fcmToken;
 
+    @Column(name = "image_path", length = 200)
+    private String imagePath;
+
     @Column(name = "withdraw_at")
     private LocalDateTime withdrawAt;
 
@@ -88,6 +91,10 @@ public class User extends BaseTimeEntity {
 
     public void updateOtherCharacteristics(String characteristics) {
         this.otherCharacteristics = characteristics;
+    }
+
+    public void changeImagePath(String imagePath) {
+        this.imagePath = imagePath;
     }
 
     public void enablePushNotification(String fcmToken) {
