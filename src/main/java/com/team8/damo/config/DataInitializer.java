@@ -102,7 +102,7 @@ public class DataInitializer implements ApplicationRunner {
 
         // Users 2-20
         for (int i = 2; i <= USER_COUNT; i++) {
-            User user = new User(snowflake.nextId(), "user" + i + "@test.com", 1000000L + i);
+            User user = new User((long) i, "user" + i + "@test.com", 1000000L + i);
             user.updateNickname("사용자" + i);
             user.updateOnboardingStep(OnboardingStep.DONE);
             users.add(user);
