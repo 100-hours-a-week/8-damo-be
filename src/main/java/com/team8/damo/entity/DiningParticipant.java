@@ -61,6 +61,10 @@ public class DiningParticipant {
         this.attendanceVoteStatus = attendanceVoteStatus;
     }
 
+    public boolean isFirstAttendanceVote() {
+        return this.attendanceVoteStatus == AttendanceVoteStatus.PENDING;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

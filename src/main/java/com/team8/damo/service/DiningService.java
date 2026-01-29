@@ -179,17 +179,13 @@ public class DiningService {
         }
 
         DiningParticipant participant = findParticipantBy(diningId, userId);
-
-        if (participant.getAttendanceVoteStatus().isNotPending()) {
-            throw new CustomException(ATTENDANCE_VOTE_ALREADY_COMPLETED);
-        }
-
+        boolean isFirstVote = participant.isFirstAttendanceVote();
         participant.updateVotingStatus(attendanceVoteStatus);
 
-        int votedCount = diningRepository.increaseAttendanceVoteDoneCount(diningId);
-
-        triggerRestaurantRecommendation(groupId, dining, votedCount);
-        // 투표 진척도를 그룹원들에게 전송하는 sse 구현
+        if (isFirstVote) {
+            int votedCount = diningRepository.increaseAttendanceVoteDoneCount(diningId);
+            triggerRestaurantRecommendation(groupId, dining, votedCount);
+        }
 
         return participant.getAttendanceVoteStatus();
     }
