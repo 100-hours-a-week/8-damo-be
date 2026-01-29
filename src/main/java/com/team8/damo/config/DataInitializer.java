@@ -268,6 +268,7 @@ public class DataInitializer implements ApplicationRunner {
             .budget(50000)
             .diningStatus(DiningStatus.RESTAURANT_VOTING)
             .build();
+        dining.changeRecommendationCount(1);
         diningRepository.save(dining);
 
         // All members vote ATTEND
@@ -306,6 +307,7 @@ public class DataInitializer implements ApplicationRunner {
                 .dislikeCount(0)
                 .point(100 - (i * 10))
                 .reasoningDescription("추천 이유 " + i + ": 맛있고 분위기 좋은 식당입니다.")
+                .recommendationCount(1)
                 .build();
             restaurants.add(restaurant);
         }
