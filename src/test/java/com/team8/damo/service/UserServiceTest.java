@@ -1,5 +1,6 @@
 package com.team8.damo.service;
 
+import com.team8.damo.client.AiService;
 import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.*;
 import com.team8.damo.exception.CustomException;
@@ -19,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,8 +30,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.*;
 import static org.mockito.Mockito.never;
 
 @ActiveProfiles("test")
@@ -59,6 +60,9 @@ class UserServiceTest {
 
     @Mock
     private Snowflake snowflake;
+
+    @Mock
+    private AiService aiService;
 
     @InjectMocks
     private UserService userService;
@@ -165,6 +169,7 @@ class UserServiceTest {
         given(likeFoodCategoryRepository.findByCategoryIn(likeFoods)).willReturn(List.of(food1, food2));
         given(likeIngredientCategoryRepository.findByCategoryIn(likeIngredients)).willReturn(List.of(ingredient1, ingredient2));
         given(snowflake.nextId()).willReturn(100L, 101L, 102L, 103L, 104L, 105L);
+        willDoNothing().given(aiService).userPersonaUpdate(user, allergies, likeFoods, likeIngredients);
 
         // when
         userService.createCharacteristics(userId, request);
@@ -191,6 +196,7 @@ class UserServiceTest {
         User user = UserFixture.create(userId);
 
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        willDoNothing().given(aiService).userPersonaUpdate(user, List.of(), List.of(), List.of());
 
         // when
         userService.createCharacteristics(userId, request);

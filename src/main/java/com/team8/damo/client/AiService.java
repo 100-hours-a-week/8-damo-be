@@ -1,14 +1,12 @@
 package com.team8.damo.client;
 
-import com.team8.damo.client.request.AiRecommendationRefreshRequest;
-import com.team8.damo.client.request.AiRecommendationRequest;
-import com.team8.damo.client.request.DiningData;
-import com.team8.damo.client.request.RestaurantVoteResult;
+import com.team8.damo.client.request.*;
+import com.team8.damo.client.response.AiPersonaResponse;
 import com.team8.damo.client.response.AiRecommendationResponse;
-import com.team8.damo.entity.Dining;
-import com.team8.damo.entity.Group;
-import com.team8.damo.entity.RecommendRestaurant;
-import com.team8.damo.entity.RecommendRestaurantVote;
+import com.team8.damo.entity.*;
+import com.team8.damo.entity.enumeration.AllergyType;
+import com.team8.damo.entity.enumeration.FoodType;
+import com.team8.damo.entity.enumeration.IngredientType;
 import com.team8.damo.entity.enumeration.RestaurantVoteStatus;
 import com.team8.damo.repository.RecommendRestaurantRepository;
 import com.team8.damo.repository.RecommendRestaurantVoteRepository;
@@ -68,6 +66,19 @@ public class AiService {
 
         List<RecommendRestaurant> recommendRestaurants = createRecommendRestaurantsBy(dining, recommendation);
         return recommendRestaurantRepository.saveAll(recommendRestaurants);
+    }
+
+    @Transactional
+    public void userPersonaUpdate(
+        User user, List<AllergyType> allergies,
+        List<FoodType> likeFoods, List<IngredientType> likeIngredients
+    ) {
+        UserData userData = UserData.of(user, allergies, likeFoods, likeIngredients);
+        AiPersonaRequest request = new AiPersonaRequest(userData);
+        AiPersonaResponse response = aiClient.updatePersona(request);
+        if (!response.success()) {
+            // 실패 시 재처리
+        }
     }
 
     private RestaurantVoteResult createVoteResult(RecommendRestaurant restaurant) {
