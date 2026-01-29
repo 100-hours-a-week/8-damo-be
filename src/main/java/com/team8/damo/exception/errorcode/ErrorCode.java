@@ -52,6 +52,8 @@ public enum ErrorCode {
 
     ACCESS_TOKEN_EXPIRED(UNAUTHORIZED, "엑세스 토큰이 만료되었습니다."),
     REFRESH_TOKEN_EXPIRED(UNAUTHORIZED, "리프레시 토큰이 만료되었습니다."),
+    REFRESH_TOKEN_NOT_FOUND(NOT_FOUND, "리프레시 토큰을 찾을 수 없습니다."),
+    REFRESH_MISMATCH(NOT_FOUND, "리프레시 토큰이 일치하지 않습니다."),
     // JWT Filter Error
     JWT_FILTER_ERROR(FORBIDDEN, "JWT filter 인증 오류 접근 권한이 없거나 토큰이 존재 하지 않습니다."),
     JWT_INVALID_TOKEN_ERROR(UNAUTHORIZED, "유효하지 않은 JWT 입니다."),
