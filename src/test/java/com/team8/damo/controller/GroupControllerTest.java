@@ -58,7 +58,8 @@ class GroupControllerTest {
                 "name": "맛집탐방대",
                 "introduction": "서울 맛집을 함께 다니는 모임",
                 "latitude": 37.5665,
-                "longitude": 126.9780
+                "longitude": 126.9780,
+                "imagePath": "image"
             }
             """;
 
@@ -86,7 +87,8 @@ class GroupControllerTest {
                 "name": "맛집탐방대",
                 "introduction": null,
                 "latitude": 37.5665,
-                "longitude": 126.9780
+                "longitude": 126.9780,
+                "imagePath": "image"
             }
             """;
 
@@ -188,7 +190,8 @@ class GroupControllerTest {
                 "name": "가나",
                 "introduction": "소개글",
                 "latitude": 37.5665,
-                "longitude": 126.9780
+                "longitude": 126.9780,
+                "imagePath": "image"
             }
             """;
 
@@ -215,7 +218,8 @@ class GroupControllerTest {
                 "name": "가나다라마바사아자차",
                 "introduction": "소개글",
                 "latitude": 37.5665,
-                "longitude": 126.9780
+                "longitude": 126.9780,
+                "imagePath": "image"
             }
             """;
 
@@ -243,7 +247,8 @@ class GroupControllerTest {
                 "name": "맛집탐방대",
                 "introduction": "%s",
                 "latitude": 37.5665,
-                "longitude": 126.9780
+                "longitude": 126.9780,
+                "imagePath": "image"
             }
             """.formatted(longIntro);
 
@@ -269,7 +274,8 @@ class GroupControllerTest {
                 "name": "맛집탐방대",
                 "introduction": "%s",
                 "latitude": 37.5665,
-                "longitude": 126.9780
+                "longitude": 126.9780,
+                "imagePath": "image"
             }
             """.formatted(exactIntro);
 

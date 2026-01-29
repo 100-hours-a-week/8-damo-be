@@ -38,11 +38,15 @@ class S3ServiceTest {
     @InjectMocks
     private S3Service s3Service;
 
+    private static final String DIRECTORY_PREFIX = "s3/images";
+    private static final String UUID_REGEX = "(?i)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+
     @Test
     @DisplayName("Presigned URL을 성공적으로 발급한다.")
     void generatePresignedUrl_success() throws Exception {
         // given
         ReflectionTestUtils.setField(s3Service, "bucketName", "test-bucket");
+        ReflectionTestUtils.setField(s3Service, "directoryPrefix", DIRECTORY_PREFIX);
 
         String fileName = "profile.jpg";
         String contentType = "image/jpeg";
@@ -63,9 +67,7 @@ class S3ServiceTest {
         assertThat(response)
             .extracting("presignedUrl", "expiresIn")
             .containsExactly("https://test-bucket.s3.amazonaws.com/test-key", 300);
-        assertThat(response.objectKey())
-            .startsWith(directory + "/")
-            .endsWith(fileName);
+        assertObjectKeyWithPrefix(response.objectKey(), DIRECTORY_PREFIX + "/" + directory + "/");
 
         then(s3Presigner).should().presignPutObject(any(PutObjectPresignRequest.class));
     }
@@ -75,6 +77,7 @@ class S3ServiceTest {
     void generatePresignedUrl_withoutDirectory() throws Exception {
         // given
         ReflectionTestUtils.setField(s3Service, "bucketName", "test-bucket");
+        ReflectionTestUtils.setField(s3Service, "directoryPrefix", DIRECTORY_PREFIX);
 
         String fileName = "image.png";
         String contentType = "image/png";
@@ -91,9 +94,7 @@ class S3ServiceTest {
         PresignedUrlResponse response = s3Service.generatePresignedUrl(request);
 
         // then
-        assertThat(response.objectKey())
-            .doesNotContain("/")
-            .endsWith(fileName);
+        assertObjectKeyWithPrefix(response.objectKey(), DIRECTORY_PREFIX + "/");
 
         then(s3Presigner).should().presignPutObject(any(PutObjectPresignRequest.class));
     }
@@ -103,6 +104,7 @@ class S3ServiceTest {
     void generatePresignedUrl_emptyDirectory() throws Exception {
         // given
         ReflectionTestUtils.setField(s3Service, "bucketName", "test-bucket");
+        ReflectionTestUtils.setField(s3Service, "directoryPrefix", DIRECTORY_PREFIX);
 
         String fileName = "image.webp";
         String contentType = "image/webp";
@@ -119,9 +121,7 @@ class S3ServiceTest {
         PresignedUrlResponse response = s3Service.generatePresignedUrl(request);
 
         // then
-        assertThat(response.objectKey())
-            .doesNotContain("/")
-            .endsWith(fileName);
+        assertObjectKeyWithPrefix(response.objectKey(), DIRECTORY_PREFIX + "/");
 
         then(s3Presigner).should().presignPutObject(any(PutObjectPresignRequest.class));
     }
@@ -132,6 +132,7 @@ class S3ServiceTest {
     void generatePresignedUrl_allowedContentTypes(String contentType) throws Exception {
         // given
         ReflectionTestUtils.setField(s3Service, "bucketName", "test-bucket");
+        ReflectionTestUtils.setField(s3Service, "directoryPrefix", DIRECTORY_PREFIX);
 
         PresignedUrlServiceRequest request = new PresignedUrlServiceRequest(
             "test.file", contentType, null
@@ -158,6 +159,7 @@ class S3ServiceTest {
     void generatePresignedUrl_caseInsensitiveContentTypes(String contentType) throws Exception {
         // given
         ReflectionTestUtils.setField(s3Service, "bucketName", "test-bucket");
+        ReflectionTestUtils.setField(s3Service, "directoryPrefix", DIRECTORY_PREFIX);
 
         PresignedUrlServiceRequest request = new PresignedUrlServiceRequest(
             "test.file", contentType, null
@@ -200,6 +202,7 @@ class S3ServiceTest {
     void generatePresignedUrl_sanitizeFileName() throws Exception {
         // given
         ReflectionTestUtils.setField(s3Service, "bucketName", "test-bucket");
+        ReflectionTestUtils.setField(s3Service, "directoryPrefix", DIRECTORY_PREFIX);
 
         String fileName = "test file@#$.jpg";
         String contentType = "image/jpeg";
@@ -217,7 +220,7 @@ class S3ServiceTest {
 
         // then
         assertThat(response.objectKey())
-            .endsWith("test_file___.jpg")
+            .startsWith(DIRECTORY_PREFIX + "/profiles/")
             .doesNotContain("@", "#", "$", " ");
 
         then(s3Presigner).should().presignPutObject(any(PutObjectPresignRequest.class));
@@ -228,6 +231,7 @@ class S3ServiceTest {
     void generatePresignedUrl_koreanFileName() throws Exception {
         // given
         ReflectionTestUtils.setField(s3Service, "bucketName", "test-bucket");
+        ReflectionTestUtils.setField(s3Service, "directoryPrefix", DIRECTORY_PREFIX);
 
         String fileName = "프로필사진.png";
         String contentType = "image/png";
@@ -247,8 +251,14 @@ class S3ServiceTest {
         assertThat(response)
             .extracting("objectKey")
             .asString()
-            .endsWith("프로필사진.png");
+            .startsWith(DIRECTORY_PREFIX + "/");
 
         then(s3Presigner).should().presignPutObject(any(PutObjectPresignRequest.class));
+    }
+
+    private void assertObjectKeyWithPrefix(String objectKey, String prefix) {
+        assertThat(objectKey).startsWith(prefix);
+        String suffix = objectKey.substring(prefix.length());
+        assertThat(suffix).matches(UUID_REGEX);
     }
 }

@@ -68,12 +68,14 @@ class GroupServiceTest {
         Long userId = 1L;
         Long groupId = 100L;
         Long userGroupId = 200L;
+        String imagePath = "groups/profile/group-100.png";
 
         GroupCreateServiceRequest request = new GroupCreateServiceRequest(
             "맛집탐방대",
             "서울 맛집을 함께 다니는 모임",
             37.5665,
-            126.9780
+            126.9780,
+            imagePath
         );
 
         User user = UserFixture.create(userId);
@@ -99,6 +101,7 @@ class GroupServiceTest {
         assertThat(savedGroup.getIntroduction()).isEqualTo("서울 맛집을 함께 다니는 모임");
         assertThat(savedGroup.getLatitude()).isEqualTo(37.5665);
         assertThat(savedGroup.getLongitude()).isEqualTo(126.9780);
+        assertThat(savedGroup.getImagePath()).isEqualTo(imagePath);
 
         UserGroup savedUserGroup = userGroupCaptor.getValue();
         assertThat(savedUserGroup.getId()).isEqualTo(userGroupId);
@@ -119,7 +122,8 @@ class GroupServiceTest {
             "맛집탐방대",
             null,
             37.5665,
-            126.9780
+            126.9780,
+            null
         );
 
         User user = UserFixture.create(userId);
@@ -150,7 +154,8 @@ class GroupServiceTest {
             "맛집탐방대",
             "서울 맛집을 함께 다니는 모임",
             37.5665,
-            126.9780
+            126.9780,
+            "groups/profile/group-999.png"
         );
 
         given(userRepository.findById(userId)).willReturn(Optional.empty());
