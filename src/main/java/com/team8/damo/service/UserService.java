@@ -1,5 +1,6 @@
 package com.team8.damo.service;
 
+import com.team8.damo.client.AiService;
 import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.AllergyType;
 import com.team8.damo.entity.enumeration.FoodType;
@@ -35,6 +36,7 @@ public class UserService {
     private final UserLikeFoodRepository userLikeFoodRepository;
     private final UserLikeIngredientRepository userLikeIngredientRepository;
     private final Snowflake snowflake;
+    private final AiService aiService;
 
     @Transactional
     public void updateUserBasic(Long userId, UserBasicUpdateServiceRequest request) {
@@ -62,6 +64,8 @@ public class UserService {
 
         user.updateOtherCharacteristics(request.otherCharacteristics());
         user.updateOnboardingStep(OnboardingStep.DONE);
+
+        aiService.userPersonaUpdate(user, request.allergies(), request.likeFoods(), request.likeIngredients());
     }
 
     @Transactional
