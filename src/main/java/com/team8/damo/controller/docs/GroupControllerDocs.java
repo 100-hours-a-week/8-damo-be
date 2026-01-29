@@ -30,6 +30,7 @@ public interface GroupControllerDocs {
             - introduction: 소개글 (최대 30자, 선택)
             - latitude: 위도
             - longitude: 경도
+            - imagePath: Presigned URL 발급 시 받은 오브젝트 키
             - 생성자는 자동으로 그룹장(LEADER)이 됩니다.
             """
     )

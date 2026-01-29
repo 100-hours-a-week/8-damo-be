@@ -42,6 +42,7 @@ public interface UserControllerDocs {
             - 닉네임: 1~10자, 공백/특수문자 불가, 영문/숫자/한글만 허용
             - 성별: MALE, FEMALE
             - 연령대: TWENTIES, THIRTIES, FORTIES, FIFTIES_PLUS
+            - imagePath: Presigned URL 발급 시 받은 오브젝트 키
             """
     )
     @ApiResponse(responseCode = "204", description = "성공")
