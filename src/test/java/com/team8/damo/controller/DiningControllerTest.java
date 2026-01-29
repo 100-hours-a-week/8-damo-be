@@ -569,8 +569,8 @@ class DiningControllerTest {
             LocalDateTime.of(2025, 12, 25, 18, 0),
             DiningStatus.RESTAURANT_VOTING,
             List.of(
-                new DiningParticipantResponse(1L, "김철수"),
-                new DiningParticipantResponse(2L, "이영희")
+                new DiningParticipantResponse(1L, "김철수", "https://example.com/image1.jpg"),
+                new DiningParticipantResponse(2L, "이영희", "https://example.com/image2.jpg")
             )
         );
 
