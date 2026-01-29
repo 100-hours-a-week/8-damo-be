@@ -815,8 +815,8 @@ class DiningServiceTest {
     }
 
     @Test
-    @DisplayName("이미 투표를 완료한 사용자는 다시 투표할 수 없다.")
-    void voteAttendance_alreadyVoted() {
+    @DisplayName("참석으로 투표한 사용자가 불참으로 변경할 수 있다.")
+    void voteAttendance_changeFromAttendToNonAttend_success() {
         // given
         Long userId = 1L;
         Long groupId = 100L;
@@ -831,19 +831,18 @@ class DiningServiceTest {
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
         given(diningParticipantRepository.findByDiningIdAndUserId(diningId, userId)).willReturn(Optional.of(participant));
 
-        // when // then
-        assertThatThrownBy(() -> diningService.voteAttendance(userId, groupId, diningId, AttendanceVoteStatus.NON_ATTEND))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ATTENDANCE_VOTE_ALREADY_COMPLETED);
+        // when
+        AttendanceVoteStatus result = diningService.voteAttendance(userId, groupId, diningId, AttendanceVoteStatus.NON_ATTEND);
 
-        then(diningRepository).should().findById(diningId);
-        then(diningParticipantRepository).should().findByDiningIdAndUserId(diningId, userId);
+        // then
+        assertThat(result).isEqualTo(AttendanceVoteStatus.NON_ATTEND);
+        assertThat(participant.getAttendanceVoteStatus()).isEqualTo(AttendanceVoteStatus.NON_ATTEND);
         then(diningRepository).should(never()).increaseAttendanceVoteDoneCount(any());
     }
 
     @Test
-    @DisplayName("불참으로 이미 투표한 사용자는 다시 투표할 수 없다.")
-    void voteAttendance_alreadyVotedNonAttend() {
+    @DisplayName("불참으로 투표한 사용자가 참석으로 변경할 수 있다.")
+    void voteAttendance_changeFromNonAttendToAttend_success() {
         // given
         Long userId = 1L;
         Long groupId = 100L;
@@ -858,10 +857,38 @@ class DiningServiceTest {
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
         given(diningParticipantRepository.findByDiningIdAndUserId(diningId, userId)).willReturn(Optional.of(participant));
 
-        // when // then
-        assertThatThrownBy(() -> diningService.voteAttendance(userId, groupId, diningId, AttendanceVoteStatus.ATTEND))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ATTENDANCE_VOTE_ALREADY_COMPLETED);
+        // when
+        AttendanceVoteStatus result = diningService.voteAttendance(userId, groupId, diningId, AttendanceVoteStatus.ATTEND);
+
+        // then
+        assertThat(result).isEqualTo(AttendanceVoteStatus.ATTEND);
+        assertThat(participant.getAttendanceVoteStatus()).isEqualTo(AttendanceVoteStatus.ATTEND);
+        then(diningRepository).should(never()).increaseAttendanceVoteDoneCount(any());
+    }
+
+    @Test
+    @DisplayName("같은 상태로 다시 투표해도 에러 없이 성공한다.")
+    void voteAttendance_sameStatusAgain_success() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+        Long diningId = 200L;
+        Long participantId = 300L;
+
+        Group group = GroupFixture.create(groupId, "맛집탐방대");
+        Dining dining = DiningFixture.create(diningId, group, DiningStatus.ATTENDANCE_VOTING);
+        User user = UserFixture.create(userId);
+        DiningParticipant participant = DiningParticipantFixture.create(participantId, dining, user, AttendanceVoteStatus.ATTEND);
+
+        given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
+        given(diningParticipantRepository.findByDiningIdAndUserId(diningId, userId)).willReturn(Optional.of(participant));
+
+        // when
+        AttendanceVoteStatus result = diningService.voteAttendance(userId, groupId, diningId, AttendanceVoteStatus.ATTEND);
+
+        // then
+        assertThat(result).isEqualTo(AttendanceVoteStatus.ATTEND);
+        then(diningRepository).should(never()).increaseAttendanceVoteDoneCount(any());
     }
 
     @Test
