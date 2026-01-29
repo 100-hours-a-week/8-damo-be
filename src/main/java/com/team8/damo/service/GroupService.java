@@ -55,7 +55,7 @@ public class GroupService {
     public List<UserGroupResponse> getGroupList(Long userId) {
         List<UserGroup> userGroups = userGroupRepository.findAllByUserIdWithGroup(userId);
         return userGroups.stream()
-            .map(UserGroupResponse::of)
+            .map(UserGroupResponse::from)
             .toList();
     }
 
