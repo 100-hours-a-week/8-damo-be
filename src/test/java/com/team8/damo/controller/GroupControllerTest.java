@@ -298,8 +298,8 @@ class GroupControllerTest {
     void getGroupList_success() throws Exception {
         // given
         List<UserGroupResponse> response = List.of(
-            new UserGroupResponse(100L, "맛집탐방대", "서울 맛집 모임"),
-            new UserGroupResponse(101L, "카페투어", "카페 탐방 모임")
+            new UserGroupResponse(100L, "맛집탐방대", "서울 맛집 모임", "https://example.com/group1.jpg"),
+            new UserGroupResponse(101L, "카페투어", "카페 탐방 모임", "https://example.com/group2.jpg")
         );
 
         given(groupService.getGroupList(any())).willReturn(response);

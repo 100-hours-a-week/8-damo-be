@@ -5,13 +5,15 @@ import com.team8.damo.entity.UserGroup;
 public record UserGroupResponse(
     Long groupId,
     String name,
-    String introduction
+    String introduction,
+    String imagePath
 ) {
-    public static UserGroupResponse of(UserGroup userGroup) {
+    public static UserGroupResponse from(UserGroup userGroup) {
         return new UserGroupResponse(
             userGroup.getGroup().getId(),
             userGroup.getGroup().getName(),
-            userGroup.getGroup().getIntroduction()
+            userGroup.getGroup().getIntroduction(),
+            userGroup.getGroup().getImagePath()
         );
     }
 }

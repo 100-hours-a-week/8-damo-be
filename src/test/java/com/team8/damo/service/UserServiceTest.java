@@ -477,10 +477,10 @@ class UserServiceTest {
         UserBasicResponse response = userService.getUserBasic(userId);
 
         // then
-        assertThat(response.getUserId()).isEqualTo(userId);
-        assertThat(response.getNickname()).isEqualTo("맛집탐험가");
-        assertThat(response.getGender()).isEqualTo(Gender.FEMALE);
-        assertThat(response.getAgeGroup()).isEqualTo(AgeGroup.THIRTIES);
+        assertThat(response.userId()).isEqualTo(userId);
+        assertThat(response.nickname()).isEqualTo("맛집탐험가");
+        assertThat(response.gender()).isEqualTo(Gender.FEMALE);
+        assertThat(response.ageGroup()).isEqualTo(AgeGroup.THIRTIES);
 
         then(userRepository).should().findById(userId);
     }
