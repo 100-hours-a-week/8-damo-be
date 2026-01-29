@@ -42,10 +42,10 @@ public class UserService {
             throw new CustomException(DUPLICATE_NICKNAME);
         }
 
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+        User user = findUserBy(userId);
 
         user.updateBasic(request.nickname(), request.gender(), request.ageGroup());
+        user.changeImagePath(request.imagePath());
     }
 
     @Transactional
@@ -54,8 +54,7 @@ public class UserService {
         validateNoDuplicates(request.likeFoods(), DUPLICATE_LIKE_FOOD_CATEGORY);
         validateNoDuplicates(request.likeIngredients(), DUPLICATE_LIKE_INGREDIENT_CATEGORY);
 
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+        User user = findUserBy(userId);
 
         saveUserAllergies(user, request.allergies());
         saveUserLikeFoods(user, request.likeFoods());
@@ -63,6 +62,13 @@ public class UserService {
 
         user.updateOtherCharacteristics(request.otherCharacteristics());
         user.updateOnboardingStep(OnboardingStep.DONE);
+    }
+
+    @Transactional
+    public void changeImagePath(Long userId, String imagePath) {
+        User user = findUserBy(userId);
+        user.changeImagePath(imagePath);
+        // 기존 이미지 삭제
     }
 
     private <T> void validateNoDuplicates(List<T> items, ErrorCode errorCode) {
@@ -117,8 +123,7 @@ public class UserService {
     }
 
     public UserProfileResponse getUserProfile(Long userId) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+        User user = findUserBy(userId);
 
         List<UserAllergy> userAllergies = userAllergyRepository.findByUserIdWithCategory(userId);
         List<UserLikeFood> userLikeFoods = userLikeFoodRepository.findByUserIdWithCategory(userId);
@@ -137,9 +142,13 @@ public class UserService {
         return UserProfileResponse.of(user, allergies, likeFoods, likeIngredients);
     }
 
-    public UserBasicResponse getUserBasic(Long userId) {
-        User user = userRepository.findById(userId)
+    private User findUserBy(Long userId) {
+        return userRepository.findById(userId)
             .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+    }
+
+    public UserBasicResponse getUserBasic(Long userId) {
+        User user = findUserBy(userId);
         return UserBasicResponse.from(user);
     }
 }

@@ -61,7 +61,8 @@ class UserControllerTest {
             {
                 "nickname": "맛집탐험가",
                 "gender": "MALE",
-                "ageGroup": "TWENTIES"
+                "ageGroup": "TWENTIES",
+                "imagePath": "image"
             }
             """;
 

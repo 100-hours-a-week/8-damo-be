@@ -73,7 +73,7 @@ class UserServiceTest {
         AgeGroup ageGroup = AgeGroup.TWENTIES;
 
         UserBasicUpdateServiceRequest request = new UserBasicUpdateServiceRequest(
-            nickname, gender, ageGroup
+            nickname, gender, ageGroup, "users/profile/user-1.png"
         );
 
         User user = UserFixture.create(userId);
@@ -101,7 +101,7 @@ class UserServiceTest {
         String duplicateNickname = "중복닉네임";
 
         UserBasicUpdateServiceRequest request = new UserBasicUpdateServiceRequest(
-            duplicateNickname, Gender.MALE, AgeGroup.TWENTIES
+            duplicateNickname, Gender.MALE, AgeGroup.TWENTIES, null
         );
 
         given(userRepository.existsByNickname(duplicateNickname)).willReturn(true);
@@ -123,7 +123,7 @@ class UserServiceTest {
         String nickname = "새닉네임";
 
         UserBasicUpdateServiceRequest request = new UserBasicUpdateServiceRequest(
-            nickname, Gender.FEMALE, AgeGroup.THIRTIES
+            nickname, Gender.FEMALE, AgeGroup.THIRTIES, "users/profile/user-999.png"
         );
 
         given(userRepository.existsByNickname(nickname)).willReturn(false);

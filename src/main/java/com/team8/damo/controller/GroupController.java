@@ -1,6 +1,7 @@
 package com.team8.damo.controller;
 
 import com.team8.damo.controller.request.GroupCreateRequest;
+import com.team8.damo.controller.request.ImagePathUpdateRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.service.response.GroupDetailResponse;
 import com.team8.damo.security.jwt.JwtUserDetails;
@@ -28,6 +29,16 @@ public class GroupController implements GroupControllerDocs {
         @Valid @RequestBody GroupCreateRequest request
     ) {
         return BaseResponse.created(groupService.createGroup(user.getUserId(), request.toServiceRequest()));
+    }
+
+    @PatchMapping("/groups/{groupId}/image-path")
+    public BaseResponse<Void> updateImagePath(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @PathVariable Long groupId,
+        @RequestBody ImagePathUpdateRequest request
+    ) {
+        groupService.changeImagePath(user.getUserId(), groupId, request.getImagePath());
+        return BaseResponse.noContent();
     }
 
     @Override

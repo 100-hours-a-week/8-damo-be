@@ -2,6 +2,7 @@ package com.team8.damo.controller.docs;
 
 import com.team8.damo.controller.request.UserBasicUpdateRequest;
 import com.team8.damo.controller.request.UserCharacteristicsCreateRequest;
+import com.team8.damo.controller.request.ImagePathUpdateRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.service.response.UserBasicResponse;
 import com.team8.damo.service.response.UserProfileResponse;
@@ -41,6 +42,7 @@ public interface UserControllerDocs {
             - 닉네임: 1~10자, 공백/특수문자 불가, 영문/숫자/한글만 허용
             - 성별: MALE, FEMALE
             - 연령대: TWENTIES, THIRTIES, FORTIES, FIFTIES_PLUS
+            - imagePath: Presigned URL 발급 시 받은 오브젝트 키
             """
     )
     @ApiResponse(responseCode = "204", description = "성공")
@@ -49,6 +51,21 @@ public interface UserControllerDocs {
         @Parameter(hidden = true)
         JwtUserDetails user,
         UserBasicUpdateRequest request
+    );
+
+    @Operation(
+        summary = "사용자 프로필 이미지 경로 수정",
+        description = """
+            ### 사용자의 프로필 이미지 경로를 수정합니다.
+            - imagePath: S3 업로드 후 반환된 objectKey
+            """
+    )
+    @ApiResponse(responseCode = "204", description = "성공")
+    @ApiErrorResponses({USER_NOT_FOUND})
+    BaseResponse<Void> updateImagePath(
+        @Parameter(hidden = true)
+        JwtUserDetails user,
+        ImagePathUpdateRequest request
     );
 
     @Operation(

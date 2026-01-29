@@ -3,6 +3,7 @@ package com.team8.damo.controller;
 import com.team8.damo.controller.docs.UserControllerDocs;
 import com.team8.damo.controller.request.UserBasicUpdateRequest;
 import com.team8.damo.controller.request.UserCharacteristicsCreateRequest;
+import com.team8.damo.controller.request.ImagePathUpdateRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.service.response.UserBasicResponse;
 import com.team8.damo.service.response.UserProfileResponse;
@@ -35,6 +36,15 @@ public class UserController implements UserControllerDocs {
         @Valid @RequestBody UserBasicUpdateRequest request
     ) {
         userService.updateUserBasic(user.getUserId(), request.toServiceRequest());
+        return BaseResponse.noContent();
+    }
+
+    @PatchMapping("/me/image-path")
+    public BaseResponse<Void> updateImagePath(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @RequestBody ImagePathUpdateRequest request
+    ) {
+        userService.changeImagePath(user.getUserId(), request.getImagePath());
         return BaseResponse.noContent();
     }
 

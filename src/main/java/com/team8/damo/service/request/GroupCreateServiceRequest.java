@@ -6,7 +6,8 @@ public record GroupCreateServiceRequest(
     String name,
     String introduction,
     double latitude,
-    double longitude
+    double longitude,
+    String imagePath
 ) {
     public Group toEntity(Long id) {
         return Group.builder()
@@ -15,6 +16,7 @@ public record GroupCreateServiceRequest(
             .introduction(introduction)
             .latitude(latitude)
             .longitude(longitude)
+            .imagePath(imagePath)
             .build();
     }
 }
