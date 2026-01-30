@@ -1,5 +1,6 @@
 package com.team8.damo.security;
 
+import com.team8.damo.security.handler.CustomLogoutHandler;
 import com.team8.damo.security.jwt.JwtAuthenticationFilter;
 import com.team8.damo.security.jwt.JwtExceptionFilter;
 import com.team8.damo.security.jwt.JwtProvider;
@@ -42,6 +43,7 @@ public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
     private final JwtExceptionFilter jwtExceptionFilter;
+    private final CustomLogoutHandler customLogoutHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -57,6 +59,7 @@ public class SecurityConfig {
             )
             .logout(logout -> logout
                 .logoutUrl("/api/logout")
+                .addLogoutHandler(customLogoutHandler)
                 .logoutSuccessHandler((request, response, authentication) -> {
                     response.setStatus(HttpServletResponse.SC_NO_CONTENT);
                 })
