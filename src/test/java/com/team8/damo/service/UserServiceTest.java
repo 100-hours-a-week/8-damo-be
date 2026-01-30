@@ -9,12 +9,15 @@ import com.team8.damo.fixture.UserFixture;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.UserBasicUpdateServiceRequest;
 import com.team8.damo.service.request.UserCharacteristicsCreateServiceRequest;
+import com.team8.damo.service.request.UserCharacteristicsUpdateServiceRequest;
 import com.team8.damo.service.response.UserBasicResponse;
 import com.team8.damo.service.response.UserProfileResponse;
 import com.team8.damo.util.Snowflake;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -30,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.*;
 import static org.mockito.Mockito.never;
 
@@ -66,6 +70,62 @@ class UserServiceTest {
 
     @InjectMocks
     private UserService userService;
+
+    @Captor
+    private ArgumentCaptor<List<UserAllergy>> userAllergyCaptor;
+
+    @Captor
+    private ArgumentCaptor<List<UserLikeFood>> userLikeFoodCaptor;
+
+    @Captor
+    private ArgumentCaptor<List<UserLikeIngredient>> userLikeIngredientCaptor;
+
+    @Captor
+    private ArgumentCaptor<List<AllergyCategory>> allergyCategoryCaptor;
+
+    @Captor
+    private ArgumentCaptor<List<LikeFoodCategory>> likeFoodCategoryCaptor;
+
+    @Captor
+    private ArgumentCaptor<List<LikeIngredientCategory>> likeIngredientCategoryCaptor;
+
+    // ===== Helper Methods for Category Assertion =====
+
+    private void assertSavedAllergies(List<UserAllergy> saved, AllergyType... expectedTypes) {
+        assertThat(saved).hasSize(expectedTypes.length)
+            .extracting(ua -> ua.getAllergyCategory().getCategory())
+            .containsExactlyInAnyOrder(expectedTypes);
+    }
+
+    private void assertSavedLikeFoods(List<UserLikeFood> saved, FoodType... expectedTypes) {
+        assertThat(saved).hasSize(expectedTypes.length)
+            .extracting(ulf -> ulf.getLikeFoodCategory().getCategory())
+            .containsExactlyInAnyOrder(expectedTypes);
+    }
+
+    private void assertSavedLikeIngredients(List<UserLikeIngredient> saved, IngredientType... expectedTypes) {
+        assertThat(saved).hasSize(expectedTypes.length)
+            .extracting(uli -> uli.getLikeIngredientCategory().getCategory())
+            .containsExactlyInAnyOrder(expectedTypes);
+    }
+
+    private void assertDeletedAllergies(List<AllergyCategory> deleted, AllergyType... expectedTypes) {
+        assertThat(deleted).hasSize(expectedTypes.length)
+            .extracting(AllergyCategory::getCategory)
+            .containsExactlyInAnyOrder(expectedTypes);
+    }
+
+    private void assertDeletedLikeFoods(List<LikeFoodCategory> deleted, FoodType... expectedTypes) {
+        assertThat(deleted).hasSize(expectedTypes.length)
+            .extracting(LikeFoodCategory::getCategory)
+            .containsExactlyInAnyOrder(expectedTypes);
+    }
+
+    private void assertDeletedLikeIngredients(List<LikeIngredientCategory> deleted, IngredientType... expectedTypes) {
+        assertThat(deleted).hasSize(expectedTypes.length)
+            .extracting(LikeIngredientCategory::getCategory)
+            .containsExactlyInAnyOrder(expectedTypes);
+    }
 
     @Test
     @DisplayName("사용자 기본 정보를 성공적으로 업데이트한다.")
@@ -178,9 +238,13 @@ class UserServiceTest {
         assertThat(user.getOtherCharacteristics()).isEqualTo(otherCharacteristics);
         assertThat(user.getOnboardingStep()).isEqualTo(OnboardingStep.DONE);
 
-        then(userAllergyRepository).should().saveAll(anyList());
-        then(userLikeFoodRepository).should().saveAll(anyList());
-        then(userLikeIngredientRepository).should().saveAll(anyList());
+        then(userAllergyRepository).should().saveAll(userAllergyCaptor.capture());
+        then(userLikeFoodRepository).should().saveAll(userLikeFoodCaptor.capture());
+        then(userLikeIngredientRepository).should().saveAll(userLikeIngredientCaptor.capture());
+
+        assertSavedAllergies(userAllergyCaptor.getValue(), AllergyType.SHRIMP, AllergyType.CRAB);
+        assertSavedLikeFoods(userLikeFoodCaptor.getValue(), FoodType.KOREAN, FoodType.CHINESE);
+        assertSavedLikeIngredients(userLikeIngredientCaptor.getValue(), IngredientType.MEAT, IngredientType.SEAFOOD);
     }
 
     @Test
@@ -499,5 +563,352 @@ class UserServiceTest {
             .hasFieldOrPropertyWithValue("errorCode", USER_NOT_FOUND);
 
         then(userRepository).should().findById(userId);
+    }
+
+    @Test
+    @DisplayName("사용자 개인 특성을 성공적으로 수정한다 - 새로운 카테고리 추가")
+    void updateUserCharacteristics_addNewCategories() {
+        // given
+        Long userId = 1L;
+        User user = UserFixture.create(userId);
+
+        List<AllergyType> newAllergies = List.of(AllergyType.SHRIMP, AllergyType.CRAB);
+        List<FoodType> newLikeFoods = List.of(FoodType.KOREAN, FoodType.CHINESE);
+        List<IngredientType> newLikeIngredients = List.of(IngredientType.MEAT, IngredientType.SEAFOOD);
+        String otherCharacteristics = "매운 음식을 좋아합니다";
+
+        UserCharacteristicsUpdateServiceRequest request = new UserCharacteristicsUpdateServiceRequest(
+            newAllergies, newLikeFoods, newLikeIngredients, otherCharacteristics
+        );
+
+        AllergyCategory allergy1 = CategoryFixture.createAllergyCategory(1, AllergyType.SHRIMP);
+        AllergyCategory allergy2 = CategoryFixture.createAllergyCategory(2, AllergyType.CRAB);
+        LikeFoodCategory food1 = CategoryFixture.createLikeFoodCategory(1, FoodType.KOREAN);
+        LikeFoodCategory food2 = CategoryFixture.createLikeFoodCategory(2, FoodType.CHINESE);
+        LikeIngredientCategory ingredient1 = CategoryFixture.createLikeIngredientCategory(1, IngredientType.MEAT);
+        LikeIngredientCategory ingredient2 = CategoryFixture.createLikeIngredientCategory(2, IngredientType.SEAFOOD);
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(userAllergyRepository.findByUserIdWithCategory(userId)).willReturn(List.of());
+        given(userLikeFoodRepository.findByUserIdWithCategory(userId)).willReturn(List.of());
+        given(userLikeIngredientRepository.findByUserIdWithCategory(userId)).willReturn(List.of());
+        given(allergyCategoryRepository.findByCategoryIn(anyList())).willReturn(List.of(allergy1, allergy2));
+        given(likeFoodCategoryRepository.findByCategoryIn(anyList())).willReturn(List.of(food1, food2));
+        given(likeIngredientCategoryRepository.findByCategoryIn(anyList())).willReturn(List.of(ingredient1, ingredient2));
+        given(snowflake.nextId()).willReturn(100L, 101L, 102L, 103L, 104L, 105L);
+        willDoNothing().given(aiService).userPersonaUpdate(user, newAllergies, newLikeFoods, newLikeIngredients);
+
+        // when
+        userService.updateUserCharacteristics(userId, request);
+
+        // then
+        assertThat(user.getOtherCharacteristics()).isEqualTo(otherCharacteristics);
+
+        then(userAllergyRepository).should().saveAll(userAllergyCaptor.capture());
+        then(userLikeFoodRepository).should().saveAll(userLikeFoodCaptor.capture());
+        then(userLikeIngredientRepository).should().saveAll(userLikeIngredientCaptor.capture());
+
+        assertSavedAllergies(userAllergyCaptor.getValue(), AllergyType.SHRIMP, AllergyType.CRAB);
+        assertSavedLikeFoods(userLikeFoodCaptor.getValue(), FoodType.KOREAN, FoodType.CHINESE);
+        assertSavedLikeIngredients(userLikeIngredientCaptor.getValue(), IngredientType.MEAT, IngredientType.SEAFOOD);
+
+        then(aiService).should().userPersonaUpdate(user, newAllergies, newLikeFoods, newLikeIngredients);
+    }
+
+    @Test
+    @DisplayName("사용자 개인 특성을 성공적으로 수정한다 - 기존 카테고리 삭제")
+    void updateUserCharacteristics_removeExistingCategories() {
+        // given
+        Long userId = 1L;
+        User user = UserFixture.create(userId);
+
+        List<AllergyType> newAllergies = List.of();
+        List<FoodType> newLikeFoods = List.of(FoodType.KOREAN);
+        List<IngredientType> newLikeIngredients = List.of(IngredientType.MEAT);
+
+        UserCharacteristicsUpdateServiceRequest request = new UserCharacteristicsUpdateServiceRequest(
+            newAllergies, newLikeFoods, newLikeIngredients, null
+        );
+
+        AllergyCategory existingAllergy = CategoryFixture.createAllergyCategory(1, AllergyType.SHRIMP);
+        LikeFoodCategory existingFood1 = CategoryFixture.createLikeFoodCategory(1, FoodType.KOREAN);
+        LikeFoodCategory existingFood2 = CategoryFixture.createLikeFoodCategory(2, FoodType.CHINESE);
+        LikeIngredientCategory existingIngredient = CategoryFixture.createLikeIngredientCategory(1, IngredientType.MEAT);
+
+        List<UserAllergy> existingUserAllergies = List.of(new UserAllergy(100L, user, existingAllergy));
+        List<UserLikeFood> existingUserLikeFoods = List.of(
+            new UserLikeFood(200L, user, existingFood1),
+            new UserLikeFood(201L, user, existingFood2)
+        );
+        List<UserLikeIngredient> existingUserLikeIngredients = List.of(
+            new UserLikeIngredient(300L, user, existingIngredient)
+        );
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(userAllergyRepository.findByUserIdWithCategory(userId)).willReturn(existingUserAllergies);
+        given(userLikeFoodRepository.findByUserIdWithCategory(userId)).willReturn(existingUserLikeFoods);
+        given(userLikeIngredientRepository.findByUserIdWithCategory(userId)).willReturn(existingUserLikeIngredients);
+        given(allergyCategoryRepository.findByCategoryIn(anyList())).willReturn(List.of(existingAllergy));
+        given(likeFoodCategoryRepository.findByCategoryIn(anyList())).willReturn(List.of(existingFood2));
+        willDoNothing().given(aiService).userPersonaUpdate(user, newAllergies, newLikeFoods, newLikeIngredients);
+
+        // when
+        userService.updateUserCharacteristics(userId, request);
+
+        // then
+        then(userAllergyRepository).should().deleteAllByUserAndAllergyCategoryIn(eq(user), allergyCategoryCaptor.capture());
+        then(userLikeFoodRepository).should().deleteAllByUserAndLikeFoodCategoryIn(eq(user), likeFoodCategoryCaptor.capture());
+        then(userLikeIngredientRepository).should(never()).deleteAllByUserAndLikeIngredientCategoryIn(any(), anyList());
+
+        assertDeletedAllergies(allergyCategoryCaptor.getValue(), AllergyType.SHRIMP);
+        assertDeletedLikeFoods(likeFoodCategoryCaptor.getValue(), FoodType.CHINESE);
+
+        then(aiService).should().userPersonaUpdate(user, newAllergies, newLikeFoods, newLikeIngredients);
+    }
+
+    @Test
+    @DisplayName("사용자 개인 특성을 성공적으로 수정한다 - 일부 추가, 일부 삭제")
+    void updateUserCharacteristics_addAndRemove() {
+        // given
+        Long userId = 1L;
+        User user = UserFixture.create(userId);
+
+        List<AllergyType> newAllergies = List.of(AllergyType.CRAB, AllergyType.EGG);
+        List<FoodType> newLikeFoods = List.of(FoodType.KOREAN);
+        List<IngredientType> newLikeIngredients = List.of(IngredientType.SEAFOOD);
+        String otherCharacteristics = "업데이트된 특성";
+
+        UserCharacteristicsUpdateServiceRequest request = new UserCharacteristicsUpdateServiceRequest(
+            newAllergies, newLikeFoods, newLikeIngredients, otherCharacteristics
+        );
+
+        AllergyCategory existingAllergy = CategoryFixture.createAllergyCategory(1, AllergyType.SHRIMP);
+        AllergyCategory newAllergy1 = CategoryFixture.createAllergyCategory(2, AllergyType.CRAB);
+        AllergyCategory newAllergy2 = CategoryFixture.createAllergyCategory(3, AllergyType.EGG);
+        LikeFoodCategory existingFood = CategoryFixture.createLikeFoodCategory(1, FoodType.KOREAN);
+        LikeIngredientCategory existingIngredient = CategoryFixture.createLikeIngredientCategory(1, IngredientType.MEAT);
+        LikeIngredientCategory newIngredient = CategoryFixture.createLikeIngredientCategory(2, IngredientType.SEAFOOD);
+
+        List<UserAllergy> existingUserAllergies = List.of(new UserAllergy(100L, user, existingAllergy));
+        List<UserLikeFood> existingUserLikeFoods = List.of(new UserLikeFood(200L, user, existingFood));
+        List<UserLikeIngredient> existingUserLikeIngredients = List.of(new UserLikeIngredient(300L, user, existingIngredient));
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(userAllergyRepository.findByUserIdWithCategory(userId)).willReturn(existingUserAllergies);
+        given(userLikeFoodRepository.findByUserIdWithCategory(userId)).willReturn(existingUserLikeFoods);
+        given(userLikeIngredientRepository.findByUserIdWithCategory(userId)).willReturn(existingUserLikeIngredients);
+        given(allergyCategoryRepository.findByCategoryIn(anyList())).willReturn(List.of(existingAllergy), List.of(newAllergy1, newAllergy2));
+        given(likeIngredientCategoryRepository.findByCategoryIn(anyList())).willReturn(List.of(existingIngredient), List.of(newIngredient));
+        given(snowflake.nextId()).willReturn(101L, 102L, 301L);
+        willDoNothing().given(aiService).userPersonaUpdate(user, newAllergies, newLikeFoods, newLikeIngredients);
+
+        // when
+        userService.updateUserCharacteristics(userId, request);
+
+        // then
+        assertThat(user.getOtherCharacteristics()).isEqualTo(otherCharacteristics);
+
+        then(userAllergyRepository).should().deleteAllByUserAndAllergyCategoryIn(eq(user), allergyCategoryCaptor.capture());
+        then(userAllergyRepository).should().saveAll(userAllergyCaptor.capture());
+        then(userLikeFoodRepository).should(never()).deleteAllByUserAndLikeFoodCategoryIn(any(), anyList());
+        then(userLikeFoodRepository).should(never()).saveAll(anyList());
+        then(userLikeIngredientRepository).should().deleteAllByUserAndLikeIngredientCategoryIn(eq(user), likeIngredientCategoryCaptor.capture());
+        then(userLikeIngredientRepository).should().saveAll(userLikeIngredientCaptor.capture());
+
+        assertDeletedAllergies(allergyCategoryCaptor.getValue(), AllergyType.SHRIMP);
+        assertSavedAllergies(userAllergyCaptor.getValue(), AllergyType.CRAB, AllergyType.EGG);
+        assertDeletedLikeIngredients(likeIngredientCategoryCaptor.getValue(), IngredientType.MEAT);
+        assertSavedLikeIngredients(userLikeIngredientCaptor.getValue(), IngredientType.SEAFOOD);
+
+        then(aiService).should().userPersonaUpdate(user, newAllergies, newLikeFoods, newLikeIngredients);
+    }
+
+    @Test
+    @DisplayName("알레르기를 null로 보내면 기존 알레르기가 모두 삭제된다.")
+    void updateUserCharacteristics_nullAllergies() {
+        // given
+        Long userId = 1L;
+        User user = UserFixture.create(userId);
+
+        List<FoodType> newLikeFoods = List.of(FoodType.KOREAN);
+        List<IngredientType> newLikeIngredients = List.of(IngredientType.MEAT);
+
+        UserCharacteristicsUpdateServiceRequest request = new UserCharacteristicsUpdateServiceRequest(
+            null, newLikeFoods, newLikeIngredients, null
+        );
+
+        AllergyCategory existingAllergy = CategoryFixture.createAllergyCategory(1, AllergyType.SHRIMP);
+        LikeFoodCategory existingFood = CategoryFixture.createLikeFoodCategory(1, FoodType.KOREAN);
+        LikeIngredientCategory existingIngredient = CategoryFixture.createLikeIngredientCategory(1, IngredientType.MEAT);
+
+        List<UserAllergy> existingUserAllergies = List.of(new UserAllergy(100L, user, existingAllergy));
+        List<UserLikeFood> existingUserLikeFoods = List.of(new UserLikeFood(200L, user, existingFood));
+        List<UserLikeIngredient> existingUserLikeIngredients = List.of(new UserLikeIngredient(300L, user, existingIngredient));
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(userAllergyRepository.findByUserIdWithCategory(userId)).willReturn(existingUserAllergies);
+        given(userLikeFoodRepository.findByUserIdWithCategory(userId)).willReturn(existingUserLikeFoods);
+        given(userLikeIngredientRepository.findByUserIdWithCategory(userId)).willReturn(existingUserLikeIngredients);
+        given(allergyCategoryRepository.findByCategoryIn(anyList())).willReturn(List.of(existingAllergy));
+        willDoNothing().given(aiService).userPersonaUpdate(user, null, newLikeFoods, newLikeIngredients);
+
+        // when
+        userService.updateUserCharacteristics(userId, request);
+
+        // then
+        then(userAllergyRepository).should().deleteAllByUserAndAllergyCategoryIn(eq(user), allergyCategoryCaptor.capture());
+        then(userAllergyRepository).should(never()).saveAll(anyList());
+
+        assertDeletedAllergies(allergyCategoryCaptor.getValue(), AllergyType.SHRIMP);
+
+        then(aiService).should().userPersonaUpdate(user, null, newLikeFoods, newLikeIngredients);
+    }
+
+    @Test
+    @DisplayName("동일한 카테고리면 추가/삭제 없이 완료된다.")
+    void updateUserCharacteristics_noChanges() {
+        // given
+        Long userId = 1L;
+        User user = UserFixture.create(userId);
+
+        List<AllergyType> allergies = List.of(AllergyType.SHRIMP);
+        List<FoodType> likeFoods = List.of(FoodType.KOREAN);
+        List<IngredientType> likeIngredients = List.of(IngredientType.MEAT);
+
+        UserCharacteristicsUpdateServiceRequest request = new UserCharacteristicsUpdateServiceRequest(
+            allergies, likeFoods, likeIngredients, "기존 특성"
+        );
+
+        AllergyCategory existingAllergy = CategoryFixture.createAllergyCategory(1, AllergyType.SHRIMP);
+        LikeFoodCategory existingFood = CategoryFixture.createLikeFoodCategory(1, FoodType.KOREAN);
+        LikeIngredientCategory existingIngredient = CategoryFixture.createLikeIngredientCategory(1, IngredientType.MEAT);
+
+        List<UserAllergy> existingUserAllergies = List.of(new UserAllergy(100L, user, existingAllergy));
+        List<UserLikeFood> existingUserLikeFoods = List.of(new UserLikeFood(200L, user, existingFood));
+        List<UserLikeIngredient> existingUserLikeIngredients = List.of(new UserLikeIngredient(300L, user, existingIngredient));
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(userAllergyRepository.findByUserIdWithCategory(userId)).willReturn(existingUserAllergies);
+        given(userLikeFoodRepository.findByUserIdWithCategory(userId)).willReturn(existingUserLikeFoods);
+        given(userLikeIngredientRepository.findByUserIdWithCategory(userId)).willReturn(existingUserLikeIngredients);
+        willDoNothing().given(aiService).userPersonaUpdate(user, allergies, likeFoods, likeIngredients);
+
+        // when
+        userService.updateUserCharacteristics(userId, request);
+
+        // then
+        assertThat(user.getOtherCharacteristics()).isEqualTo("기존 특성");
+
+        then(userAllergyRepository).should(never()).deleteAllByUserAndAllergyCategoryIn(any(), anyList());
+        then(userAllergyRepository).should(never()).saveAll(anyList());
+        then(userLikeFoodRepository).should(never()).deleteAllByUserAndLikeFoodCategoryIn(any(), anyList());
+        then(userLikeFoodRepository).should(never()).saveAll(anyList());
+        then(userLikeIngredientRepository).should(never()).deleteAllByUserAndLikeIngredientCategoryIn(any(), anyList());
+        then(userLikeIngredientRepository).should(never()).saveAll(anyList());
+        then(aiService).should().userPersonaUpdate(user, allergies, likeFoods, likeIngredients);
+    }
+
+    @Test
+    @DisplayName("특성 수정 시 알레르기 타입이 중복되면 예외가 발생한다.")
+    void updateUserCharacteristics_duplicateAllergies() {
+        // given
+        Long userId = 1L;
+        List<AllergyType> duplicateAllergies = List.of(AllergyType.SHRIMP, AllergyType.SHRIMP);
+
+        UserCharacteristicsUpdateServiceRequest request = new UserCharacteristicsUpdateServiceRequest(
+            duplicateAllergies, List.of(FoodType.KOREAN), List.of(IngredientType.MEAT), null
+        );
+
+        // when // then
+        assertThatThrownBy(() -> userService.updateUserCharacteristics(userId, request))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", DUPLICATE_ALLERGY_CATEGORY);
+
+        then(userRepository).should(never()).findById(any());
+    }
+
+    @Test
+    @DisplayName("특성 수정 시 선호 음식 타입이 중복되면 예외가 발생한다.")
+    void updateUserCharacteristics_duplicateLikeFoods() {
+        // given
+        Long userId = 1L;
+        List<FoodType> duplicateFoods = List.of(FoodType.KOREAN, FoodType.KOREAN);
+
+        UserCharacteristicsUpdateServiceRequest request = new UserCharacteristicsUpdateServiceRequest(
+            List.of(), duplicateFoods, List.of(IngredientType.MEAT), null
+        );
+
+        // when // then
+        assertThatThrownBy(() -> userService.updateUserCharacteristics(userId, request))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", DUPLICATE_LIKE_FOOD_CATEGORY);
+
+        then(userRepository).should(never()).findById(any());
+    }
+
+    @Test
+    @DisplayName("특성 수정 시 선호 재료 타입이 중복되면 예외가 발생한다.")
+    void updateUserCharacteristics_duplicateLikeIngredients() {
+        // given
+        Long userId = 1L;
+        List<IngredientType> duplicateIngredients = List.of(IngredientType.MEAT, IngredientType.MEAT);
+
+        UserCharacteristicsUpdateServiceRequest request = new UserCharacteristicsUpdateServiceRequest(
+            List.of(), List.of(FoodType.KOREAN), duplicateIngredients, null
+        );
+
+        // when // then
+        assertThatThrownBy(() -> userService.updateUserCharacteristics(userId, request))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", DUPLICATE_LIKE_INGREDIENT_CATEGORY);
+
+        then(userRepository).should(never()).findById(any());
+    }
+
+    @Test
+    @DisplayName("특성 수정 시 존재하지 않는 사용자면 예외가 발생한다.")
+    void updateUserCharacteristics_userNotFound() {
+        // given
+        Long userId = 999L;
+
+        UserCharacteristicsUpdateServiceRequest request = new UserCharacteristicsUpdateServiceRequest(
+            List.of(), List.of(FoodType.KOREAN), List.of(IngredientType.MEAT), null
+        );
+
+        given(userRepository.findById(userId)).willReturn(Optional.empty());
+
+        // when // then
+        assertThatThrownBy(() -> userService.updateUserCharacteristics(userId, request))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", USER_NOT_FOUND);
+
+        then(userRepository).should().findById(userId);
+    }
+
+    @Test
+    @DisplayName("특성 수정 시 DB에 존재하지 않는 알레르기 카테고리면 예외가 발생한다.")
+    void updateUserCharacteristics_invalidAllergyCategory() {
+        // given
+        Long userId = 1L;
+        User user = UserFixture.create(userId);
+
+        List<AllergyType> newAllergies = List.of(AllergyType.SHRIMP, AllergyType.CRAB);
+        List<FoodType> newLikeFoods = List.of(FoodType.KOREAN);
+        List<IngredientType> newLikeIngredients = List.of(IngredientType.MEAT);
+
+        UserCharacteristicsUpdateServiceRequest request = new UserCharacteristicsUpdateServiceRequest(
+            newAllergies, newLikeFoods, newLikeIngredients, null
+        );
+
+        AllergyCategory allergy1 = CategoryFixture.createAllergyCategory(1, AllergyType.SHRIMP);
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(userAllergyRepository.findByUserIdWithCategory(userId)).willReturn(List.of());
+        given(allergyCategoryRepository.findByCategoryIn(anyList())).willReturn(List.of(allergy1));
+
+        // when // then
+        assertThatThrownBy(() -> userService.updateUserCharacteristics(userId, request))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", INVALID_CATEGORY);
     }
 }
