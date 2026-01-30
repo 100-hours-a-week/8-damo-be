@@ -379,6 +379,9 @@ public class DiningService {
         Restaurant restaurant = restaurantRepository.findById(recommendRestaurant.getRestaurantId())
             .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
 
+        Group group = findGroupBy(groupId);
+        aiService.sendConfirmRestaurant(group, dining, restaurant.getId(), recommendRestaurant);
+
         return DiningConfirmedResponse.of(recommendRestaurant, restaurant);
     }
 

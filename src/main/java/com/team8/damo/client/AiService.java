@@ -3,6 +3,7 @@ package com.team8.damo.client;
 import com.team8.damo.client.request.*;
 import com.team8.damo.client.response.AiPersonaResponse;
 import com.team8.damo.client.response.AiRecommendationResponse;
+import com.team8.damo.client.response.AiRestaurantConfirmResponse;
 import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.AllergyType;
 import com.team8.damo.entity.enumeration.FoodType;
@@ -29,7 +30,7 @@ public class AiService {
 
     @Transactional
     public void recommendationRestaurant(Group group, Dining dining, List<Long> userIds) {
-        DiningData diningData = new DiningData(dining.getId(), group.getId(), dining.getDiningDate(), dining.getBudget(), String.valueOf(group.getLongitude()), String.valueOf(group.getLatitude()));
+        DiningData diningData = createDiningData(group, dining);
 
         AiRecommendationRequest request = new AiRecommendationRequest(diningData, userIds);
         AiRecommendationResponse recommendation = aiClient.recommendation(request);
@@ -46,7 +47,7 @@ public class AiService {
 
     @Transactional
     public List<RecommendRestaurant> recommendationRefreshRestaurant(Group group, Dining dining, List<Long> userIds) {
-        DiningData diningData = new DiningData(dining.getId(), group.getId(), dining.getDiningDate(), dining.getBudget(), String.valueOf(group.getLongitude()), String.valueOf(group.getLatitude()));
+        DiningData diningData = createDiningData(group, dining);
 
         List<RecommendRestaurant> restaurants = recommendRestaurantRepository
             .findByDiningIdAndRecommendationCount(dining.getId(), dining.getRecommendationCount());
@@ -79,6 +80,40 @@ public class AiService {
         if (!response.success()) {
             // 실패 시 재처리
         }
+    }
+
+    @Transactional
+    public void sendConfirmRestaurant(
+        Group group,
+        Dining dining,
+        String restaurantId,
+        RecommendRestaurant confirmedRestaurant
+    ) {
+        DiningData diningData = createDiningData(group, dining);
+
+        List<RestaurantVoteResult> voteResultList = List.of(createVoteResult(confirmedRestaurant));
+
+        AiRestaurantConfirmRequest request = new AiRestaurantConfirmRequest(
+            diningData,
+            restaurantId,
+            voteResultList
+        );
+
+        AiRestaurantConfirmResponse response = aiClient.confirmRestaurant(request);
+        if (!response.success()) {
+            log.warn("AI 식당 확정 전송 실패: restaurantId={}", restaurantId);
+        }
+    }
+
+    private DiningData createDiningData(Group group, Dining dining) {
+        return new DiningData(
+            dining.getId(),
+            group.getId(),
+            dining.getDiningDate(),
+            dining.getBudget(),
+            String.valueOf(group.getLongitude()),
+            String.valueOf(group.getLatitude())
+        );
     }
 
     private RestaurantVoteResult createVoteResult(RecommendRestaurant restaurant) {

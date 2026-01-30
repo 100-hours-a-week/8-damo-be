@@ -32,6 +32,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.never;
 
 @ActiveProfiles("test")
@@ -2350,12 +2351,14 @@ class DiningServiceTest {
 
         given(userGroupRepository.existsByUserIdAndGroupIdAndRole(userId, groupId, GroupRole.LEADER))
             .willReturn(true);
+        given(groupRepository.findById(groupId)).willReturn(Optional.of(group));
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
         given(recommendRestaurantRepository.findById(recommendRestaurantId))
             .willReturn(Optional.of(recommendRestaurant));
         given(recommendRestaurantRepository.existsByDiningIdAndRecommendationCountAndConfirmedStatusTrue(
             diningId, recommendationCount)).willReturn(false);
         given(restaurantRepository.findById(restaurantId)).willReturn(Optional.of(restaurant));
+        willDoNothing().given(aiService).sendConfirmRestaurant(any(Group.class), any(Dining.class), any(String.class), any(RecommendRestaurant.class));
 
         // when
         DiningConfirmedResponse result = diningService.confirmDiningRestaurant(
