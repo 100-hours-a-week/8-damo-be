@@ -1,5 +1,6 @@
 package com.team8.damo.repository;
 
+import com.team8.damo.entity.LikeFoodCategory;
 import com.team8.damo.entity.User;
 import com.team8.damo.entity.UserLikeFood;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,4 +17,6 @@ public interface UserLikeFoodRepository extends JpaRepository<UserLikeFood, Long
 
     @Query("SELECT ulf FROM UserLikeFood ulf JOIN FETCH ulf.likeFoodCategory WHERE ulf.user.id = :userId")
     List<UserLikeFood> findByUserIdWithCategory(@Param("userId") Long userId);
+
+    void deleteAllByUserAndLikeFoodCategoryIn(User user, List<LikeFoodCategory> categories);
 }

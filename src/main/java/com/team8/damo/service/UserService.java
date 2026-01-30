@@ -11,6 +11,7 @@ import com.team8.damo.exception.errorcode.ErrorCode;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.UserBasicUpdateServiceRequest;
 import com.team8.damo.service.request.UserCharacteristicsCreateServiceRequest;
+import com.team8.damo.service.request.UserCharacteristicsUpdateServiceRequest;
 import com.team8.damo.service.response.UserBasicResponse;
 import com.team8.damo.service.response.UserProfileResponse;
 import com.team8.damo.util.Snowflake;
@@ -18,8 +19,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.team8.damo.exception.errorcode.ErrorCode.*;
 
@@ -154,5 +158,94 @@ public class UserService {
     public UserBasicResponse getUserBasic(Long userId) {
         User user = findUserBy(userId);
         return UserBasicResponse.from(user);
+    }
+
+    @Transactional
+    public void updateUserCharacteristics(Long userId, UserCharacteristicsUpdateServiceRequest request) {
+        validateNoDuplicates(request.allergies(), DUPLICATE_ALLERGY_CATEGORY);
+        validateNoDuplicates(request.likeFoods(), DUPLICATE_LIKE_FOOD_CATEGORY);
+        validateNoDuplicates(request.likeIngredients(), DUPLICATE_LIKE_INGREDIENT_CATEGORY);
+
+        User user = findUserBy(userId);
+
+        updateUserAllergies(user, request.allergies());
+        updateUserLikeFoods(user, request.likeFoods());
+        updateUserLikeIngredients(user, request.likeIngredients());
+
+        user.updateOtherCharacteristics(request.otherCharacteristics());
+
+        aiService.userPersonaUpdate(user, request.allergies(), request.likeFoods(), request.likeIngredients());
+    }
+
+    private void updateUserAllergies(User user, List<AllergyType> newAllergies) {
+        List<UserAllergy> existingUserAllergies = userAllergyRepository.findByUserIdWithCategory(user.getId());
+        Set<AllergyType> existingTypes = existingUserAllergies.stream()
+            .map(ua -> ua.getAllergyCategory().getCategory())
+            .collect(Collectors.toSet());
+
+        Set<AllergyType> newTypes = newAllergies == null ? Set.of() : new HashSet<>(newAllergies);
+
+        List<AllergyType> toAdd = new ArrayList<>(newTypes);
+        toAdd.removeAll(existingTypes);
+
+        List<AllergyType> toRemove = new ArrayList<>(existingTypes);
+        toRemove.removeAll(newTypes);
+
+        if (!toRemove.isEmpty()) {
+            List<AllergyCategory> categoriesToRemove = allergyCategoryRepository.findByCategoryIn(toRemove);
+            userAllergyRepository.deleteAllByUserAndAllergyCategoryIn(user, categoriesToRemove);
+        }
+
+        if (!toAdd.isEmpty()) {
+            saveUserAllergies(user, toAdd);
+        }
+    }
+
+    private void updateUserLikeFoods(User user, List<FoodType> newLikeFoods) {
+        List<UserLikeFood> existingUserLikeFoods = userLikeFoodRepository.findByUser(user);
+        Set<FoodType> existingTypes = existingUserLikeFoods.stream()
+            .map(ulf -> ulf.getLikeFoodCategory().getCategory())
+            .collect(Collectors.toSet());
+
+        Set<FoodType> newTypes = newLikeFoods == null ? Set.of() : new HashSet<>(newLikeFoods);
+
+        List<FoodType> toAdd = new ArrayList<>(newTypes);
+        toAdd.removeAll(existingTypes);
+
+        List<FoodType> toRemove = new ArrayList<>(existingTypes);
+        toRemove.removeAll(newTypes);
+
+        if (!toRemove.isEmpty()) {
+            List<LikeFoodCategory> categoriesToRemove = likeFoodCategoryRepository.findByCategoryIn(toRemove);
+            userLikeFoodRepository.deleteAllByUserAndLikeFoodCategoryIn(user, categoriesToRemove);
+        }
+
+        if (!toAdd.isEmpty()) {
+            saveUserLikeFoods(user, toAdd);
+        }
+    }
+
+    private void updateUserLikeIngredients(User user, List<IngredientType> newLikeIngredients) {
+        List<UserLikeIngredient> existingUserLikeIngredients = userLikeIngredientRepository.findByUser(user);
+        Set<IngredientType> existingTypes = existingUserLikeIngredients.stream()
+            .map(uli -> uli.getLikeIngredientCategory().getCategory())
+            .collect(Collectors.toSet());
+
+        Set<IngredientType> newTypes = newLikeIngredients == null ? Set.of() : new HashSet<>(newLikeIngredients);
+
+        List<IngredientType> toAdd = new ArrayList<>(newTypes);
+        toAdd.removeAll(existingTypes);
+
+        List<IngredientType> toRemove = new ArrayList<>(existingTypes);
+        toRemove.removeAll(newTypes);
+
+        if (!toRemove.isEmpty()) {
+            List<LikeIngredientCategory> categoriesToRemove = likeIngredientCategoryRepository.findByCategoryIn(toRemove);
+            userLikeIngredientRepository.deleteAllByUserAndLikeIngredientCategoryIn(user, categoriesToRemove);
+        }
+
+        if (!toAdd.isEmpty()) {
+            saveUserLikeIngredients(user, toAdd);
+        }
     }
 }
