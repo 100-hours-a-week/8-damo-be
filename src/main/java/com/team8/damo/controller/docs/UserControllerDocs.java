@@ -3,6 +3,7 @@ package com.team8.damo.controller.docs;
 import com.team8.damo.controller.request.UserBasicUpdateRequest;
 import com.team8.damo.controller.request.UserCharacteristicsCreateRequest;
 import com.team8.damo.controller.request.ImagePathUpdateRequest;
+import com.team8.damo.controller.request.UserCharacteristicsUpdateRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.service.response.UserBasicResponse;
 import com.team8.damo.service.response.UserProfileResponse;
@@ -102,5 +103,25 @@ public interface UserControllerDocs {
     BaseResponse<UserProfileResponse> getProfile(
         @Parameter(hidden = true)
         JwtUserDetails user
+    );
+
+    @Operation(
+        summary = "사용자 프로필 수정",
+        description = """
+            ### 사용자의 프로필 정보를 수정합니다.
+            - allergies: 알레르기 타입 목록 (SHRIMP, CRAB, EGG, MILK 등) - nullable, 빈 리스트 허용
+            - likeFoods: 선호 음식 타입 목록 (KOREAN, CHINESE, JAPANESE 등) - 필수
+            - likeIngredients: 선호 재료 타입 목록 (MEAT, SEAFOOD, VEGETABLE 등) - 필수
+            - otherCharacteristics: 기타 특성 (최대 100자)
+
+            기존 카테고리와 비교하여 추가/삭제 대상만 처리합니다.
+            """
+    )
+    @ApiResponse(responseCode = "204", description = "성공")
+    @ApiErrorResponses({USER_NOT_FOUND, INVALID_CATEGORY, DUPLICATE_ALLERGY_CATEGORY, DUPLICATE_LIKE_FOOD_CATEGORY, DUPLICATE_LIKE_INGREDIENT_CATEGORY})
+    BaseResponse<Void> updateProfile(
+        @Parameter(hidden = true)
+        JwtUserDetails user,
+        UserCharacteristicsUpdateRequest request
     );
 }

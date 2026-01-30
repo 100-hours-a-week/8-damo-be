@@ -441,4 +441,239 @@ class UserControllerTest {
 
         then(userService).should().getUserBasic(any());
     }
+
+    @Test
+    @DisplayName("사용자 개인 특성을 성공적으로 수정한다.")
+    void updateCharacteristics_success() throws Exception {
+        // given
+        String requestBody = """
+            {
+                "allergies": ["SHRIMP", "CRAB"],
+                "likeFoods": ["KOREAN", "CHINESE"],
+                "likeIngredients": ["MEAT", "SEAFOOD"],
+                "otherCharacteristics": "매운 음식을 좋아합니다"
+            }
+            """;
+
+        willDoNothing().given(userService).updateUserCharacteristics(any(), any());
+
+        // when // then
+        mockMvc.perform(
+                patch("/api/v1/users/me/characteristics")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+            )
+            .andDo(print())
+            .andExpect(status().isOk());
+
+        then(userService).should().updateUserCharacteristics(any(), any());
+    }
+
+    @Test
+    @DisplayName("알레르기가 비어있어도 특성 수정에 성공한다.")
+    void updateCharacteristics_emptyAllergies() throws Exception {
+        // given
+        String requestBody = """
+            {
+                "allergies": [],
+                "likeFoods": ["KOREAN"],
+                "likeIngredients": ["MEAT"],
+                "otherCharacteristics": null
+            }
+            """;
+
+        willDoNothing().given(userService).updateUserCharacteristics(any(), any());
+
+        // when // then
+        mockMvc.perform(
+                patch("/api/v1/users/me/characteristics")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+            )
+            .andDo(print())
+            .andExpect(status().isOk());
+
+        then(userService).should().updateUserCharacteristics(any(), any());
+    }
+
+    @Test
+    @DisplayName("알레르기가 null이어도 특성 수정에 성공한다.")
+    void updateCharacteristics_nullAllergies() throws Exception {
+        // given
+        String requestBody = """
+            {
+                "allergies": null,
+                "likeFoods": ["KOREAN"],
+                "likeIngredients": ["MEAT"],
+                "otherCharacteristics": null
+            }
+            """;
+
+        willDoNothing().given(userService).updateUserCharacteristics(any(), any());
+
+        // when // then
+        mockMvc.perform(
+                patch("/api/v1/users/me/characteristics")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+            )
+            .andDo(print())
+            .andExpect(status().isOk());
+
+        then(userService).should().updateUserCharacteristics(any(), any());
+    }
+
+    @Test
+    @DisplayName("선호 음식이 비어있으면 400 에러를 반환한다.")
+    void updateCharacteristics_emptyLikeFoods() throws Exception {
+        // given
+        String requestBody = """
+            {
+                "allergies": ["SHRIMP"],
+                "likeFoods": [],
+                "likeIngredients": ["MEAT"],
+                "otherCharacteristics": null
+            }
+            """;
+
+        // when // then
+        mockMvc.perform(
+                patch("/api/v1/users/me/characteristics")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+            )
+            .andDo(print())
+            .andExpect(status().isBadRequest());
+
+        then(userService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("선호 음식이 null이면 400 에러를 반환한다.")
+    void updateCharacteristics_nullLikeFoods() throws Exception {
+        // given
+        String requestBody = """
+            {
+                "allergies": ["SHRIMP"],
+                "likeFoods": null,
+                "likeIngredients": ["MEAT"],
+                "otherCharacteristics": null
+            }
+            """;
+
+        // when // then
+        mockMvc.perform(
+                patch("/api/v1/users/me/characteristics")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+            )
+            .andDo(print())
+            .andExpect(status().isBadRequest());
+
+        then(userService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("선호 재료가 비어있으면 400 에러를 반환한다.")
+    void updateCharacteristics_emptyLikeIngredients() throws Exception {
+        // given
+        String requestBody = """
+            {
+                "allergies": [],
+                "likeFoods": ["KOREAN"],
+                "likeIngredients": [],
+                "otherCharacteristics": null
+            }
+            """;
+
+        // when // then
+        mockMvc.perform(
+                patch("/api/v1/users/me/characteristics")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+            )
+            .andDo(print())
+            .andExpect(status().isBadRequest());
+
+        then(userService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("선호 재료가 null이면 400 에러를 반환한다.")
+    void updateCharacteristics_nullLikeIngredients() throws Exception {
+        // given
+        String requestBody = """
+            {
+                "allergies": [],
+                "likeFoods": ["KOREAN"],
+                "likeIngredients": null,
+                "otherCharacteristics": null
+            }
+            """;
+
+        // when // then
+        mockMvc.perform(
+                patch("/api/v1/users/me/characteristics")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+            )
+            .andDo(print())
+            .andExpect(status().isBadRequest());
+
+        then(userService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("특성 수정 시 기타 특성이 100자를 초과하면 400 에러를 반환한다.")
+    void updateCharacteristics_otherCharacteristicsTooLong() throws Exception {
+        // given
+        String longText = "가".repeat(101);
+        String requestBody = """
+            {
+                "allergies": ["SHRIMP"],
+                "likeFoods": ["KOREAN"],
+                "likeIngredients": ["MEAT"],
+                "otherCharacteristics": "%s"
+            }
+            """.formatted(longText);
+
+        // when // then
+        mockMvc.perform(
+                patch("/api/v1/users/me/characteristics")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+            )
+            .andDo(print())
+            .andExpect(status().isBadRequest());
+
+        then(userService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @DisplayName("특성 수정 시 기타 특성이 정확히 100자면 성공한다.")
+    void updateCharacteristics_otherCharacteristicsExactly100() throws Exception {
+        // given
+        String exactText = "가".repeat(100);
+        String requestBody = """
+            {
+                "allergies": [],
+                "likeFoods": ["KOREAN"],
+                "likeIngredients": ["MEAT"],
+                "otherCharacteristics": "%s"
+            }
+            """.formatted(exactText);
+
+        willDoNothing().given(userService).updateUserCharacteristics(any(), any());
+
+        // when // then
+        mockMvc.perform(
+                patch("/api/v1/users/me/characteristics")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+            )
+            .andDo(print())
+            .andExpect(status().isOk());
+
+        then(userService).should().updateUserCharacteristics(any(), any());
+    }
 }

@@ -4,6 +4,7 @@ import com.team8.damo.controller.docs.UserControllerDocs;
 import com.team8.damo.controller.request.UserBasicUpdateRequest;
 import com.team8.damo.controller.request.UserCharacteristicsCreateRequest;
 import com.team8.damo.controller.request.ImagePathUpdateRequest;
+import com.team8.damo.controller.request.UserCharacteristicsUpdateRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.service.response.UserBasicResponse;
 import com.team8.damo.service.response.UserProfileResponse;
@@ -62,5 +63,14 @@ public class UserController implements UserControllerDocs {
         @AuthenticationPrincipal JwtUserDetails user
     ) {
         return BaseResponse.ok(userService.getUserProfile(user.getUserId()));
+    }
+
+    @PatchMapping("/me/characteristics")
+    public BaseResponse<Void> updateProfile(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @Valid @RequestBody UserCharacteristicsUpdateRequest request
+    ) {
+        userService.updateUserCharacteristics(user.getUserId(), request.toServiceRequest());
+        return BaseResponse.noContent();
     }
 }
