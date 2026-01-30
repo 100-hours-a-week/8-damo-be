@@ -202,7 +202,7 @@ public class UserService {
     }
 
     private void updateUserLikeFoods(User user, List<FoodType> newLikeFoods) {
-        List<UserLikeFood> existingUserLikeFoods = userLikeFoodRepository.findByUser(user);
+        List<UserLikeFood> existingUserLikeFoods = userLikeFoodRepository.findByUserIdWithCategory(user.getId());
         Set<FoodType> existingTypes = existingUserLikeFoods.stream()
             .map(ulf -> ulf.getLikeFoodCategory().getCategory())
             .collect(Collectors.toSet());
@@ -226,7 +226,7 @@ public class UserService {
     }
 
     private void updateUserLikeIngredients(User user, List<IngredientType> newLikeIngredients) {
-        List<UserLikeIngredient> existingUserLikeIngredients = userLikeIngredientRepository.findByUser(user);
+        List<UserLikeIngredient> existingUserLikeIngredients = userLikeIngredientRepository.findByUserIdWithCategory(user.getId());
         Set<IngredientType> existingTypes = existingUserLikeIngredients.stream()
             .map(uli -> uli.getLikeIngredientCategory().getCategory())
             .collect(Collectors.toSet());
