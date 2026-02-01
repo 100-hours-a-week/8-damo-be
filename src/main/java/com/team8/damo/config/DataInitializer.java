@@ -103,8 +103,10 @@ public class DataInitializer implements ApplicationRunner {
         // Users 2-20
         for (int i = 2; i <= USER_COUNT; i++) {
             User user = new User((long) i, "user" + i + "@test.com", 1000000L + i);
-            user.updateNickname("사용자" + i);
+            user.updateBasic("사용자" + i, Gender.MALE, AgeGroup.TWENTIES);
+            user.updateOtherCharacteristics("매운 음식 못먹어요");
             user.updateOnboardingStep(OnboardingStep.DONE);
+            user.changeImagePath("");
             users.add(user);
         }
 

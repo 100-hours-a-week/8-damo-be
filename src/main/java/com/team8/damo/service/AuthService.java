@@ -76,6 +76,15 @@ public class AuthService {
         return new JwtTokenResponse(newAccessToken, newRefreshToken);
     }
 
+    @Transactional
+    public JwtTokenResponse test() {
+        String email = "user2@test.com";
+        String accessToken = jwtProvider.createAccessToken(2L, email);
+        String refreshToken = jwtProvider.createRefreshToken(2L, email);
+        refreshTokenRepository.save(new RefreshToken(email, refreshToken));
+        return new JwtTokenResponse(accessToken, refreshToken);
+    }
+
     private User join(Long id, String email, Long providerId, Boolean isNew) {
         isNew = true;
         User user = new User(id, email, providerId);
