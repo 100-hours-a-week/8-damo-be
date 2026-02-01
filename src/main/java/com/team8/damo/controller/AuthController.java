@@ -50,4 +50,15 @@ public class AuthController implements AuthControllerDocs {
         CookieUtil.addCookie(response, REFRESH, jwtTokenResponse.refreshToken());
         return BaseResponse.noContent();
     }
+
+    @PostMapping("/test")
+    public BaseResponse<Void> test(
+        HttpServletRequest request,
+        HttpServletResponse response
+    ) {
+        JwtTokenResponse jwtTokenResponse = authService.test();
+        CookieUtil.addCookie(response, ACCESS, jwtTokenResponse.accessToken());
+        CookieUtil.addCookie(response, REFRESH, jwtTokenResponse.refreshToken());
+        return BaseResponse.noContent();
+    }
 }
