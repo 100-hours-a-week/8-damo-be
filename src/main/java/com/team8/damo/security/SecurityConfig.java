@@ -39,7 +39,7 @@ public class SecurityConfig {
         "/api-test",
         "/ws-stomp",
         "/sub/**",
-        "/pub/**"
+        "/pub/**", "/actuator/health", "/actuator/prometheus"
     };
 
     private final JwtProvider jwtProvider;
