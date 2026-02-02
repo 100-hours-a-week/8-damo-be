@@ -24,6 +24,7 @@ import com.team8.damo.service.response.DiningResponse;
 import com.team8.damo.service.response.RestaurantVoteDetailResponse;
 import com.team8.damo.service.response.DiningConfirmedResponse;
 import com.team8.damo.service.response.RestaurantVoteResponse;
+import com.team8.damo.event.RestaurantRecommendationEvent;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -198,9 +199,10 @@ public class DiningService {
         // 모두 참석 투표를 완료하면 AI 장소 추천 요청
         Group group = findGroupBy(groupId);
         List<Long> userIds = createAttendParticipantIds(dining);
-        aiService.recommendationRestaurant(group, dining, userIds);
+        // aiService.recommendationRestaurant(group, dining, userIds);
+        eventPublisher.publishEvent(RestaurantRecommendationEvent.of(group, dining, userIds));
 
-        dining.startRestaurantVoting();
+        dining.startRecommendationPending();
     }
 
     private List<Long> createAttendParticipantIds(Dining dining) {

@@ -2,6 +2,7 @@ package com.team8.damo.client;
 
 import com.team8.damo.client.request.*;
 import com.team8.damo.client.response.AiPersonaResponse;
+import com.team8.damo.client.response.AiRecommendRestaurantsResponse;
 import com.team8.damo.client.response.AiRecommendationResponse;
 import com.team8.damo.client.response.AiRestaurantConfirmResponse;
 import com.team8.damo.entity.*;
@@ -28,20 +29,16 @@ public class AiService {
     private final RecommendRestaurantRepository recommendRestaurantRepository;
     private final RecommendRestaurantVoteRepository recommendRestaurantVoteRepository;
 
-    @Transactional
-    public void recommendationRestaurant(Group group, Dining dining, List<Long> userIds) {
+    public AiRecommendRestaurantsResponse recommendationRestaurant(Group group, Dining dining, List<Long> userIds) {
         DiningData diningData = createDiningData(group, dining);
 
         AiRecommendationRequest request = new AiRecommendationRequest(diningData, userIds);
         AiRecommendationResponse recommendation = aiClient.recommendation(request);
 
         List<RecommendRestaurant> recommendRestaurants = createRecommendRestaurantsBy(dining, recommendation);
-        recommendRestaurantRepository.saveAll(recommendRestaurants);
-
-        dining.changeRecommendationCount(recommendation.recommendationCount());
-
-        recommendation.recommendedItems().forEach(
-            recommendedItem -> log.info("recommendedItem: {}", recommendedItem)
+        return AiRecommendRestaurantsResponse.of(
+            recommendation.recommendationCount(),
+            recommendRestaurants
         );
     }
 

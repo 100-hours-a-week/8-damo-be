@@ -60,6 +60,10 @@ public class Dining extends BaseTimeEntity {
         this.diningStatus = DiningStatus.RESTAURANT_VOTING;
     }
 
+    public void startRecommendationPending() {
+        this.diningStatus = DiningStatus.RECOMMENDATION_PENDING;
+    }
+
     public void changeRecommendationCount(Integer count) {
         this.recommendationCount = count;
     }
