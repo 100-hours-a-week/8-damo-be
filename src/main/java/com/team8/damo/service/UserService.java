@@ -6,6 +6,7 @@ import com.team8.damo.entity.enumeration.AllergyType;
 import com.team8.damo.entity.enumeration.FoodType;
 import com.team8.damo.entity.enumeration.IngredientType;
 import com.team8.damo.entity.enumeration.OnboardingStep;
+import com.team8.damo.event.UserPersonaEvent;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.exception.errorcode.ErrorCode;
 import com.team8.damo.repository.*;
@@ -16,6 +17,7 @@ import com.team8.damo.service.response.UserBasicResponse;
 import com.team8.damo.service.response.UserProfileResponse;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +43,7 @@ public class UserService {
     private final UserLikeIngredientRepository userLikeIngredientRepository;
     private final Snowflake snowflake;
     private final AiService aiService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public void updateUserBasic(Long userId, UserBasicUpdateServiceRequest request) {
@@ -69,7 +72,9 @@ public class UserService {
         user.updateOtherCharacteristics(request.otherCharacteristics());
         user.updateOnboardingStep(OnboardingStep.DONE);
 
-        aiService.userPersonaUpdate(user, request.allergies(), request.likeFoods(), request.likeIngredients());
+        eventPublisher.publishEvent(
+            UserPersonaEvent.of(user, request.allergies(), request.likeFoods(), request.likeIngredients())
+        );
     }
 
     @Transactional
@@ -174,7 +179,9 @@ public class UserService {
 
         user.updateOtherCharacteristics(request.otherCharacteristics());
 
-        aiService.userPersonaUpdate(user, request.allergies(), request.likeFoods(), request.likeIngredients());
+        eventPublisher.publishEvent(
+            UserPersonaEvent.of(user, request.allergies(), request.likeFoods(), request.likeIngredients())
+        );
     }
 
     private void updateUserAllergies(User user, List<AllergyType> newAllergies) {

@@ -3,6 +3,7 @@ package com.team8.damo.event.handler;
 import com.team8.damo.client.AiService;
 import com.team8.damo.client.response.AiRecommendRestaurantsResponse;
 import com.team8.damo.event.RestaurantRecommendationEvent;
+import com.team8.damo.event.UserPersonaEvent;
 import com.team8.damo.service.RecommendRestaurantService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,21 @@ public class EventHandler {
             event.dining().getId(),
             response.recommendationCount(),
             response.recommendRestaurants()
+        );
+    }
+
+    @Async("eventRelayExecutor")
+    @Retryable(
+        delay = 200L,
+        multiplier = 1.5
+    )
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleUserPersonaEvent(UserPersonaEvent event) {
+        aiService.userPersonaUpdate(
+            event.user(),
+            event.allergies(),
+            event.likeFoods(),
+            event.likeIngredients()
         );
     }
 }

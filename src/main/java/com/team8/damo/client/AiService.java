@@ -66,7 +66,6 @@ public class AiService {
         return recommendRestaurantRepository.saveAll(recommendRestaurants);
     }
 
-    @Transactional
     public void userPersonaUpdate(
         User user, List<AllergyType> allergies,
         List<FoodType> likeFoods, List<IngredientType> likeIngredients
@@ -74,9 +73,7 @@ public class AiService {
         UserData userData = UserData.of(user, allergies, likeFoods, likeIngredients);
         AiPersonaRequest request = new AiPersonaRequest(userData);
         AiPersonaResponse response = aiClient.updatePersona(request);
-        if (!response.success()) {
-            // 실패 시 재처리
-        }
+        log.info("userPersonaUpdate: {}", response);
     }
 
     @Transactional

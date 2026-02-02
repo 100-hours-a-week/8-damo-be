@@ -3,6 +3,7 @@ package com.team8.damo.service;
 import com.team8.damo.client.AiService;
 import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.*;
+import com.team8.damo.event.UserPersonaEvent;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.fixture.CategoryFixture;
 import com.team8.damo.fixture.UserFixture;
@@ -21,6 +22,7 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Collections;
@@ -68,6 +70,9 @@ class UserServiceTest {
     @Mock
     private AiService aiService;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private UserService userService;
 
@@ -88,6 +93,9 @@ class UserServiceTest {
 
     @Captor
     private ArgumentCaptor<List<LikeIngredientCategory>> likeIngredientCategoryCaptor;
+
+    @Captor
+    private ArgumentCaptor<UserPersonaEvent> userPersonaEventCaptor;
 
     // ===== Helper Methods for Category Assertion =====
 
@@ -229,7 +237,9 @@ class UserServiceTest {
         given(likeFoodCategoryRepository.findByCategoryIn(likeFoods)).willReturn(List.of(food1, food2));
         given(likeIngredientCategoryRepository.findByCategoryIn(likeIngredients)).willReturn(List.of(ingredient1, ingredient2));
         given(snowflake.nextId()).willReturn(100L, 101L, 102L, 103L, 104L, 105L);
-        willDoNothing().given(aiService).userPersonaUpdate(user, allergies, likeFoods, likeIngredients);
+        willDoNothing().given(eventPublisher).publishEvent(
+            UserPersonaEvent.of(user, request.allergies(), request.likeFoods(), request.likeIngredients())
+        );
 
         // when
         userService.createCharacteristics(userId, request);
@@ -260,7 +270,6 @@ class UserServiceTest {
         User user = UserFixture.create(userId);
 
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
-        willDoNothing().given(aiService).userPersonaUpdate(user, List.of(), List.of(), List.of());
 
         // when
         userService.createCharacteristics(userId, request);
@@ -596,7 +605,6 @@ class UserServiceTest {
         given(likeFoodCategoryRepository.findByCategoryIn(anyList())).willReturn(List.of(food1, food2));
         given(likeIngredientCategoryRepository.findByCategoryIn(anyList())).willReturn(List.of(ingredient1, ingredient2));
         given(snowflake.nextId()).willReturn(100L, 101L, 102L, 103L, 104L, 105L);
-        willDoNothing().given(aiService).userPersonaUpdate(user, newAllergies, newLikeFoods, newLikeIngredients);
 
         // when
         userService.updateUserCharacteristics(userId, request);
@@ -612,7 +620,12 @@ class UserServiceTest {
         assertSavedLikeFoods(userLikeFoodCaptor.getValue(), FoodType.KOREAN, FoodType.CHINESE);
         assertSavedLikeIngredients(userLikeIngredientCaptor.getValue(), IngredientType.MEAT, IngredientType.SEAFOOD);
 
-        then(aiService).should().userPersonaUpdate(user, newAllergies, newLikeFoods, newLikeIngredients);
+        then(eventPublisher).should().publishEvent(userPersonaEventCaptor.capture());
+        UserPersonaEvent capturedEvent = userPersonaEventCaptor.getValue();
+        assertThat(capturedEvent.user()).isEqualTo(user);
+        assertThat(capturedEvent.allergies()).isEqualTo(newAllergies);
+        assertThat(capturedEvent.likeFoods()).isEqualTo(newLikeFoods);
+        assertThat(capturedEvent.likeIngredients()).isEqualTo(newLikeIngredients);
     }
 
     @Test
@@ -650,7 +663,6 @@ class UserServiceTest {
         given(userLikeIngredientRepository.findByUserIdWithCategory(userId)).willReturn(existingUserLikeIngredients);
         given(allergyCategoryRepository.findByCategoryIn(anyList())).willReturn(List.of(existingAllergy));
         given(likeFoodCategoryRepository.findByCategoryIn(anyList())).willReturn(List.of(existingFood2));
-        willDoNothing().given(aiService).userPersonaUpdate(user, newAllergies, newLikeFoods, newLikeIngredients);
 
         // when
         userService.updateUserCharacteristics(userId, request);
@@ -663,7 +675,12 @@ class UserServiceTest {
         assertDeletedAllergies(allergyCategoryCaptor.getValue(), AllergyType.SHRIMP);
         assertDeletedLikeFoods(likeFoodCategoryCaptor.getValue(), FoodType.CHINESE);
 
-        then(aiService).should().userPersonaUpdate(user, newAllergies, newLikeFoods, newLikeIngredients);
+        then(eventPublisher).should().publishEvent(userPersonaEventCaptor.capture());
+        UserPersonaEvent capturedEvent = userPersonaEventCaptor.getValue();
+        assertThat(capturedEvent.user()).isEqualTo(user);
+        assertThat(capturedEvent.allergies()).isEqualTo(newAllergies);
+        assertThat(capturedEvent.likeFoods()).isEqualTo(newLikeFoods);
+        assertThat(capturedEvent.likeIngredients()).isEqualTo(newLikeIngredients);
     }
 
     @Test
@@ -700,7 +717,6 @@ class UserServiceTest {
         given(allergyCategoryRepository.findByCategoryIn(anyList())).willReturn(List.of(existingAllergy), List.of(newAllergy1, newAllergy2));
         given(likeIngredientCategoryRepository.findByCategoryIn(anyList())).willReturn(List.of(existingIngredient), List.of(newIngredient));
         given(snowflake.nextId()).willReturn(101L, 102L, 301L);
-        willDoNothing().given(aiService).userPersonaUpdate(user, newAllergies, newLikeFoods, newLikeIngredients);
 
         // when
         userService.updateUserCharacteristics(userId, request);
@@ -720,7 +736,12 @@ class UserServiceTest {
         assertDeletedLikeIngredients(likeIngredientCategoryCaptor.getValue(), IngredientType.MEAT);
         assertSavedLikeIngredients(userLikeIngredientCaptor.getValue(), IngredientType.SEAFOOD);
 
-        then(aiService).should().userPersonaUpdate(user, newAllergies, newLikeFoods, newLikeIngredients);
+        then(eventPublisher).should().publishEvent(userPersonaEventCaptor.capture());
+        UserPersonaEvent capturedEvent = userPersonaEventCaptor.getValue();
+        assertThat(capturedEvent.user()).isEqualTo(user);
+        assertThat(capturedEvent.allergies()).isEqualTo(newAllergies);
+        assertThat(capturedEvent.likeFoods()).isEqualTo(newLikeFoods);
+        assertThat(capturedEvent.likeIngredients()).isEqualTo(newLikeIngredients);
     }
 
     @Test
@@ -750,7 +771,6 @@ class UserServiceTest {
         given(userLikeFoodRepository.findByUserIdWithCategory(userId)).willReturn(existingUserLikeFoods);
         given(userLikeIngredientRepository.findByUserIdWithCategory(userId)).willReturn(existingUserLikeIngredients);
         given(allergyCategoryRepository.findByCategoryIn(anyList())).willReturn(List.of(existingAllergy));
-        willDoNothing().given(aiService).userPersonaUpdate(user, null, newLikeFoods, newLikeIngredients);
 
         // when
         userService.updateUserCharacteristics(userId, request);
@@ -761,7 +781,12 @@ class UserServiceTest {
 
         assertDeletedAllergies(allergyCategoryCaptor.getValue(), AllergyType.SHRIMP);
 
-        then(aiService).should().userPersonaUpdate(user, null, newLikeFoods, newLikeIngredients);
+        then(eventPublisher).should().publishEvent(userPersonaEventCaptor.capture());
+        UserPersonaEvent capturedEvent = userPersonaEventCaptor.getValue();
+        assertThat(capturedEvent.user()).isEqualTo(user);
+        assertThat(capturedEvent.allergies()).isNull();
+        assertThat(capturedEvent.likeFoods()).isEqualTo(newLikeFoods);
+        assertThat(capturedEvent.likeIngredients()).isEqualTo(newLikeIngredients);
     }
 
     @Test
@@ -791,7 +816,6 @@ class UserServiceTest {
         given(userAllergyRepository.findByUserIdWithCategory(userId)).willReturn(existingUserAllergies);
         given(userLikeFoodRepository.findByUserIdWithCategory(userId)).willReturn(existingUserLikeFoods);
         given(userLikeIngredientRepository.findByUserIdWithCategory(userId)).willReturn(existingUserLikeIngredients);
-        willDoNothing().given(aiService).userPersonaUpdate(user, allergies, likeFoods, likeIngredients);
 
         // when
         userService.updateUserCharacteristics(userId, request);
@@ -805,7 +829,13 @@ class UserServiceTest {
         then(userLikeFoodRepository).should(never()).saveAll(anyList());
         then(userLikeIngredientRepository).should(never()).deleteAllByUserAndLikeIngredientCategoryIn(any(), anyList());
         then(userLikeIngredientRepository).should(never()).saveAll(anyList());
-        then(aiService).should().userPersonaUpdate(user, allergies, likeFoods, likeIngredients);
+
+        then(eventPublisher).should().publishEvent(userPersonaEventCaptor.capture());
+        UserPersonaEvent capturedEvent = userPersonaEventCaptor.getValue();
+        assertThat(capturedEvent.user()).isEqualTo(user);
+        assertThat(capturedEvent.allergies()).isEqualTo(allergies);
+        assertThat(capturedEvent.likeFoods()).isEqualTo(likeFoods);
+        assertThat(capturedEvent.likeIngredients()).isEqualTo(likeIngredients);
     }
 
     @Test
