@@ -3,14 +3,15 @@ package com.team8.damo.service.response;
 import com.team8.damo.entity.User;
 import com.team8.damo.entity.enumeration.AgeGroup;
 import com.team8.damo.entity.enumeration.Gender;
-import lombok.Getter;
+import com.team8.damo.entity.enumeration.OnboardingStep;
 
 public record UserBasicResponse(
     Long userId,
     String nickname,
     Gender gender,
     AgeGroup ageGroup,
-    String imagePath
+    String imagePath,
+    OnboardingStep onboardingStep
 ) {
     public static UserBasicResponse from(User user) {
         return new UserBasicResponse(
@@ -18,7 +19,8 @@ public record UserBasicResponse(
             user.getNickname(),
             user.getGender(),
             user.getAgeGroup(),
-            user.getImagePath()
+            user.getImagePath(),
+            user.getOnboardingStep()
         );
     }
 }
