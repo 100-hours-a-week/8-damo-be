@@ -6,6 +6,7 @@ import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
 import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.entity.enumeration.GroupRole;
 import com.team8.damo.entity.enumeration.RestaurantVoteStatus;
+import com.team8.damo.event.handler.CommonEventPublisher;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.fixture.*;
 import com.team8.damo.repository.*;
@@ -68,6 +69,9 @@ class DiningServiceTest {
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private CommonEventPublisher commonEventPublisher;
 
     @Mock
     private AiService aiService;
