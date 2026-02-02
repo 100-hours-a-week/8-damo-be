@@ -19,7 +19,7 @@ public class HttpClientConfig {
     @Bean
     public HttpServiceProxyFactory httpServiceProxyFactory() {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
-        requestFactory.setReadTimeout(Duration.ofSeconds(150));
+        requestFactory.setReadTimeout(Duration.ofSeconds(180));
 
         RestClient restClient = RestClient.builder()
             .baseUrl(baseUrl)
