@@ -50,6 +50,18 @@ kakao:
 qr:
   redirect-url: ${QR_REDIRECT_URL}
   image-format: ${QR_IMAGE_FORMAT}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: damo-be
 ---
 spring:
   config:
