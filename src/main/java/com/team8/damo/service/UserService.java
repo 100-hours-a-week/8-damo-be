@@ -6,7 +6,9 @@ import com.team8.damo.entity.enumeration.AllergyType;
 import com.team8.damo.entity.enumeration.FoodType;
 import com.team8.damo.entity.enumeration.IngredientType;
 import com.team8.damo.entity.enumeration.OnboardingStep;
-import com.team8.damo.event.UserPersonaEvent;
+import com.team8.damo.event.EventType;
+import com.team8.damo.event.handler.CommonEventPublisher;
+import com.team8.damo.event.payload.UserPersonaPayload;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.exception.errorcode.ErrorCode;
 import com.team8.damo.repository.*;
@@ -44,6 +46,7 @@ public class UserService {
     private final Snowflake snowflake;
     private final AiService aiService;
     private final ApplicationEventPublisher eventPublisher;
+    private final CommonEventPublisher commonEventPublisher;
 
     @Transactional
     public void updateUserBasic(Long userId, UserBasicUpdateServiceRequest request) {
@@ -72,8 +75,14 @@ public class UserService {
         user.updateOtherCharacteristics(request.otherCharacteristics());
         user.updateOnboardingStep(OnboardingStep.DONE);
 
-        eventPublisher.publishEvent(
-            UserPersonaEvent.of(user, request.allergies(), request.likeFoods(), request.likeIngredients())
+        commonEventPublisher.publish(
+            EventType.USER_PERSONA,
+            UserPersonaPayload.builder()
+                .user(user)
+                .allergies(request.allergies())
+                .likeFoods(request.likeFoods())
+                .likeIngredients(request.likeIngredients())
+                .build()
         );
     }
 
@@ -179,8 +188,14 @@ public class UserService {
 
         user.updateOtherCharacteristics(request.otherCharacteristics());
 
-        eventPublisher.publishEvent(
-            UserPersonaEvent.of(user, request.allergies(), request.likeFoods(), request.likeIngredients())
+        commonEventPublisher.publish(
+            EventType.USER_PERSONA,
+            UserPersonaPayload.builder()
+                .user(user)
+                .allergies(request.allergies())
+                .likeFoods(request.likeFoods())
+                .likeIngredients(request.likeIngredients())
+                .build()
         );
     }
 

@@ -3,7 +3,9 @@ package com.team8.damo.service;
 import com.team8.damo.client.AiService;
 import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.*;
-import com.team8.damo.event.UserPersonaEvent;
+import com.team8.damo.event.EventType;
+import com.team8.damo.event.handler.CommonEventPublisher;
+import com.team8.damo.event.payload.UserPersonaPayload;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.fixture.CategoryFixture;
 import com.team8.damo.fixture.UserFixture;
@@ -22,7 +24,6 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Collections;
@@ -71,7 +72,7 @@ class UserServiceTest {
     private AiService aiService;
 
     @Mock
-    private ApplicationEventPublisher eventPublisher;
+    private CommonEventPublisher commonEventPublisher;
 
     @InjectMocks
     private UserService userService;
@@ -95,7 +96,7 @@ class UserServiceTest {
     private ArgumentCaptor<List<LikeIngredientCategory>> likeIngredientCategoryCaptor;
 
     @Captor
-    private ArgumentCaptor<UserPersonaEvent> userPersonaEventCaptor;
+    private ArgumentCaptor<UserPersonaPayload> userPersonaPayloadCaptor;
 
     // ===== Helper Methods for Category Assertion =====
 
@@ -237,9 +238,6 @@ class UserServiceTest {
         given(likeFoodCategoryRepository.findByCategoryIn(likeFoods)).willReturn(List.of(food1, food2));
         given(likeIngredientCategoryRepository.findByCategoryIn(likeIngredients)).willReturn(List.of(ingredient1, ingredient2));
         given(snowflake.nextId()).willReturn(100L, 101L, 102L, 103L, 104L, 105L);
-        willDoNothing().given(eventPublisher).publishEvent(
-            UserPersonaEvent.of(user, request.allergies(), request.likeFoods(), request.likeIngredients())
-        );
 
         // when
         userService.createCharacteristics(userId, request);
@@ -255,6 +253,13 @@ class UserServiceTest {
         assertSavedAllergies(userAllergyCaptor.getValue(), AllergyType.SHRIMP, AllergyType.CRAB);
         assertSavedLikeFoods(userLikeFoodCaptor.getValue(), FoodType.KOREAN, FoodType.CHINESE);
         assertSavedLikeIngredients(userLikeIngredientCaptor.getValue(), IngredientType.MEAT, IngredientType.SEAFOOD);
+
+        then(commonEventPublisher).should().publish(eq(EventType.USER_PERSONA), userPersonaPayloadCaptor.capture());
+        UserPersonaPayload capturedPayload = userPersonaPayloadCaptor.getValue();
+        assertThat(capturedPayload.user()).isEqualTo(user);
+        assertThat(capturedPayload.allergies()).isEqualTo(allergies);
+        assertThat(capturedPayload.likeFoods()).isEqualTo(likeFoods);
+        assertThat(capturedPayload.likeIngredients()).isEqualTo(likeIngredients);
     }
 
     @Test
@@ -281,6 +286,13 @@ class UserServiceTest {
         then(userAllergyRepository).should(never()).saveAll(anyList());
         then(userLikeFoodRepository).should(never()).saveAll(anyList());
         then(userLikeIngredientRepository).should(never()).saveAll(anyList());
+
+        then(commonEventPublisher).should().publish(eq(EventType.USER_PERSONA), userPersonaPayloadCaptor.capture());
+        UserPersonaPayload capturedPayload = userPersonaPayloadCaptor.getValue();
+        assertThat(capturedPayload.user()).isEqualTo(user);
+        assertThat(capturedPayload.allergies()).isEmpty();
+        assertThat(capturedPayload.likeFoods()).isEmpty();
+        assertThat(capturedPayload.likeIngredients()).isEmpty();
     }
 
     @Test
@@ -620,12 +632,12 @@ class UserServiceTest {
         assertSavedLikeFoods(userLikeFoodCaptor.getValue(), FoodType.KOREAN, FoodType.CHINESE);
         assertSavedLikeIngredients(userLikeIngredientCaptor.getValue(), IngredientType.MEAT, IngredientType.SEAFOOD);
 
-        then(eventPublisher).should().publishEvent(userPersonaEventCaptor.capture());
-        UserPersonaEvent capturedEvent = userPersonaEventCaptor.getValue();
-        assertThat(capturedEvent.user()).isEqualTo(user);
-        assertThat(capturedEvent.allergies()).isEqualTo(newAllergies);
-        assertThat(capturedEvent.likeFoods()).isEqualTo(newLikeFoods);
-        assertThat(capturedEvent.likeIngredients()).isEqualTo(newLikeIngredients);
+        then(commonEventPublisher).should().publish(eq(EventType.USER_PERSONA), userPersonaPayloadCaptor.capture());
+        UserPersonaPayload capturedPayload = userPersonaPayloadCaptor.getValue();
+        assertThat(capturedPayload.user()).isEqualTo(user);
+        assertThat(capturedPayload.allergies()).isEqualTo(newAllergies);
+        assertThat(capturedPayload.likeFoods()).isEqualTo(newLikeFoods);
+        assertThat(capturedPayload.likeIngredients()).isEqualTo(newLikeIngredients);
     }
 
     @Test
@@ -675,12 +687,12 @@ class UserServiceTest {
         assertDeletedAllergies(allergyCategoryCaptor.getValue(), AllergyType.SHRIMP);
         assertDeletedLikeFoods(likeFoodCategoryCaptor.getValue(), FoodType.CHINESE);
 
-        then(eventPublisher).should().publishEvent(userPersonaEventCaptor.capture());
-        UserPersonaEvent capturedEvent = userPersonaEventCaptor.getValue();
-        assertThat(capturedEvent.user()).isEqualTo(user);
-        assertThat(capturedEvent.allergies()).isEqualTo(newAllergies);
-        assertThat(capturedEvent.likeFoods()).isEqualTo(newLikeFoods);
-        assertThat(capturedEvent.likeIngredients()).isEqualTo(newLikeIngredients);
+        then(commonEventPublisher).should().publish(eq(EventType.USER_PERSONA), userPersonaPayloadCaptor.capture());
+        UserPersonaPayload capturedPayload = userPersonaPayloadCaptor.getValue();
+        assertThat(capturedPayload.user()).isEqualTo(user);
+        assertThat(capturedPayload.allergies()).isEqualTo(newAllergies);
+        assertThat(capturedPayload.likeFoods()).isEqualTo(newLikeFoods);
+        assertThat(capturedPayload.likeIngredients()).isEqualTo(newLikeIngredients);
     }
 
     @Test
@@ -736,12 +748,12 @@ class UserServiceTest {
         assertDeletedLikeIngredients(likeIngredientCategoryCaptor.getValue(), IngredientType.MEAT);
         assertSavedLikeIngredients(userLikeIngredientCaptor.getValue(), IngredientType.SEAFOOD);
 
-        then(eventPublisher).should().publishEvent(userPersonaEventCaptor.capture());
-        UserPersonaEvent capturedEvent = userPersonaEventCaptor.getValue();
-        assertThat(capturedEvent.user()).isEqualTo(user);
-        assertThat(capturedEvent.allergies()).isEqualTo(newAllergies);
-        assertThat(capturedEvent.likeFoods()).isEqualTo(newLikeFoods);
-        assertThat(capturedEvent.likeIngredients()).isEqualTo(newLikeIngredients);
+        then(commonEventPublisher).should().publish(eq(EventType.USER_PERSONA), userPersonaPayloadCaptor.capture());
+        UserPersonaPayload capturedPayload = userPersonaPayloadCaptor.getValue();
+        assertThat(capturedPayload.user()).isEqualTo(user);
+        assertThat(capturedPayload.allergies()).isEqualTo(newAllergies);
+        assertThat(capturedPayload.likeFoods()).isEqualTo(newLikeFoods);
+        assertThat(capturedPayload.likeIngredients()).isEqualTo(newLikeIngredients);
     }
 
     @Test
@@ -781,12 +793,12 @@ class UserServiceTest {
 
         assertDeletedAllergies(allergyCategoryCaptor.getValue(), AllergyType.SHRIMP);
 
-        then(eventPublisher).should().publishEvent(userPersonaEventCaptor.capture());
-        UserPersonaEvent capturedEvent = userPersonaEventCaptor.getValue();
-        assertThat(capturedEvent.user()).isEqualTo(user);
-        assertThat(capturedEvent.allergies()).isNull();
-        assertThat(capturedEvent.likeFoods()).isEqualTo(newLikeFoods);
-        assertThat(capturedEvent.likeIngredients()).isEqualTo(newLikeIngredients);
+        then(commonEventPublisher).should().publish(eq(EventType.USER_PERSONA), userPersonaPayloadCaptor.capture());
+        UserPersonaPayload capturedPayload = userPersonaPayloadCaptor.getValue();
+        assertThat(capturedPayload.user()).isEqualTo(user);
+        assertThat(capturedPayload.allergies()).isNull();
+        assertThat(capturedPayload.likeFoods()).isEqualTo(newLikeFoods);
+        assertThat(capturedPayload.likeIngredients()).isEqualTo(newLikeIngredients);
     }
 
     @Test
@@ -830,12 +842,12 @@ class UserServiceTest {
         then(userLikeIngredientRepository).should(never()).deleteAllByUserAndLikeIngredientCategoryIn(any(), anyList());
         then(userLikeIngredientRepository).should(never()).saveAll(anyList());
 
-        then(eventPublisher).should().publishEvent(userPersonaEventCaptor.capture());
-        UserPersonaEvent capturedEvent = userPersonaEventCaptor.getValue();
-        assertThat(capturedEvent.user()).isEqualTo(user);
-        assertThat(capturedEvent.allergies()).isEqualTo(allergies);
-        assertThat(capturedEvent.likeFoods()).isEqualTo(likeFoods);
-        assertThat(capturedEvent.likeIngredients()).isEqualTo(likeIngredients);
+        then(commonEventPublisher).should().publish(eq(EventType.USER_PERSONA), userPersonaPayloadCaptor.capture());
+        UserPersonaPayload capturedPayload = userPersonaPayloadCaptor.getValue();
+        assertThat(capturedPayload.user()).isEqualTo(user);
+        assertThat(capturedPayload.allergies()).isEqualTo(allergies);
+        assertThat(capturedPayload.likeFoods()).isEqualTo(likeFoods);
+        assertThat(capturedPayload.likeIngredients()).isEqualTo(likeIngredients);
     }
 
     @Test

@@ -50,6 +50,8 @@ kakao:
 qr:
   redirect-url: ${QR_REDIRECT_URL}
   image-format: ${QR_IMAGE_FORMAT}
+ai:
+  base-url: ${AI_BASE_URL}
 
 management:
   endpoints:
