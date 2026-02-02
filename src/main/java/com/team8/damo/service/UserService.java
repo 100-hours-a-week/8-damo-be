@@ -75,7 +75,6 @@ public class UserService {
         eventPublisher.publishEvent(
             UserPersonaEvent.of(user, request.allergies(), request.likeFoods(), request.likeIngredients())
         );
-        // aiService.userPersonaUpdate(user, request.allergies(), request.likeFoods(), request.likeIngredients());
     }
 
     @Transactional
@@ -180,7 +179,9 @@ public class UserService {
 
         user.updateOtherCharacteristics(request.otherCharacteristics());
 
-        aiService.userPersonaUpdate(user, request.allergies(), request.likeFoods(), request.likeIngredients());
+        eventPublisher.publishEvent(
+            UserPersonaEvent.of(user, request.allergies(), request.likeFoods(), request.likeIngredients())
+        );
     }
 
     private void updateUserAllergies(User user, List<AllergyType> newAllergies) {
