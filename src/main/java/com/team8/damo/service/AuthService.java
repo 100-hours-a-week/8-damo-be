@@ -85,6 +85,16 @@ public class AuthService {
         return new JwtTokenResponse(accessToken, refreshToken);
     }
 
+    @Transactional
+    public JwtTokenResponse test(Long userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+        String accessToken = jwtProvider.createAccessToken(userId, user.getEmail());
+        String refreshToken = jwtProvider.createRefreshToken(userId, user.getEmail());
+        refreshTokenRepository.save(new RefreshToken(user.getEmail(), refreshToken));
+        return new JwtTokenResponse(accessToken, refreshToken);
+    }
+
     private User join(Long id, String email, Long providerId, Boolean isNew) {
         isNew = true;
         User user = new User(id, email, providerId);

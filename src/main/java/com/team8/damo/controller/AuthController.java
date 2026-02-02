@@ -12,10 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import static com.team8.damo.entity.enumeration.TokenType.ACCESS;
 import static com.team8.damo.entity.enumeration.TokenType.REFRESH;
@@ -60,5 +57,14 @@ public class AuthController implements AuthControllerDocs {
         CookieUtil.addCookie(response, ACCESS, jwtTokenResponse.accessToken());
         CookieUtil.addCookie(response, REFRESH, jwtTokenResponse.refreshToken());
         return BaseResponse.noContent();
+    }
+
+    @PostMapping("/test/{userId}")
+    public BaseResponse<JwtTokenResponse> test(
+        @PathVariable Long userId,
+        HttpServletRequest request,
+        HttpServletResponse response
+    ) {
+        return BaseResponse.ok(authService.test(userId));
     }
 }
