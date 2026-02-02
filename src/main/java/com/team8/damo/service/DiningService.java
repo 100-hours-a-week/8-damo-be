@@ -13,6 +13,9 @@ import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
 import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.entity.enumeration.GroupRole;
 import com.team8.damo.entity.enumeration.RestaurantVoteStatus;
+import com.team8.damo.event.EventType;
+import com.team8.damo.event.handler.CommonEventPublisher;
+import com.team8.damo.event.payload.RecommendationEventPayload;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.DiningCreateServiceRequest;
@@ -57,6 +60,7 @@ public class DiningService {
     private final RestaurantRepository restaurantRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final AiService aiService;
+    private final CommonEventPublisher commonEventPublisher;
 
     @Transactional
     public Long createDining(Long userId, Long groupId, DiningCreateServiceRequest request, LocalDateTime currentDataTime) {
@@ -199,8 +203,15 @@ public class DiningService {
         // 모두 참석 투표를 완료하면 AI 장소 추천 요청
         Group group = findGroupBy(groupId);
         List<Long> userIds = createAttendParticipantIds(dining);
-        // aiService.recommendationRestaurant(group, dining, userIds);
-        eventPublisher.publishEvent(RestaurantRecommendationEvent.of(group, dining, userIds));
+
+        commonEventPublisher.publish(
+            EventType.RESTAURANT_RECOMMENDATION,
+            RecommendationEventPayload.builder()
+                .group(group)
+                .dining(dining)
+                .userIds(userIds)
+                .build()
+        );
 
         dining.startRecommendationPending();
     }
