@@ -893,7 +893,7 @@ class DiningServiceTest {
     }
 
     @Test
-    @DisplayName("모든 참여자가 투표를 완료하면 회식 상태가 장소 투표로 변경된다.")
+    @DisplayName("모든 참여자가 투표를 완료하면 회식 상태가 장소 투표 대기 중으로 변경된다.")
     void voteAttendance_allParticipantsVoted_changeStatusToRestaurantVoting() {
         // given
         Long userId = 1L;
@@ -919,7 +919,7 @@ class DiningServiceTest {
 
         // then
         assertThat(result).isEqualTo(AttendanceVoteStatus.ATTEND);
-        assertThat(dining.getDiningStatus()).isEqualTo(DiningStatus.RESTAURANT_VOTING);
+        assertThat(dining.getDiningStatus()).isEqualTo(DiningStatus.RECOMMENDATION_PENDING);
     }
 
     @Test
@@ -950,7 +950,7 @@ class DiningServiceTest {
     }
 
     @Test
-    @DisplayName("1명만 있는 그룹에서 투표하면 바로 장소 투표 상태로 변경된다.")
+    @DisplayName("1명만 있는 그룹에서 투표하면 바로 장소 투표 대기 중 상태로 변경된다.")
     void voteAttendance_singleParticipant_changeStatusImmediately() {
         // given
         Long userId = 1L;
@@ -976,7 +976,7 @@ class DiningServiceTest {
 
         // then
         assertThat(result).isEqualTo(AttendanceVoteStatus.ATTEND);
-        assertThat(dining.getDiningStatus()).isEqualTo(DiningStatus.RESTAURANT_VOTING);
+        assertThat(dining.getDiningStatus()).isEqualTo(DiningStatus.RECOMMENDATION_PENDING);
     }
 
     @Test
