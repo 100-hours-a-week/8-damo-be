@@ -76,6 +76,10 @@ dependencies {
 
     // MockWebServer for HTTP client testing
     testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
+
+    // Prometheus (/actuator/prometheus)
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 }
 
 tasks.named('test') {
