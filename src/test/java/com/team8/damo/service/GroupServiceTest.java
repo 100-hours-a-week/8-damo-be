@@ -1,17 +1,16 @@
 package com.team8.damo.service;
 
-import com.team8.damo.entity.Group;
-import com.team8.damo.entity.User;
-import com.team8.damo.entity.UserGroup;
+import com.team8.damo.entity.*;
+import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
+import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.entity.enumeration.GroupRole;
 import com.team8.damo.exception.CustomException;
+import com.team8.damo.fixture.DiningFixture;
 import com.team8.damo.fixture.GroupFixture;
 import com.team8.damo.fixture.UserFixture;
+import com.team8.damo.repository.*;
 import com.team8.damo.service.response.GroupDetailResponse;
 import com.team8.damo.service.response.UserGroupResponse;
-import com.team8.damo.repository.GroupRepository;
-import com.team8.damo.repository.UserGroupRepository;
-import com.team8.damo.repository.UserRepository;
 import com.team8.damo.service.request.GroupCreateServiceRequest;
 import com.team8.damo.util.QrCodeGenerator;
 import com.team8.damo.util.Snowflake;
@@ -57,6 +56,12 @@ class GroupServiceTest {
 
     @Mock
     private UserGroupRepository userGroupRepository;
+
+    @Mock
+    private DiningRepository diningRepository;
+
+    @Mock
+    private DiningParticipantRepository diningParticipantRepository;
 
     @InjectMocks
     private GroupService groupService;
@@ -329,8 +334,8 @@ class GroupServiceTest {
     }
 
     @Test
-    @DisplayName("그룹에 성공적으로 참여한다.")
-    void attendGroup_success() {
+    @DisplayName("그룹에 성공적으로 참여한다. (진행중인 참석 투표 없음)")
+    void attendGroup_success_noAttendanceVoting() {
         // given
         Long userId = 1L;
         Long groupId = 100L;
@@ -343,6 +348,8 @@ class GroupServiceTest {
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
         given(groupRepository.findById(groupId)).willReturn(Optional.of(group));
         given(snowflake.nextId()).willReturn(userGroupId);
+        given(diningRepository.findAllByGroupIdAndDiningStatus(groupId, DiningStatus.ATTENDANCE_VOTING))
+            .willReturn(List.of());
 
         // when
         Long result = groupService.attendGroup(userId, groupId);
@@ -357,6 +364,52 @@ class GroupServiceTest {
         assertThat(savedUserGroup)
             .extracting("id", "user", "group", "role")
             .contains(userGroupId, user, group, GroupRole.PARTICIPANT);
+
+        then(diningRepository).should().findAllByGroupIdAndDiningStatus(groupId, DiningStatus.ATTENDANCE_VOTING);
+        then(diningParticipantRepository).should().saveAll(List.of());
+        then(groupRepository).should().increaseTotalMembers(groupId);
+    }
+
+    @Test
+    @DisplayName("그룹 참여 시 진행중인 참석 투표가 있으면 DiningParticipant가 생성된다.")
+    void attendGroup_success_withAttendanceVoting() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+        Long userGroupId = 200L;
+        Long diningParticipantId1 = 300L;
+        Long diningParticipantId2 = 301L;
+
+        User user = UserFixture.create(userId);
+        Group group = GroupFixture.create(groupId, "맛집탐방대", "서울 맛집 모임");
+        Dining dining1 = DiningFixture.create(1000L, group, DiningStatus.ATTENDANCE_VOTING);
+        Dining dining2 = DiningFixture.create(1001L, group, DiningStatus.ATTENDANCE_VOTING);
+
+        given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(false);
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(groupRepository.findById(groupId)).willReturn(Optional.of(group));
+        given(snowflake.nextId()).willReturn(userGroupId, diningParticipantId1, diningParticipantId2);
+        given(diningRepository.findAllByGroupIdAndDiningStatus(groupId, DiningStatus.ATTENDANCE_VOTING))
+            .willReturn(List.of(dining1, dining2));
+
+        // when
+        Long result = groupService.attendGroup(userId, groupId);
+
+        // then
+        assertThat(result).isEqualTo(groupId);
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<DiningParticipant>> participantsCaptor = ArgumentCaptor.forClass(List.class);
+        then(diningParticipantRepository).should().saveAll(participantsCaptor.capture());
+
+        List<DiningParticipant> savedParticipants = participantsCaptor.getValue();
+        assertThat(savedParticipants).hasSize(2);
+        assertThat(savedParticipants)
+            .extracting("dining", "user", "attendanceVoteStatus")
+            .containsExactly(
+                tuple(dining1, user, AttendanceVoteStatus.PENDING),
+                tuple(dining2, user, AttendanceVoteStatus.PENDING)
+            );
 
         then(groupRepository).should().increaseTotalMembers(groupId);
     }
@@ -379,6 +432,8 @@ class GroupServiceTest {
         then(userRepository).should(never()).findById(any());
         then(groupRepository).should(never()).findById(any());
         then(userGroupRepository).should(never()).save(any());
+        then(diningRepository).should(never()).findAllByGroupIdAndDiningStatus(any(), any());
+        then(diningParticipantRepository).should(never()).saveAll(any());
     }
 
     @Test
@@ -400,6 +455,8 @@ class GroupServiceTest {
         then(userRepository).should().findById(userId);
         then(groupRepository).should(never()).findById(any());
         then(userGroupRepository).should(never()).save(any());
+        then(diningRepository).should(never()).findAllByGroupIdAndDiningStatus(any(), any());
+        then(diningParticipantRepository).should(never()).saveAll(any());
     }
 
     @Test
@@ -424,5 +481,7 @@ class GroupServiceTest {
         then(userRepository).should().findById(userId);
         then(groupRepository).should().findById(groupId);
         then(userGroupRepository).should(never()).save(any());
+        then(diningRepository).should(never()).findAllByGroupIdAndDiningStatus(any(), any());
+        then(diningParticipantRepository).should(never()).saveAll(any());
     }
 }
