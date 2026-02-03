@@ -108,7 +108,7 @@ class DiningServiceTest {
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
         given(groupRepository.findById(groupId)).willReturn(Optional.of(group));
         given(userGroupRepository.existsByUserIdAndGroupIdAndRole(userId, groupId, GroupRole.LEADER)).willReturn(true);
-        given(diningRepository.countByGroupIdAndDiningStatusNot(groupId, DiningStatus.COMPLETE)).willReturn(0);
+        given(diningRepository.countByGroupIdAndDiningStatusNot(groupId, DiningStatus.CONFIRMED)).willReturn(0);
         given(snowflake.nextId()).willReturn(diningId, participantId1, participantId2);
         given(userGroupRepository.findAllByGroupIdWithUser(groupId)).willReturn(List.of(userGroup1, userGroup2));
 
@@ -345,14 +345,14 @@ class DiningServiceTest {
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
         given(groupRepository.findById(groupId)).willReturn(Optional.of(group));
         given(userGroupRepository.existsByUserIdAndGroupIdAndRole(userId, groupId, GroupRole.LEADER)).willReturn(true);
-        given(diningRepository.countByGroupIdAndDiningStatusNot(groupId, DiningStatus.COMPLETE)).willReturn(3);
+        given(diningRepository.countByGroupIdAndDiningStatusNot(groupId, DiningStatus.CONFIRMED)).willReturn(3);
 
         // when // then
         assertThatThrownBy(() -> diningService.createDining(userId, groupId, request, now))
             .isInstanceOf(CustomException.class)
             .hasFieldOrPropertyWithValue("errorCode", DINING_LIMIT_EXCEEDED);
 
-        then(diningRepository).should().countByGroupIdAndDiningStatusNot(groupId, DiningStatus.COMPLETE);
+        then(diningRepository).should().countByGroupIdAndDiningStatusNot(groupId, DiningStatus.CONFIRMED);
         then(diningRepository).should(never()).save(any());
     }
 
@@ -377,7 +377,7 @@ class DiningServiceTest {
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
         given(groupRepository.findById(groupId)).willReturn(Optional.of(group));
         given(userGroupRepository.existsByUserIdAndGroupIdAndRole(userId, groupId, GroupRole.LEADER)).willReturn(true);
-        given(diningRepository.countByGroupIdAndDiningStatusNot(groupId, DiningStatus.COMPLETE)).willReturn(2);
+        given(diningRepository.countByGroupIdAndDiningStatusNot(groupId, DiningStatus.CONFIRMED)).willReturn(2);
         given(snowflake.nextId()).willReturn(diningId, participantId);
         given(userGroupRepository.findAllByGroupIdWithUser(groupId)).willReturn(List.of(userGroup));
 
@@ -410,7 +410,7 @@ class DiningServiceTest {
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
         given(groupRepository.findById(groupId)).willReturn(Optional.of(group));
         given(userGroupRepository.existsByUserIdAndGroupIdAndRole(userId, groupId, GroupRole.LEADER)).willReturn(true);
-        given(diningRepository.countByGroupIdAndDiningStatusNot(groupId, DiningStatus.COMPLETE)).willReturn(0);
+        given(diningRepository.countByGroupIdAndDiningStatusNot(groupId, DiningStatus.CONFIRMED)).willReturn(0);
         given(snowflake.nextId()).willReturn(diningId, participantId);
         given(userGroupRepository.findAllByGroupIdWithUser(groupId)).willReturn(List.of(userGroup));
 
@@ -448,7 +448,7 @@ class DiningServiceTest {
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
         given(groupRepository.findById(groupId)).willReturn(Optional.of(group));
         given(userGroupRepository.existsByUserIdAndGroupIdAndRole(userId, groupId, GroupRole.LEADER)).willReturn(true);
-        given(diningRepository.countByGroupIdAndDiningStatusNot(groupId, DiningStatus.COMPLETE)).willReturn(0);
+        given(diningRepository.countByGroupIdAndDiningStatusNot(groupId, DiningStatus.CONFIRMED)).willReturn(0);
         given(snowflake.nextId()).willReturn(diningId, participantId);
         given(userGroupRepository.findAllByGroupIdWithUser(groupId)).willReturn(List.of(userGroup));
 
