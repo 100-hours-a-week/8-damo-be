@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 import static com.team8.damo.exception.errorcode.ErrorCode.*;
 
@@ -60,11 +61,13 @@ public class GroupService {
     }
 
     public GroupDetailResponse getGroupDetail(Long userId, Long groupId) {
-        UserGroup userGroup = userGroupRepository.findByUserIdAndGroupId(userId, groupId)
-            .orElseThrow(() -> new CustomException(USER_NOT_GROUP_MEMBER));
+        Optional<UserGroup> optionalUserGroup = userGroupRepository.findByUserIdAndGroupId(userId, groupId);
+        Group group = findGroupBy(groupId);
 
-        boolean isGroupLeader = userGroup.getRole() == GroupRole.LEADER;
-        return GroupDetailResponse.of(userGroup.getGroup(), isGroupLeader);
+        boolean isGroupLeader = optionalUserGroup
+            .filter(userGroup -> userGroup.getRole() == GroupRole.LEADER)
+            .isPresent();
+        return GroupDetailResponse.of(group, isGroupLeader);
     }
 
     @Transactional
