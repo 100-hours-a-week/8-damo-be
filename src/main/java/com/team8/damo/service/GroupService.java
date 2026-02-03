@@ -1,15 +1,13 @@
 package com.team8.damo.service;
 
-import com.team8.damo.entity.Group;
-import com.team8.damo.entity.User;
-import com.team8.damo.entity.UserGroup;
+import com.team8.damo.entity.*;
+import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
+import com.team8.damo.entity.enumeration.DiningStatus;
+import com.team8.damo.entity.enumeration.GroupRole;
 import com.team8.damo.exception.CustomException;
-import com.team8.damo.repository.GroupRepository;
-import com.team8.damo.repository.UserGroupRepository;
-import com.team8.damo.repository.UserRepository;
+import com.team8.damo.repository.*;
 import com.team8.damo.service.request.GroupCreateServiceRequest;
 import com.team8.damo.service.response.GroupDetailResponse;
-import com.team8.damo.entity.enumeration.GroupRole;
 import com.team8.damo.service.response.UserGroupResponse;
 import com.team8.damo.util.QrCodeGenerator;
 import com.team8.damo.util.Snowflake;
@@ -31,6 +29,8 @@ public class GroupService {
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
     private final UserGroupRepository userGroupRepository;
+    private final DiningRepository diningRepository;
+    private final DiningParticipantRepository diningParticipantRepository;
 
     @Transactional
     public Long createGroup(Long userId, GroupCreateServiceRequest request) {
@@ -79,11 +79,21 @@ public class GroupService {
         User user = findUserBy(userId);
         Group group = findGroupBy(groupId);
 
-        UserGroup participant = UserGroup.createParticipant(snowflake.nextId(), user, group);
-        userGroupRepository.save(participant);
+        UserGroup groupParticipant = UserGroup.createParticipant(snowflake.nextId(), user, group);
+        userGroupRepository.save(groupParticipant);
+
+        createDiningParticipantToAttendanceVote(user, groupId);
 
         groupRepository.increaseTotalMembers(groupId);
         return groupId;
+    }
+
+    private void createDiningParticipantToAttendanceVote(User user, Long groupId) {
+        List<Dining> diningList = diningRepository.findAllByGroupIdAndDiningStatus(groupId, DiningStatus.ATTENDANCE_VOTING);
+        List<DiningParticipant> diningParticipants = diningList.stream()
+            .map(dining -> new DiningParticipant(snowflake.nextId(), dining, user, AttendanceVoteStatus.PENDING))
+            .toList();
+        diningParticipantRepository.saveAll(diningParticipants);
     }
 
     private Group findGroupBy(Long groupId) {
