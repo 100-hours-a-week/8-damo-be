@@ -206,6 +206,7 @@ public class DiningService {
 
         // 모두 참석 투표를 완료하면 AI 장소 추천 요청
         Group group = findGroupBy(groupId);
+        Dining refreshDining = findDiningBy(dining.getId());
         List<Long> userIds = createAttendParticipantIds(dining);
 
         commonEventPublisher.publish(
@@ -217,7 +218,7 @@ public class DiningService {
                 .build()
         );
 
-        dining.startRecommendationPending();
+        refreshDining.startRecommendationPending();
     }
 
     @Transactional
