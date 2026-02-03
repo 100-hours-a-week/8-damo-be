@@ -276,7 +276,7 @@ public class DiningService {
     }
 
     private void validateDiningLimit(Long groupId) {
-        int incompleteDiningCount = diningRepository.countByGroupIdAndDiningStatusNot(groupId, DiningStatus.COMPLETE);
+        int incompleteDiningCount = diningRepository.countByGroupIdAndDiningStatusNot(groupId, DiningStatus.CONFIRMED);
         if (incompleteDiningCount >= MAX_INCOMPLETE_DINING_COUNT) {
             throw new CustomException(DINING_LIMIT_EXCEEDED);
         }
