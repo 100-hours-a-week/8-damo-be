@@ -237,6 +237,7 @@ class GroupServiceTest {
 
         given(userGroupRepository.findByUserIdAndGroupId(userId, groupId))
             .willReturn(Optional.of(userGroup));
+        given(groupRepository.findById(groupId)).willReturn(Optional.of(group));
 
         // when
         GroupDetailResponse result = groupService.getGroupDetail(userId, groupId);
@@ -247,6 +248,7 @@ class GroupServiceTest {
             .contains("맛집탐방대", "서울 맛집 모임", 1, true);
 
         then(userGroupRepository).should().findByUserIdAndGroupId(userId, groupId);
+        then(groupRepository).should().findById(groupId);
     }
 
     @Test
@@ -267,6 +269,7 @@ class GroupServiceTest {
 
         given(userGroupRepository.findByUserIdAndGroupId(userId, groupId))
             .willReturn(Optional.of(userGroup));
+        given(groupRepository.findById(groupId)).willReturn(Optional.of(group));
 
         // when
         GroupDetailResponse result = groupService.getGroupDetail(userId, groupId);
@@ -277,24 +280,52 @@ class GroupServiceTest {
             .contains("맛집탐방대", "서울 맛집 모임", 1, false);
 
         then(userGroupRepository).should().findByUserIdAndGroupId(userId, groupId);
+        then(groupRepository).should().findById(groupId);
     }
 
     @Test
-    @DisplayName("그룹에 속하지 않은 사용자는 그룹 상세 정보를 조회할 수 없다.")
-    void getGroupDetail_userNotGroupMember() {
+    @DisplayName("그룹 멤버가 아닌 사용자도 그룹 상세 정보를 조회할 수 있다.")
+    void getGroupDetail_asNonMember() {
         // given
         Long userId = 1L;
         Long groupId = 100L;
 
+        Group group = GroupFixture.create(groupId, "맛집탐방대", "서울 맛집 모임");
+
         given(userGroupRepository.findByUserIdAndGroupId(userId, groupId))
             .willReturn(Optional.empty());
+        given(groupRepository.findById(groupId)).willReturn(Optional.of(group));
+
+        // when
+        GroupDetailResponse result = groupService.getGroupDetail(userId, groupId);
+
+        // then
+        assertThat(result)
+            .extracting("name", "introduction", "participantsCount", "isGroupLeader")
+            .contains("맛집탐방대", "서울 맛집 모임", 1, false);
+
+        then(userGroupRepository).should().findByUserIdAndGroupId(userId, groupId);
+        then(groupRepository).should().findById(groupId);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 그룹의 상세 정보를 조회할 수 없다.")
+    void getGroupDetail_groupNotFound() {
+        // given
+        Long userId = 1L;
+        Long groupId = 999L;
+
+        given(userGroupRepository.findByUserIdAndGroupId(userId, groupId))
+            .willReturn(Optional.empty());
+        given(groupRepository.findById(groupId)).willReturn(Optional.empty());
 
         // when // then
         assertThatThrownBy(() -> groupService.getGroupDetail(userId, groupId))
             .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", USER_NOT_GROUP_MEMBER);
+            .hasFieldOrPropertyWithValue("errorCode", GROUP_NOT_FOUND);
 
         then(userGroupRepository).should().findByUserIdAndGroupId(userId, groupId);
+        then(groupRepository).should().findById(groupId);
     }
 
     @Test
