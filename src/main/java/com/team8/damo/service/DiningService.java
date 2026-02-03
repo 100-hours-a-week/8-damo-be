@@ -16,6 +16,7 @@ import com.team8.damo.entity.enumeration.RestaurantVoteStatus;
 import com.team8.damo.event.EventType;
 import com.team8.damo.event.handler.CommonEventPublisher;
 import com.team8.damo.event.payload.RecommendationEventPayload;
+import com.team8.damo.event.payload.RecommendationRefreshEventPayload;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.DiningCreateServiceRequest;
@@ -30,6 +31,7 @@ import com.team8.damo.service.response.RestaurantVoteResponse;
 import com.team8.damo.event.RestaurantRecommendationEvent;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +43,7 @@ import java.util.stream.Collectors;
 
 import static com.team8.damo.exception.errorcode.ErrorCode.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -188,25 +191,55 @@ public class DiningService {
         participant.updateVotingStatus(attendanceVoteStatus);
 
         if (isFirstVote) {
-            int votedCount = diningRepository.increaseAttendanceVoteDoneCount(diningId);
-            triggerRestaurantRecommendation(groupId, dining, votedCount);
+            diningRepository.increaseAttendanceVoteDoneCount(diningId);
+            triggerRestaurantRecommendation(groupId, dining);
         }
 
         return participant.getAttendanceVoteStatus();
     }
 
-    private void triggerRestaurantRecommendation(Long groupId, Dining dining, int votedCount) {
+    private void triggerRestaurantRecommendation(Long groupId, Dining dining) {
+        int voteDoneCount = diningRepository.getAttendanceVoteDoneCount(dining.getId());
         int totalParticipants = diningParticipantRepository.countByDiningId(dining.getId());
 
-        if (votedCount < totalParticipants) return;
+        if (voteDoneCount < totalParticipants) return;
 
         // 모두 참석 투표를 완료하면 AI 장소 추천 요청
         Group group = findGroupBy(groupId);
+        Dining refreshDining = findDiningBy(dining.getId());
         List<Long> userIds = createAttendParticipantIds(dining);
 
         commonEventPublisher.publish(
             EventType.RESTAURANT_RECOMMENDATION,
             RecommendationEventPayload.builder()
+                .group(group)
+                .dining(dining)
+                .userIds(userIds)
+                .build()
+        );
+
+        refreshDining.startRecommendationPending();
+    }
+
+    @Transactional
+    public void refreshRecommendRestaurants(
+        Long userId, Long groupId, Long diningId
+    ) {
+        if (isNotGroupLeader(userId, groupId)) {
+            throw new CustomException(ONLY_GROUP_LEADER_CAN_REFRESH);
+        }
+
+        Dining dining = findDiningBy(diningId);
+        if (dining.isNotRestaurantVoting()) {
+            throw new CustomException(RECOMMEND_REFRESH_ONLY_IN_RESTAURANT_VOTING);
+        }
+
+        Group group = findGroupBy(groupId);
+
+        List<Long> userIds = createAttendParticipantIds(dining);
+        commonEventPublisher.publish(
+            EventType.RESTAURANT_RECOMMENDATION_REFRESH,
+            RecommendationRefreshEventPayload.builder()
                 .group(group)
                 .dining(dining)
                 .userIds(userIds)
@@ -402,25 +435,4 @@ public class DiningService {
         return !userGroupRepository.existsByUserIdAndGroupIdAndRole(userId, groupId, GroupRole.LEADER);
     }
 
-    @Transactional
-    public List<RestaurantVoteDetailResponse> refreshRecommendRestaurants(
-        Long userId, Long groupId, Long diningId
-    ) {
-        if (isNotGroupLeader(userId, groupId)) {
-            throw new CustomException(ONLY_GROUP_LEADER_CAN_REFRESH);
-        }
-
-        Dining dining = findDiningBy(diningId);
-        if (dining.isNotRestaurantVoting()) {
-            throw new CustomException(RECOMMEND_REFRESH_ONLY_IN_RESTAURANT_VOTING);
-        }
-
-        Group group = findGroupBy(groupId);
-
-        List<Long> userIds = createAttendParticipantIds(dining);
-        List<RecommendRestaurant> recommendRestaurants =
-            aiService.recommendationRefreshRestaurant(group, dining, userIds);
-
-        return mapToVoteDetailResponses(userId, recommendRestaurants);
-    }
 }

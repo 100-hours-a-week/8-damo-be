@@ -149,13 +149,12 @@ public class DiningController implements DiningControllerDocs {
 
     @Override
     @PostMapping("/groups/{groupId}/dining/{diningId}/recommend-restaurant/refresh")
-    public BaseResponse<List<RestaurantVoteDetailResponse>> refreshRecommendRestaurants(
+    public BaseResponse<Void> refreshRecommendRestaurants(
         @AuthenticationPrincipal JwtUserDetails user,
         @PathVariable Long groupId,
         @PathVariable Long diningId
     ) {
-        return BaseResponse.ok(
-            diningService.refreshRecommendRestaurants(user.getUserId(), groupId, diningId)
-        );
+        diningService.refreshRecommendRestaurants(user.getUserId(), groupId, diningId);
+        return BaseResponse.noContent();
     }
 }

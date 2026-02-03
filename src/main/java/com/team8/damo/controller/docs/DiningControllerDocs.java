@@ -290,12 +290,13 @@ public interface DiningControllerDocs {
         summary = "장소 재추천 받기",
         description = """
             ### AI를 통해 새로운 식당 추천을 받습니다.
+            **호출 후 RECOMMENDATION_PENDING 상태로 변경됩니다.**
 
             **호출 조건**:
             - 그룹장만 재추천을 요청할 수 있습니다.
             - 기존 투표 결과를 바탕으로 AI가 새로운 추천을 생성합니다.
 
-            **응답 정보**:
+            **응답 정보(없음)**:
             - recommendRestaurantsId: 추천 식당 ID
             - restaurantsName: 식당 이름
             - reasoningDescription: AI 추천 이유
@@ -312,7 +313,7 @@ public interface DiningControllerDocs {
         GROUP_NOT_FOUND,
         RESTAURANT_NOT_FOUND
     })
-    BaseResponse<List<RestaurantVoteDetailResponse>> refreshRecommendRestaurants(
+    BaseResponse<Void> refreshRecommendRestaurants(
         @Parameter(hidden = true)
         JwtUserDetails user,
         @Parameter(description = "그룹 ID", required = true)

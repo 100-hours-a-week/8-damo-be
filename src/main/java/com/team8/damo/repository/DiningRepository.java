@@ -15,11 +15,14 @@ public interface DiningRepository extends JpaRepository<Dining, Long> {
 
     List<Dining> findAllByGroupIdAndDiningStatus(Long groupId, DiningStatus status);
 
-    @Modifying(flushAutomatically = true)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("update Dining d set d.attendanceVoteDoneCount = d.attendanceVoteDoneCount + 1 where d.id = :diningId")
-    int increaseAttendanceVoteDoneCount(@Param("diningId") Long diningId);
+    void increaseAttendanceVoteDoneCount(@Param("diningId") Long diningId);
 
     @Modifying(flushAutomatically = true)
     @Query("update Dining d set d.attendanceVoteDoneCount = :count where d.id = :diningId")
     void setAttendanceVoteDoneCount(@Param("diningId") Long diningId, @Param("count") int count);
+
+    @Query("select d.attendanceVoteDoneCount from Dining d where d.id = :diningId")
+    int getAttendanceVoteDoneCount(@Param("diningId") Long diningId);
 }

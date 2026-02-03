@@ -31,6 +31,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -821,33 +822,7 @@ class DiningControllerTest {
         Long groupId = 100L;
         Long diningId = 200L;
 
-        List<RestaurantVoteDetailResponse> response = List.of(
-            new RestaurantVoteDetailResponse(
-                400L,
-                "새로운 고기집",
-                "AI가 추천한 식당입니다.",
-                "NONE",
-                "02-1234-5678",
-                "37.5012",
-                "127.0396",
-                0,
-                0
-            ),
-            new RestaurantVoteDetailResponse(
-                401L,
-                "새로운 해산물집",
-                "AI가 추천한 식당입니다.",
-                "NONE",
-                "02-5678-1234",
-                "37.5065",
-                "127.0523",
-                0,
-                0
-            )
-        );
-
-        given(diningService.refreshRecommendRestaurants(any(), eq(groupId), eq(diningId)))
-            .willReturn(response);
+        willDoNothing().given(diningService).refreshRecommendRestaurants(any(), eq(groupId), eq(diningId));
 
         // when // then
         mockMvc.perform(
@@ -857,39 +832,7 @@ class DiningControllerTest {
             )
             .andDo(print())
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data").isArray())
-            .andExpect(jsonPath("$.data.length()").value(2))
-            .andExpect(jsonPath("$.data[0].recommendRestaurantsId").value(400L))
-            .andExpect(jsonPath("$.data[0].restaurantsName").value("새로운 고기집"))
-            .andExpect(jsonPath("$.data[0].restaurantVoteStatus").value("NONE"))
-            .andExpect(jsonPath("$.data[0].likeCount").value(0))
-            .andExpect(jsonPath("$.data[0].dislikeCount").value(0))
-            .andExpect(jsonPath("$.data[1].recommendRestaurantsId").value(401L))
-            .andExpect(jsonPath("$.data[1].restaurantsName").value("새로운 해산물집"));
-
-        then(diningService).should().refreshRecommendRestaurants(any(), eq(groupId), eq(diningId));
-    }
-
-    @Test
-    @DisplayName("추천 장소 새로고침 시 빈 목록이 반환될 수 있다.")
-    void refreshRecommendRestaurants_emptyList() throws Exception {
-        // given
-        Long groupId = 100L;
-        Long diningId = 200L;
-
-        given(diningService.refreshRecommendRestaurants(any(), eq(groupId), eq(diningId)))
-            .willReturn(List.of());
-
-        // when // then
-        mockMvc.perform(
-                post("/api/v1/groups/{groupId}/dining/{diningId}/recommend-restaurant/refresh",
-                    groupId, diningId)
-                    .contentType(MediaType.APPLICATION_JSON)
-            )
-            .andDo(print())
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data").isArray())
-            .andExpect(jsonPath("$.data.length()").value(0));
+            .andExpect(jsonPath("$.data").doesNotExist());
 
         then(diningService).should().refreshRecommendRestaurants(any(), eq(groupId), eq(diningId));
     }

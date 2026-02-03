@@ -6,7 +6,9 @@ import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
 import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.entity.enumeration.GroupRole;
 import com.team8.damo.entity.enumeration.RestaurantVoteStatus;
+import com.team8.damo.event.EventType;
 import com.team8.damo.event.handler.CommonEventPublisher;
+import com.team8.damo.event.payload.RecommendationRefreshEventPayload;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.fixture.*;
 import com.team8.damo.repository.*;
@@ -31,6 +33,7 @@ import java.util.Optional;
 import static com.team8.damo.exception.errorcode.ErrorCode.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willDoNothing;
@@ -674,7 +677,7 @@ class DiningServiceTest {
 
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
         given(diningParticipantRepository.findByDiningIdAndUserId(diningId, userId)).willReturn(Optional.of(participant));
-        given(diningRepository.increaseAttendanceVoteDoneCount(diningId)).willReturn(1);
+        given(diningRepository.getAttendanceVoteDoneCount(diningId)).willReturn(1);
         given(diningParticipantRepository.countByDiningId(diningId)).willReturn(3);
 
         // when
@@ -705,7 +708,7 @@ class DiningServiceTest {
 
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
         given(diningParticipantRepository.findByDiningIdAndUserId(diningId, userId)).willReturn(Optional.of(participant));
-        given(diningRepository.increaseAttendanceVoteDoneCount(diningId)).willReturn(1);
+        given(diningRepository.getAttendanceVoteDoneCount(diningId)).willReturn(1);
         given(diningParticipantRepository.countByDiningId(diningId)).willReturn(3);
 
         // when
@@ -912,7 +915,7 @@ class DiningServiceTest {
 
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
         given(diningParticipantRepository.findByDiningIdAndUserId(diningId, userId)).willReturn(Optional.of(participant));
-        given(diningRepository.increaseAttendanceVoteDoneCount(diningId)).willReturn(3);
+        given(diningRepository.getAttendanceVoteDoneCount(diningId)).willReturn(3);
         given(diningParticipantRepository.countByDiningId(diningId)).willReturn(3);
         given(diningParticipantRepository.findAllByDiningAndAttendanceVoteStatus(dining, AttendanceVoteStatus.ATTEND))
             .willReturn(List.of(participant));
@@ -942,7 +945,7 @@ class DiningServiceTest {
 
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
         given(diningParticipantRepository.findByDiningIdAndUserId(diningId, userId)).willReturn(Optional.of(participant));
-        given(diningRepository.increaseAttendanceVoteDoneCount(diningId)).willReturn(2);
+        given(diningRepository.getAttendanceVoteDoneCount(diningId)).willReturn(2);
         given(diningParticipantRepository.countByDiningId(diningId)).willReturn(5);
 
         // when
@@ -969,7 +972,7 @@ class DiningServiceTest {
 
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
         given(diningParticipantRepository.findByDiningIdAndUserId(diningId, userId)).willReturn(Optional.of(participant));
-        given(diningRepository.increaseAttendanceVoteDoneCount(diningId)).willReturn(1);
+        given(diningRepository.getAttendanceVoteDoneCount(diningId)).willReturn(1);
         given(diningParticipantRepository.countByDiningId(diningId)).willReturn(1);
         given(diningParticipantRepository.findAllByDiningAndAttendanceVoteStatus(dining, AttendanceVoteStatus.ATTEND))
             .willReturn(List.of(participant));
@@ -2607,24 +2610,11 @@ class DiningServiceTest {
         Long userId = 1L;
         Long groupId = 100L;
         Long diningId = 200L;
-        String restaurantId1 = "restaurant-001";
-        String restaurantId2 = "restaurant-002";
-        Integer recommendationCount = 2;
 
         User user = UserFixture.create(userId);
         Group group = GroupFixture.create(groupId, "맛집탐방대");
         Dining dining = DiningFixture.createWithRecommendationCount(diningId, group, DiningStatus.RESTAURANT_VOTING, 1);
         DiningParticipant participant = DiningParticipantFixture.create(300L, dining, user, AttendanceVoteStatus.ATTEND);
-
-        RecommendRestaurant newRecommendRestaurant1 = RecommendRestaurantFixture.create(
-            400L, dining, restaurantId1, recommendationCount, 0, 0
-        );
-        RecommendRestaurant newRecommendRestaurant2 = RecommendRestaurantFixture.create(
-            401L, dining, restaurantId2, recommendationCount, 0, 0
-        );
-
-        Restaurant restaurant1 = RestaurantFixture.create(restaurantId1, "새로운 고기집");
-        Restaurant restaurant2 = RestaurantFixture.create(restaurantId2, "새로운 해산물집");
 
         given(userGroupRepository.existsByUserIdAndGroupIdAndRole(userId, groupId, GroupRole.LEADER))
             .willReturn(true);
@@ -2632,30 +2622,17 @@ class DiningServiceTest {
         given(groupRepository.findById(groupId)).willReturn(Optional.of(group));
         given(diningParticipantRepository.findAllByDiningAndAttendanceVoteStatus(dining, AttendanceVoteStatus.ATTEND))
             .willReturn(List.of(participant));
-        given(aiService.recommendationRefreshRestaurant(group, dining, List.of(userId)))
-            .willReturn(List.of(newRecommendRestaurant1, newRecommendRestaurant2));
-        given(restaurantRepository.findById(restaurantId1)).willReturn(Optional.of(restaurant1));
-        given(restaurantRepository.findById(restaurantId2)).willReturn(Optional.of(restaurant2));
-        given(recommendRestaurantVoteRepository.findByUserIdAndRecommendRestaurantId(userId, 400L))
-            .willReturn(Optional.empty());
-        given(recommendRestaurantVoteRepository.findByUserIdAndRecommendRestaurantId(userId, 401L))
-            .willReturn(Optional.empty());
 
         // when
-        List<RestaurantVoteDetailResponse> result = diningService.refreshRecommendRestaurants(userId, groupId, diningId);
+        diningService.refreshRecommendRestaurants(userId, groupId, diningId);
 
         // then
-        assertThat(result).hasSize(2)
-            .extracting("recommendRestaurantsId", "restaurantsName", "restaurantVoteStatus", "likeCount", "dislikeCount")
-            .containsExactlyInAnyOrder(
-                tuple(400L, "새로운 고기집", "NONE", 0, 0),
-                tuple(401L, "새로운 해산물집", "NONE", 0, 0)
-            );
+        assertThat(dining.getDiningStatus()).isEqualTo(DiningStatus.RECOMMENDATION_PENDING);
 
         then(userGroupRepository).should().existsByUserIdAndGroupIdAndRole(userId, groupId, GroupRole.LEADER);
         then(diningRepository).should().findById(diningId);
         then(groupRepository).should().findById(groupId);
-        then(aiService).should().recommendationRefreshRestaurant(group, dining, List.of(userId));
+        then(commonEventPublisher).should().publish(eq(EventType.RESTAURANT_RECOMMENDATION_REFRESH), any(RecommendationRefreshEventPayload.class));
     }
 
     @Test
@@ -2797,7 +2774,7 @@ class DiningServiceTest {
         then(userGroupRepository).should().existsByUserIdAndGroupIdAndRole(userId, groupId, GroupRole.LEADER);
         then(diningRepository).should().findById(diningId);
         then(groupRepository).should().findById(groupId);
-        then(aiService).should(never()).recommendationRefreshRestaurant(any(), any(), any());
+        then(commonEventPublisher).should(never()).publish(any(), any());
     }
 
     @Test
@@ -2807,8 +2784,6 @@ class DiningServiceTest {
         Long userId = 1L;
         Long groupId = 100L;
         Long diningId = 200L;
-        String restaurantId = "restaurant-001";
-        Integer recommendationCount = 2;
 
         User user1 = UserFixture.create(userId);
         User user2 = UserFixture.create(2L);
@@ -2819,70 +2794,18 @@ class DiningServiceTest {
         DiningParticipant participant2 = DiningParticipantFixture.create(301L, dining, user2, AttendanceVoteStatus.ATTEND);
         DiningParticipant participant3 = DiningParticipantFixture.create(302L, dining, user3, AttendanceVoteStatus.ATTEND);
 
-        RecommendRestaurant newRecommendRestaurant = RecommendRestaurantFixture.create(
-            400L, dining, restaurantId, recommendationCount, 0, 0
-        );
-
-        Restaurant restaurant = RestaurantFixture.create(restaurantId, "추천 식당");
-
         given(userGroupRepository.existsByUserIdAndGroupIdAndRole(userId, groupId, GroupRole.LEADER))
             .willReturn(true);
         given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
         given(groupRepository.findById(groupId)).willReturn(Optional.of(group));
         given(diningParticipantRepository.findAllByDiningAndAttendanceVoteStatus(dining, AttendanceVoteStatus.ATTEND))
             .willReturn(List.of(participant1, participant2, participant3));
-        given(aiService.recommendationRefreshRestaurant(group, dining, List.of(userId, 2L, 3L)))
-            .willReturn(List.of(newRecommendRestaurant));
-        given(restaurantRepository.findById(restaurantId)).willReturn(Optional.of(restaurant));
-        given(recommendRestaurantVoteRepository.findByUserIdAndRecommendRestaurantId(userId, 400L))
-            .willReturn(Optional.empty());
 
         // when
-        List<RestaurantVoteDetailResponse> result = diningService.refreshRecommendRestaurants(userId, groupId, diningId);
+        diningService.refreshRecommendRestaurants(userId, groupId, diningId);
 
         // then
-        assertThat(result).hasSize(1)
-            .extracting("recommendRestaurantsId", "restaurantsName")
-            .containsExactlyInAnyOrder(
-                tuple(400L, "추천 식당")
-            );
-        then(aiService).should().recommendationRefreshRestaurant(group, dining, List.of(userId, 2L, 3L));
-    }
-
-    @Test
-    @DisplayName("새로고침 후 식당 정보가 없으면 예외가 발생한다.")
-    void refreshRecommendRestaurants_restaurantNotFound() {
-        // given
-        Long userId = 1L;
-        Long groupId = 100L;
-        Long diningId = 200L;
-        String restaurantId = "restaurant-999";
-        Integer recommendationCount = 2;
-
-        User user = UserFixture.create(userId);
-        Group group = GroupFixture.create(groupId, "맛집탐방대");
-        Dining dining = DiningFixture.createWithRecommendationCount(diningId, group, DiningStatus.RESTAURANT_VOTING, 1);
-        DiningParticipant participant = DiningParticipantFixture.create(300L, dining, user, AttendanceVoteStatus.ATTEND);
-
-        RecommendRestaurant newRecommendRestaurant = RecommendRestaurantFixture.create(
-            400L, dining, restaurantId, recommendationCount, 0, 0
-        );
-
-        given(userGroupRepository.existsByUserIdAndGroupIdAndRole(userId, groupId, GroupRole.LEADER))
-            .willReturn(true);
-        given(diningRepository.findById(diningId)).willReturn(Optional.of(dining));
-        given(groupRepository.findById(groupId)).willReturn(Optional.of(group));
-        given(diningParticipantRepository.findAllByDiningAndAttendanceVoteStatus(dining, AttendanceVoteStatus.ATTEND))
-            .willReturn(List.of(participant));
-        given(aiService.recommendationRefreshRestaurant(group, dining, List.of(userId)))
-            .willReturn(List.of(newRecommendRestaurant));
-        given(restaurantRepository.findById(restaurantId)).willReturn(Optional.empty());
-
-        // when // then
-        assertThatThrownBy(() -> diningService.refreshRecommendRestaurants(userId, groupId, diningId))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", RESTAURANT_NOT_FOUND);
-
-        then(restaurantRepository).should().findById(restaurantId);
+        assertThat(dining.getDiningStatus()).isEqualTo(DiningStatus.RECOMMENDATION_PENDING);
+        then(commonEventPublisher).should().publish(eq(EventType.RESTAURANT_RECOMMENDATION_REFRESH), any(RecommendationRefreshEventPayload.class));
     }
 }
