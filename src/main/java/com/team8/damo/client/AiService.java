@@ -42,8 +42,7 @@ public class AiService {
         );
     }
 
-    @Transactional
-    public List<RecommendRestaurant> recommendationRefreshRestaurant(Group group, Dining dining, List<Long> userIds) {
+    public AiRecommendRestaurantsResponse recommendationRefreshRestaurant(Group group, Dining dining, List<Long> userIds) {
         DiningData diningData = createDiningData(group, dining);
 
         List<RecommendRestaurant> restaurants = recommendRestaurantRepository
@@ -56,14 +55,11 @@ public class AiService {
         AiRecommendationRefreshRequest refreshRequest = new AiRecommendationRefreshRequest(diningData, userIds, voteResultList);
         AiRecommendationResponse recommendation = aiClient.recommendationRefresh(refreshRequest);
 
-        dining.changeRecommendationCount(recommendation.recommendationCount());
-
-        recommendation.recommendedItems().forEach(
-            recommendedItem -> log.info("recommendedItem: {}", recommendedItem)
-        );
-
         List<RecommendRestaurant> recommendRestaurants = createRecommendRestaurantsBy(dining, recommendation);
-        return recommendRestaurantRepository.saveAll(recommendRestaurants);
+        return AiRecommendRestaurantsResponse.of(
+            recommendation.recommendationCount(),
+            recommendRestaurants
+        );
     }
 
     public void userPersonaUpdate(

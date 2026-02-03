@@ -30,6 +30,7 @@ public class RecommendRestaurantService {
         dining.startRestaurantVoting();
         dining.changeRecommendationCount(recommendationCount);
 
+        log.info("recommendationCount: {}", recommendationCount);
         recommendRestaurants.forEach(recommendRestaurant -> {
             log.info("recommendRestaurant: {} {}",  recommendRestaurant.getRestaurantId(), recommendRestaurant.getReasoningDescription());
         });

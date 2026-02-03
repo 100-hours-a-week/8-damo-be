@@ -4,7 +4,7 @@ import com.team8.damo.client.AiService;
 import com.team8.damo.client.response.AiRecommendRestaurantsResponse;
 import com.team8.damo.event.Event;
 import com.team8.damo.event.EventType;
-import com.team8.damo.event.payload.RecommendationEventPayload;
+import com.team8.damo.event.payload.RecommendationRefreshEventPayload;
 import com.team8.damo.service.RecommendRestaurantService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,21 +13,21 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class RecommendationRestaurantHandler implements EventHandler<RecommendationEventPayload> {
+public class RecommendationRefreshHandler implements EventHandler<RecommendationRefreshEventPayload> {
+
     private final AiService aiService;
     private final RecommendRestaurantService recommendRestaurantService;
 
     @Override
-    public void handle(Event<RecommendationEventPayload> event) {
-        log.info("[RecommendationRestaurantHandler] handle: {}", event.getPayload().dining().getId());
-        RecommendationEventPayload payload = event.getPayload();
+    public void handle(Event<RecommendationRefreshEventPayload> event) {
+        log.info("[RecommendationRefreshHandler] handle: {}", event.getPayload().dining().getId());
+        RecommendationRefreshEventPayload payload = event.getPayload();
 
         try {
-            AiRecommendRestaurantsResponse response = aiService.recommendationRestaurant(
+            AiRecommendRestaurantsResponse response = aiService.recommendationRefreshRestaurant(
                 payload.group(), payload.dining(), payload.userIds()
             );
 
-            // 추천 식당 저장 및 회식 상태를 "장소 투표" 상태로 변경
             recommendRestaurantService.updateRecommendRestaurant(
                 payload.dining().getId(),
                 response.recommendationCount(),
@@ -46,7 +46,7 @@ public class RecommendationRestaurantHandler implements EventHandler<Recommendat
     }
 
     @Override
-    public boolean supports(Event<RecommendationEventPayload> event) {
-        return EventType.RESTAURANT_RECOMMENDATION == event.getEventType();
+    public boolean supports(Event<RecommendationRefreshEventPayload> event) {
+        return EventType.RESTAURANT_RECOMMENDATION_REFRESH == event.getEventType();
     }
 }
