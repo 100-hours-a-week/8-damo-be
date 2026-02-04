@@ -20,6 +20,7 @@ public enum ErrorCode {
     GROUP_NOT_FOUND(NOT_FOUND, "그룹을 찾을 수 없습니다."),
     DUPLICATE_GROUP_MEMBER(CONFLICT, "이미 참여중인 그룹입니다."),
     USER_NOT_GROUP_MEMBER(FORBIDDEN, "그룹에 속하지 않아 접근할 수 없습니다."),
+    GROUP_CAPACITY_EXCEEDED(BAD_REQUEST, "그룹 최대 참여 인원을 초과했습니다."),
 
     // Dining
     ONLY_GROUP_LEADER_ALLOWED(FORBIDDEN, "회식 생성은 그룹장만 가능합니다."),

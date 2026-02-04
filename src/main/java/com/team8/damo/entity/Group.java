@@ -37,6 +37,8 @@ public class Group extends BaseTimeEntity {
     @Column(name = "image_path", length = 200)
     private String imagePath;
 
+    private static final int MAX_CAPACITY = 8;
+
     @Builder
     public Group(Long id, String name, String introduction, double latitude, double longitude, String imagePath) {
         this.id = id;
@@ -53,5 +55,9 @@ public class Group extends BaseTimeEntity {
 
     public void changeImagePath(String imagePath) {
         this.imagePath = imagePath;
+    }
+
+    public boolean isOverCapacity() {
+        return totalMembers >= MAX_CAPACITY;
     }
 }
