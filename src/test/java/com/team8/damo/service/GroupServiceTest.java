@@ -26,10 +26,7 @@ import org.springframework.test.context.ActiveProfiles;
 import java.util.List;
 import java.util.Optional;
 
-import static com.team8.damo.exception.errorcode.ErrorCode.USER_NOT_FOUND;
-import static com.team8.damo.exception.errorcode.ErrorCode.USER_NOT_GROUP_MEMBER;
-import static com.team8.damo.exception.errorcode.ErrorCode.GROUP_NOT_FOUND;
-import static com.team8.damo.exception.errorcode.ErrorCode.DUPLICATE_GROUP_MEMBER;
+import static com.team8.damo.exception.errorcode.ErrorCode.*;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -37,6 +34,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
@@ -412,6 +410,34 @@ class GroupServiceTest {
             );
 
         then(groupRepository).should().increaseTotalMembers(groupId);
+    }
+
+    @Test
+    @DisplayName("그룹 최대 참여 인원을 초과하면 참여할 수 없다.")
+    void attendGroup_groupCapacityExceeded() {
+        // given
+        Long userId = 1L;
+        Long groupId = 100L;
+
+        User user = UserFixture.create(userId);
+        Group group = GroupFixture.create(groupId, "맛집탐방대", "서울 맛집 모임", 8);
+
+        given(userGroupRepository.existsByUserIdAndGroupId(userId, groupId)).willReturn(false);
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(groupRepository.findById(groupId)).willReturn(Optional.of(group));
+
+        // when // then
+        assertThatThrownBy(() -> groupService.attendGroup(userId, groupId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", GROUP_CAPACITY_EXCEEDED);
+
+        then(userGroupRepository).should().existsByUserIdAndGroupId(userId, groupId);
+        then(userRepository).should().findById(userId);
+        then(groupRepository).should().findById(groupId);
+        then(userGroupRepository).should(never()).save(any());
+        then(diningRepository).should(never()).findAllByGroupIdAndDiningStatus(any(), any());
+        then(diningParticipantRepository).should(never()).saveAll(any());
+        then(groupRepository).should(never()).increaseTotalMembers(any());
     }
 
     @Test

@@ -40,13 +40,14 @@ public class Group extends BaseTimeEntity {
     private static final int MAX_CAPACITY = 8;
 
     @Builder
-    public Group(Long id, String name, String introduction, double latitude, double longitude, String imagePath) {
+    public Group(Long id, String name, String introduction, double latitude, double longitude, String imagePath, int totalMembers) {
         this.id = id;
         this.name = name;
         this.introduction = introduction;
         this.latitude = latitude;
         this.longitude = longitude;
         this.imagePath = imagePath;
+        this.totalMembers = totalMembers == 0 ? 1 : totalMembers;
     }
 
     public void incrementTotalMembers() {
