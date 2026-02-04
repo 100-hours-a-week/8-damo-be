@@ -79,6 +79,10 @@ public class GroupService {
         User user = findUserBy(userId);
         Group group = findGroupBy(groupId);
 
+        if (group.isOverCapacity()) {
+            throw new CustomException(GROUP_CAPACITY_EXCEEDED);
+        }
+
         UserGroup groupParticipant = UserGroup.createParticipant(snowflake.nextId(), user, group);
         userGroupRepository.save(groupParticipant);
 
