@@ -50,7 +50,7 @@ public class UserService {
 
     @Transactional
     public void updateUserBasic(Long userId, UserBasicUpdateServiceRequest request) {
-        if (userRepository.existsByNickname(request.nickname())) {
+        if (userRepository.existsByNicknameAndIdNot(request.nickname(), userId)) {
             throw new CustomException(DUPLICATE_NICKNAME);
         }
 

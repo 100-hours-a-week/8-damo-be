@@ -16,19 +16,22 @@ public class UserProfileResponse {
     private final List<CategoryResponse> allergies;
     private final List<CategoryResponse> likeFoods;
     private final List<CategoryResponse> likeIngredients;
+    private final String otherCharacteristics;
 
     private UserProfileResponse(
         Long userId,
         String nickname,
         List<CategoryResponse> allergies,
         List<CategoryResponse> likeFoods,
-        List<CategoryResponse> likeIngredients
+        List<CategoryResponse> likeIngredients,
+        String otherCharacteristics
     ) {
         this.userId = userId;
         this.nickname = nickname;
         this.allergies = allergies;
         this.likeFoods = likeFoods;
         this.likeIngredients = likeIngredients;
+        this.otherCharacteristics = otherCharacteristics;
     }
 
     public static UserProfileResponse of(
@@ -58,7 +61,8 @@ public class UserProfileResponse {
             user.getNickname(),
             allergyResponses,
             likeFoodResponses,
-            likeIngredientResponses
+            likeIngredientResponses,
+            user.getOtherCharacteristics()
         );
     }
 
