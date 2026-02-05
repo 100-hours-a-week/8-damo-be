@@ -4,7 +4,7 @@ server:
 spring:
 
   profiles:
-    active: local
+    active: ${ACTIVE_PROFILE}
 
   security:
     oauth2:
@@ -68,6 +68,61 @@ management:
 spring:
   config:
     activate:
+      on-profile: prod
+
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+
+  mongodb:
+    uri: ${MONGODB_URI}
+    auto-index-creation: true
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/damo?serverTimezone=UTC
+    username: ${MYSQL_USERNAME}
+    password: ${MYSQL_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: false
+    defer-datasource-initialization: true
+
+  sql:
+    init:
+      mode: always
+
+  output:
+    ansi:
+      enabled: ALWAYS
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
+
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: true
+
+springdoc:
+  swagger-ui:
+    path: /api-test
+    csrf:
+      enabled: true
+
+---
+
+spring:
+  config:
+    activate:
       on-profile: local
 
   data:
@@ -77,9 +132,6 @@ spring:
 
   mongodb:
     uri: ${MONGODB_URI}
-    #port: ${MONGODB_PORT}
-    #host: ${MONGODB_HOST}
-    #database: ${MONGODB_DATABASE}
     auto-index-creation: true
 
   datasource:
@@ -154,6 +206,10 @@ spring:
   sql:
     init:
       mode: always
+
+  output:
+    ansi:
+      enabled: ALWAYS
 
 decorator:
   datasource:
