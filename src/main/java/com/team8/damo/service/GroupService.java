@@ -88,7 +88,7 @@ public class GroupService {
 
         createDiningParticipantToAttendanceVote(user, groupId);
 
-        groupRepository.increaseTotalMembers(groupId);
+        group.incrementTotalMembers();
         return groupId;
     }
 

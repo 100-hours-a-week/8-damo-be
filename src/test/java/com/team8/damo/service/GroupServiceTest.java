@@ -34,7 +34,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
@@ -365,7 +364,7 @@ class GroupServiceTest {
 
         then(diningRepository).should().findAllByGroupIdAndDiningStatus(groupId, DiningStatus.ATTENDANCE_VOTING);
         then(diningParticipantRepository).should().saveAll(List.of());
-        then(groupRepository).should().increaseTotalMembers(groupId);
+        assertThat(group.getTotalMembers()).isEqualTo(2);
     }
 
     @Test
@@ -409,7 +408,7 @@ class GroupServiceTest {
                 tuple(dining2, user, AttendanceVoteStatus.PENDING)
             );
 
-        then(groupRepository).should().increaseTotalMembers(groupId);
+        assertThat(group.getTotalMembers()).isEqualTo(2);
     }
 
     @Test
