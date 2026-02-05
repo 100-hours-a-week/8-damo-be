@@ -151,7 +151,7 @@ class UserServiceTest {
 
         User user = UserFixture.create(userId);
 
-        given(userRepository.existsByNickname(nickname)).willReturn(false);
+        given(userRepository.existsByNicknameAndIdNot(nickname, userId)).willReturn(false);
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
 
         // when
@@ -162,7 +162,7 @@ class UserServiceTest {
         assertThat(user.getGender()).isEqualTo(gender);
         assertThat(user.getAgeGroup()).isEqualTo(ageGroup);
 
-        then(userRepository).should().existsByNickname(nickname);
+        then(userRepository).should().existsByNicknameAndIdNot(nickname, userId);
         then(userRepository).should().findById(userId);
     }
 
@@ -177,14 +177,14 @@ class UserServiceTest {
             duplicateNickname, Gender.MALE, AgeGroup.TWENTIES, null
         );
 
-        given(userRepository.existsByNickname(duplicateNickname)).willReturn(true);
+        given(userRepository.existsByNicknameAndIdNot(duplicateNickname, userId)).willReturn(true);
 
         // when // then
         assertThatThrownBy(() -> userService.updateUserBasic(userId, request))
             .isInstanceOf(CustomException.class)
             .hasFieldOrPropertyWithValue("errorCode", DUPLICATE_NICKNAME);
 
-        then(userRepository).should().existsByNickname(duplicateNickname);
+        then(userRepository).should().existsByNicknameAndIdNot(duplicateNickname, userId);
         then(userRepository).should(never()).findById(userId);
     }
 
@@ -199,7 +199,7 @@ class UserServiceTest {
             nickname, Gender.FEMALE, AgeGroup.THIRTIES, "users/profile/user-999.png"
         );
 
-        given(userRepository.existsByNickname(nickname)).willReturn(false);
+        given(userRepository.existsByNicknameAndIdNot(nickname, userId)).willReturn(false);
         given(userRepository.findById(userId)).willReturn(Optional.empty());
 
         // when // then
@@ -207,7 +207,7 @@ class UserServiceTest {
             .isInstanceOf(CustomException.class)
             .hasFieldOrPropertyWithValue("errorCode", USER_NOT_FOUND);
 
-        then(userRepository).should().existsByNickname(nickname);
+        then(userRepository).should().existsByNicknameAndIdNot(nickname, userId);
         then(userRepository).should().findById(userId);
     }
 
