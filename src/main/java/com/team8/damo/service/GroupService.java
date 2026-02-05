@@ -1,5 +1,6 @@
 package com.team8.damo.service;
 
+import com.team8.damo.aop.CustomLock;
 import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
 import com.team8.damo.entity.enumeration.DiningStatus;
@@ -71,6 +72,7 @@ public class GroupService {
     }
 
     @Transactional
+    @CustomLock(key = "#groupId")
     public Long attendGroup(Long userId, Long groupId) {
         if (userGroupRepository.existsByUserIdAndGroupId(userId, groupId)) {
             throw new CustomException(DUPLICATE_GROUP_MEMBER);
