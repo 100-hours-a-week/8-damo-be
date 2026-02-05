@@ -1,6 +1,5 @@
 package com.team8.damo.service;
 
-import com.team8.damo.aop.CustomLock;
 import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
 import com.team8.damo.entity.enumeration.DiningStatus;
@@ -13,7 +12,6 @@ import com.team8.damo.service.response.UserGroupResponse;
 import com.team8.damo.util.QrCodeGenerator;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +20,6 @@ import java.util.Optional;
 
 import static com.team8.damo.exception.errorcode.ErrorCode.*;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -74,9 +71,7 @@ public class GroupService {
     }
 
     @Transactional
-    @CustomLock(key = "#groupId")
     public Long attendGroup(Long userId, Long groupId) {
-        log.info("[GroupService.attendGroup] userId:{} groupId:{}", userId, groupId);
         if (userGroupRepository.existsByUserIdAndGroupId(userId, groupId)) {
             throw new CustomException(DUPLICATE_GROUP_MEMBER);
         }
