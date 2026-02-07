@@ -166,3 +166,12 @@ cookieUtil.addCookie(response, "refresh", refreshToken);
 - `EnumType.STRING` for enums with explicit length
 - Implement `equals()`/`hashCode()` based on ID
 - Extend `BaseTimeEntity` for automatic timestamp management
+
+### DTO Best Practices
+
+- **Use Java Record for DTOs**: All DTOs (Request, Response, Service DTOs) should be created using Java `record` instead of classes
+- Records provide immutability, auto-generated `equals()`, `hashCode()`, `toString()`, and compact syntax
+
+## Claude Code Instructions
+
+- **Skill Usage Notification**: When using a skill (e.g., `/commit`, `/jpa-entity-design`), always inform the user which skill is being used at the start of the response

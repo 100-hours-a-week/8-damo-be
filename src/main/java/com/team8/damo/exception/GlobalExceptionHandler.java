@@ -2,7 +2,6 @@ package com.team8.damo.exception;
 
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.exception.errorcode.ErrorCode;
-import com.team8.damo.exception.errorcode.GlobalErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -18,7 +17,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = {NoHandlerFoundException.class, HttpRequestMethodNotSupportedException.class})
     public BaseResponse<?> handleNoPageFoundException(Exception e) {
         log.error("[Not Found Exception]", e);
-        return BaseResponse.fail(new CustomException(GlobalErrorCode.NOT_FOUND_END_POINT));
+        return BaseResponse.fail(new CustomException(ErrorCode.NOT_FOUND_END_POINT));
     }
 
     // 커스텀 예외
@@ -39,6 +38,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = {Exception.class})
     public BaseResponse<?> handleException(Exception e) {
         log.error("[Unhandled Exception]", e);
-        return BaseResponse.fail(new CustomException(GlobalErrorCode.INTERNAL_SERVER_ERROR));
+        return BaseResponse.fail(new CustomException(ErrorCode.INTERNAL_SERVER_ERROR));
     }
 }

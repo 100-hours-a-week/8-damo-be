@@ -1,5 +1,6 @@
 package com.team8.damo.security;
 
+import com.team8.damo.security.handler.CustomLogoutHandler;
 import com.team8.damo.security.jwt.JwtAuthenticationFilter;
 import com.team8.damo.security.jwt.JwtExceptionFilter;
 import com.team8.damo.security.jwt.JwtProvider;
@@ -28,17 +29,24 @@ public class SecurityConfig {
 
     private static final String[] AUTH_WHITELIST = {
         "/api/v1/auth/oauth",
+        "/api/v1/auth/reissue",
+        "/api/v1/auth/test",
+        "/api/v1/s3",
         "/login",
+        "/api/healthy",
         "/swagger-ui/**",
         "/v3/api-docs/**",
         "/api-test",
         "/ws-stomp",
         "/sub/**",
-        "/pub/**"
+        "/pub/**",
+        "/actuator/health",
+        "/actuator/prometheus"
     };
 
     private final JwtProvider jwtProvider;
     private final JwtExceptionFilter jwtExceptionFilter;
+    private final CustomLogoutHandler customLogoutHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -53,7 +61,8 @@ public class SecurityConfig {
                 sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .logout(logout -> logout
-                .logoutUrl("/logout")
+                .logoutUrl("/api/logout")
+                .addLogoutHandler(customLogoutHandler)
                 .logoutSuccessHandler((request, response, authentication) -> {
                     response.setStatus(HttpServletResponse.SC_NO_CONTENT);
                 })
@@ -71,7 +80,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173"));
+        configuration.setAllowedOrigins(List.of("https://localhost:3000", "http://localhost:5173", "https://damo.today"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Set-Cookie"));
