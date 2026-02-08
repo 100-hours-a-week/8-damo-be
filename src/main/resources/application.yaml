@@ -72,17 +72,17 @@ spring:
 
   data:
     redis:
-      host: 127.0.0.1
-      port: 6379
+      host: ${PROD_REDIS_HOST}
+      port: ${PROD_REDIS_PORT}
 
   mongodb:
-    uri: ${MONGODB_URI}
+    uri: ${PROD_MONGODB_URI}
     auto-index-creation: true
 
   datasource:
-    url: jdbc:mysql://localhost:3306/damo?serverTimezone=UTC
-    username: ${MYSQL_USERNAME}
-    password: ${MYSQL_PASSWORD}
+    url: ${PROD_MYSQL_URL}
+    username: ${PROD_MYSQL_USERNAME}
+    password: ${PROD_MYSQL_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -127,15 +127,15 @@ spring:
 
   data:
     redis:
-      host: 127.0.0.1
-      port: 6379
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
 
   mongodb:
     uri: ${MONGODB_URI}
     auto-index-creation: true
 
   datasource:
-    url: jdbc:mysql://localhost:3306/damo?serverTimezone=UTC
+    url: ${MYSQL_URL}
     username: ${MYSQL_USERNAME}
     password: ${MYSQL_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
