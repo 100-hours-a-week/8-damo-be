@@ -38,6 +38,16 @@ public class CookieUtil {
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
+    public static void deleteCookie(HttpServletResponse response, String cookieName) {
+        ResponseCookie cookie = ResponseCookie.from(cookieName, "")
+            .path("/")
+            .httpOnly(true)
+            .secure(true)
+            .maxAge(0)
+            .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
     public static String getRefreshToken(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies == null) {

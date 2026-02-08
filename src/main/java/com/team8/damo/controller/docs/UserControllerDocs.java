@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 
 import static com.team8.damo.exception.errorcode.ErrorCode.*;
 
@@ -123,5 +124,22 @@ public interface UserControllerDocs {
         @Parameter(hidden = true)
         JwtUserDetails user,
         UserCharacteristicsUpdateRequest request
+    );
+
+    @Operation(
+        summary = "회원 탈퇴",
+        description = """
+            ### 회원 탈퇴를 처리합니다.
+            - 카카오 연동 해제
+            - 사용자 소프트 삭제 (is_withdraw = true, withdraw_at 설정)
+            - Redis 리프레시 토큰 삭제
+            - access_token, refresh_token 쿠키 삭제
+            """
+    )
+    @ApiResponse(responseCode = "204", description = "성공")
+    @ApiErrorResponses({USER_NOT_FOUND, ALREADY_WITHDRAWN, KAKAO_UNLINK_FAILED})
+    BaseResponse<Void> withdraw(
+        @Parameter(hidden = true) JwtUserDetails user,
+        @Parameter(hidden = true) HttpServletResponse response
     );
 }

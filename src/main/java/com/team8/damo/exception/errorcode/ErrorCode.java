@@ -11,6 +11,8 @@ import static org.springframework.http.HttpStatus.*;
 public enum ErrorCode {
     USER_NOT_FOUND(NOT_FOUND, "사용자를 찾을 수 없습니다."),
     DUPLICATE_NICKNAME(CONFLICT, "이미 사용중인 닉네임입니다."),
+    ALREADY_WITHDRAWN(CONFLICT, "이미 탈퇴한 사용자입니다."),
+    KAKAO_UNLINK_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "카카오 연동 해제에 실패했습니다."),
     INVALID_CATEGORY(BAD_REQUEST, "잘못된 카테고리입니다."),
     DUPLICATE_ALLERGY_CATEGORY(CONFLICT, "알레르기 카테고리가 중복 선택 되었습니다."),
     DUPLICATE_LIKE_FOOD_CATEGORY(CONFLICT, "선호 음식 카테고리가 중복 선택 되었습니다."),

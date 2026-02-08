@@ -10,6 +10,8 @@ import com.team8.damo.service.response.UserBasicResponse;
 import com.team8.damo.service.response.UserProfileResponse;
 import com.team8.damo.security.jwt.JwtUserDetails;
 import com.team8.damo.service.UserService;
+import com.team8.damo.util.CookieUtil;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -71,6 +73,17 @@ public class UserController implements UserControllerDocs {
         @Valid @RequestBody UserCharacteristicsUpdateRequest request
     ) {
         userService.updateUserCharacteristics(user.getUserId(), request.toServiceRequest());
+        return BaseResponse.noContent();
+    }
+
+    @DeleteMapping("/me")
+    public BaseResponse<Void> withdraw(
+        @AuthenticationPrincipal JwtUserDetails user,
+        HttpServletResponse response
+    ) {
+        userService.withdraw(user.getUserId());
+        CookieUtil.deleteCookie(response, "access_token");
+        CookieUtil.deleteCookie(response, "refresh_token");
         return BaseResponse.noContent();
     }
 }

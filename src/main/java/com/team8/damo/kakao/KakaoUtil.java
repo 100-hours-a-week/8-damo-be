@@ -111,7 +111,7 @@ public class KakaoUtil {
             HttpMethod.POST,
             kakaoRequest,
             String.class);
-        System.out.println("response = " + response.getBody());
+        log.info("Kakao unlink response: {}", response.getBody());
 
         KakaoResponse.UnlinkInfo unlinkInfo = null;
         ObjectMapper objectMapper = new ObjectMapper();
@@ -124,7 +124,7 @@ public class KakaoUtil {
         }
 
         if(!unlinkInfo.getId().equals(targetId)) {
-            // throw new CustomException(KAKAO_UNLINK_ERROR);
+            throw new CustomException(KAKAO_UNLINK_FAILED);
         }
     }
 }
