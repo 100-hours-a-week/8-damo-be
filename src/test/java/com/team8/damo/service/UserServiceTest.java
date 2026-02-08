@@ -9,6 +9,7 @@ import com.team8.damo.event.payload.UserPersonaPayload;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.fixture.CategoryFixture;
 import com.team8.damo.fixture.UserFixture;
+import com.team8.damo.kakao.KakaoUtil;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.UserBasicUpdateServiceRequest;
 import com.team8.damo.service.request.UserCharacteristicsCreateServiceRequest;
@@ -73,6 +74,12 @@ class UserServiceTest {
 
     @Mock
     private CommonEventPublisher commonEventPublisher;
+
+    @Mock
+    private KakaoUtil kakaoUtil;
+
+    @Mock
+    private RefreshTokenRepository refreshTokenRepository;
 
     @InjectMocks
     private UserService userService;
@@ -952,5 +959,85 @@ class UserServiceTest {
         assertThatThrownBy(() -> userService.updateUserCharacteristics(userId, request))
             .isInstanceOf(CustomException.class)
             .hasFieldOrPropertyWithValue("errorCode", INVALID_CATEGORY);
+    }
+
+    // ===== Withdraw Tests =====
+
+    @Test
+    @DisplayName("회원 탈퇴를 성공적으로 처리한다.")
+    void withdraw_success() {
+        // given
+        Long userId = 1L;
+        User user = UserFixture.create(userId);
+        RefreshToken refreshToken = new RefreshToken(user.getEmail(), "some-token");
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        willDoNothing().given(kakaoUtil).kakaoUnlink(user.getProviderId());
+        given(refreshTokenRepository.findById(user.getEmail())).willReturn(Optional.of(refreshToken));
+
+        // when
+        userService.withdraw(userId);
+
+        // then
+        assertThat(user.isWithdraw()).isTrue();
+        assertThat(user.getWithdrawAt()).isNotNull();
+
+        then(kakaoUtil).should().kakaoUnlink(user.getProviderId());
+        then(refreshTokenRepository).should().findById(user.getEmail());
+        then(refreshTokenRepository).should().delete(refreshToken);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 사용자는 탈퇴할 수 없다.")
+    void withdraw_userNotFound() {
+        // given
+        Long userId = 999L;
+
+        given(userRepository.findById(userId)).willReturn(Optional.empty());
+
+        // when // then
+        assertThatThrownBy(() -> userService.withdraw(userId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", USER_NOT_FOUND);
+
+        then(kakaoUtil).should(never()).kakaoUnlink(any());
+    }
+
+    @Test
+    @DisplayName("이미 탈퇴한 사용자는 다시 탈퇴할 수 없다.")
+    void withdraw_alreadyWithdrawn() {
+        // given
+        Long userId = 1L;
+        User user = UserFixture.create(userId);
+        user.withdraw();
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+
+        // when // then
+        assertThatThrownBy(() -> userService.withdraw(userId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", ALREADY_WITHDRAWN);
+
+        then(kakaoUtil).should(never()).kakaoUnlink(any());
+    }
+
+    @Test
+    @DisplayName("카카오 연동 해제 실패 시 탈퇴가 롤백된다.")
+    void withdraw_kakaoUnlinkFailed() {
+        // given
+        Long userId = 1L;
+        User user = UserFixture.create(userId);
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        willThrow(new CustomException(KAKAO_UNLINK_FAILED)).given(kakaoUtil).kakaoUnlink(user.getProviderId());
+
+        // when // then
+        assertThatThrownBy(() -> userService.withdraw(userId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", KAKAO_UNLINK_FAILED);
+
+        assertThat(user.isWithdraw()).isFalse();
+
+        then(refreshTokenRepository).should(never()).findById(any());
     }
 }

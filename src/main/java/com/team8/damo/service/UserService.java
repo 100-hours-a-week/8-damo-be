@@ -11,6 +11,7 @@ import com.team8.damo.event.handler.CommonEventPublisher;
 import com.team8.damo.event.payload.UserPersonaPayload;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.exception.errorcode.ErrorCode;
+import com.team8.damo.kakao.KakaoUtil;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.UserBasicUpdateServiceRequest;
 import com.team8.damo.service.request.UserCharacteristicsCreateServiceRequest;
@@ -47,6 +48,8 @@ public class UserService {
     private final AiService aiService;
     private final ApplicationEventPublisher eventPublisher;
     private final CommonEventPublisher commonEventPublisher;
+    private final KakaoUtil kakaoUtil;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Transactional
     public void updateUserBasic(Long userId, UserBasicUpdateServiceRequest request) {
@@ -162,6 +165,21 @@ public class UserService {
             .toList();
 
         return UserProfileResponse.of(user, allergies, likeFoods, likeIngredients);
+    }
+
+    @Transactional
+    public void withdraw(Long userId) {
+        User user = findUserBy(userId);
+
+        if (user.isWithdraw()) {
+            throw new CustomException(ALREADY_WITHDRAWN);
+        }
+
+        kakaoUtil.kakaoUnlink(user.getProviderId());
+        user.withdraw();
+
+        refreshTokenRepository.findById(user.getEmail())
+            .ifPresent(refreshTokenRepository::delete);
     }
 
     private User findUserBy(Long userId) {
