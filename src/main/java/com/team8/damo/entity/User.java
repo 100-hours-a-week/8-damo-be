@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-import static jakarta.persistence.EnumType.*;
+import static jakarta.persistence.EnumType.STRING;
 
 @Entity
 @Table(
@@ -73,7 +73,7 @@ public class User extends BaseTimeEntity {
 
     @Enumerated(STRING)
     @Column(name = "role_type", length = 20)
-    private RoleType roleType =  RoleType.ROLE_USER;
+    private RoleType roleType = RoleType.ROLE_USER;
 
     public User(Long id, String email, Long providerId) {
         this.id = id;
@@ -116,6 +116,8 @@ public class User extends BaseTimeEntity {
         this.nickname = nickname;
         this.gender = gender;
         this.ageGroup = ageGroup;
-        this.onboardingStep = OnboardingStep.CHARACTERISTIC;
+        if (this.onboardingStep != OnboardingStep.DONE) {
+            this.onboardingStep = OnboardingStep.CHARACTERISTIC;
+        }
     }
 }
