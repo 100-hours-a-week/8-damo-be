@@ -5,6 +5,7 @@ import com.team8.damo.controller.request.UserCharacteristicsCreateRequest;
 import com.team8.damo.controller.request.ImagePathUpdateRequest;
 import com.team8.damo.controller.request.UserCharacteristicsUpdateRequest;
 import com.team8.damo.controller.response.BaseResponse;
+import com.team8.damo.service.response.LightningResponse;
 import com.team8.damo.service.response.UserBasicResponse;
 import com.team8.damo.service.response.UserProfileResponse;
 import com.team8.damo.security.jwt.JwtUserDetails;
@@ -14,6 +15,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
+
+import java.util.List;
 
 import static com.team8.damo.exception.errorcode.ErrorCode.*;
 
@@ -124,6 +127,27 @@ public interface UserControllerDocs {
         @Parameter(hidden = true)
         JwtUserDetails user,
         UserCharacteristicsUpdateRequest request
+    );
+
+    @Operation(
+        summary = "참가중인 번개 모임 목록 조회",
+        description = """
+            ### 사용자가 참가중인 번개 모임 목록을 조회합니다.
+            - lightningDate 기준 최근 3일 이내의 번개 모임만 반환
+            - lightningId: 번개 모임 ID
+            - restaurantName: 식당 이름
+            - description: 설명
+            - maxParticipants: 최대 참여 인원
+            - participantsCount: 현재 참여 인원
+            - lightningStatus: 상태 (OPEN, CLOSED)
+            - myRole: 나의 역할 (LEADER, PARTICIPANT)
+            """
+    )
+    @ApiResponse(responseCode = "200", description = "성공")
+    @ApiErrorResponses({USER_NOT_FOUND})
+    BaseResponse<List<LightningResponse>> getParticipantLightningList(
+        @Parameter(hidden = true)
+        JwtUserDetails user
     );
 
     @Operation(

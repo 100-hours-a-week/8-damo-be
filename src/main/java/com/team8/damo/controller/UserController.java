@@ -9,13 +9,18 @@ import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.service.response.UserBasicResponse;
 import com.team8.damo.service.response.UserProfileResponse;
 import com.team8.damo.security.jwt.JwtUserDetails;
+import com.team8.damo.service.LightningService;
 import com.team8.damo.service.UserService;
+import com.team8.damo.service.response.LightningResponse;
 import com.team8.damo.util.CookieUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 
 
@@ -25,6 +30,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController implements UserControllerDocs {
 
     private final UserService userService;
+    private final LightningService lightningService;
 
     @GetMapping("/me/basic")
     public BaseResponse<UserBasicResponse> getBasic(
@@ -74,6 +80,13 @@ public class UserController implements UserControllerDocs {
     ) {
         userService.updateUserCharacteristics(user.getUserId(), request.toServiceRequest());
         return BaseResponse.noContent();
+    }
+
+    @GetMapping("/me/lightning")
+    public BaseResponse<List<LightningResponse>> getParticipantLightningList(
+        @AuthenticationPrincipal JwtUserDetails user
+    ) {
+        return BaseResponse.ok(lightningService.getParticipantLightningList(user.getUserId(), LocalDateTime.now(), 3));
     }
 
     @DeleteMapping("/me")
