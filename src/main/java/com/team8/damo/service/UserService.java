@@ -1,6 +1,5 @@
 package com.team8.damo.service;
 
-import com.team8.damo.client.AiService;
 import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.AllergyType;
 import com.team8.damo.entity.enumeration.FoodType;
@@ -20,7 +19,6 @@ import com.team8.damo.service.response.UserBasicResponse;
 import com.team8.damo.service.response.UserProfileResponse;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,8 +43,6 @@ public class UserService {
     private final UserLikeFoodRepository userLikeFoodRepository;
     private final UserLikeIngredientRepository userLikeIngredientRepository;
     private final Snowflake snowflake;
-    private final AiService aiService;
-    private final ApplicationEventPublisher eventPublisher;
     private final CommonEventPublisher commonEventPublisher;
     private final KakaoUtil kakaoUtil;
     private final RefreshTokenRepository refreshTokenRepository;
