@@ -1,9 +1,11 @@
 package com.team8.damo.service;
 
+import com.team8.damo.aop.CustomLock;
 import com.team8.damo.entity.Lightning;
 import com.team8.damo.entity.LightningParticipant;
 import com.team8.damo.entity.Restaurant;
 import com.team8.damo.entity.User;
+import com.team8.damo.entity.enumeration.LightningStatus;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.repository.LightningParticipantRepository;
 import com.team8.damo.repository.LightningRepository;
@@ -21,8 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.team8.damo.exception.errorcode.ErrorCode.LIGHTNING_DATE_MUST_BE_AFTER_NOW;
-import static com.team8.damo.exception.errorcode.ErrorCode.USER_NOT_FOUND;
+import static com.team8.damo.exception.errorcode.ErrorCode.*;
 
 @Service
 @RequiredArgsConstructor
@@ -36,32 +37,55 @@ public class LightningService {
     private final RestaurantRepository restaurantRepository;
 
     @Transactional
+    @CustomLock(key = "#lightningId")
+    public Long joinLightning(Long userId, Long lightningId) {
+        Lightning lightning = findLightningBy(lightningId);
+
+        if (lightning.getLightningStatus() != LightningStatus.OPEN) {
+            throw new CustomException(LIGHTNING_CLOSED);
+        }
+
+        if (lightningParticipantRepository.existsByLightningIdAndUserId(lightningId, userId)) {
+            throw new CustomException(DUPLICATE_LIGHTNING_PARTICIPANT);
+        }
+
+        if (lightningParticipantRepository.countByLightningId(lightningId) >= lightning.getMaxParticipants()) {
+            throw new CustomException(LIGHTNING_CAPACITY_EXCEEDED);
+        }
+
+        User user = findUserBy(userId);
+
+        LightningParticipant participant = LightningParticipant.createParticipant(snowflake.nextId(), lightning, user);
+        lightningParticipantRepository.save(participant);
+
+        return lightningId;
+    }
+
+    @Transactional
     public Long createLightning(Long userId, LightningCreateServiceRequest request, LocalDateTime currentTime) {
         if (request.lightningDate().isBefore(currentTime)) {
             throw new CustomException(LIGHTNING_DATE_MUST_BE_AFTER_NOW);
         }
 
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+        User user = findUserBy(userId);
 
-        Lightning gathering = Lightning.builder()
+        Lightning lightning = Lightning.builder()
             .id(snowflake.nextId())
             .restaurantId(request.restaurantId())
             .maxParticipants(request.maxParticipants())
             .description(request.description())
             .lightningDate(request.lightningDate())
             .build();
-        lightningRepository.save(gathering);
+        lightningRepository.save(lightning);
 
-        LightningParticipant leader = LightningParticipant.createLeader(snowflake.nextId(), gathering, user);
+        LightningParticipant leader = LightningParticipant.createLeader(snowflake.nextId(), lightning, user);
         lightningParticipantRepository.save(leader);
 
-        return gathering.getId();
+        return lightning.getId();
     }
 
     public List<LightningResponse> getParticipantLightningList(Long userId, LocalDateTime currentTime, int cutoff) {
-        userRepository.findById(userId)
-            .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+        findUserBy(userId);
 
         LocalDateTime cutoffDate = currentTime.minusDays(cutoff);
 
@@ -106,5 +130,15 @@ public class LightningService {
                 );
             })
             .toList();
+    }
+
+    private User findUserBy(Long userId) {
+        return userRepository.findById(userId)
+            .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+    }
+
+    private Lightning findLightningBy(Long lightningId) {
+        return lightningRepository.findById(lightningId)
+            .orElseThrow(() -> new CustomException(LIGHTNING_NOT_FOUND));
     }
 }
