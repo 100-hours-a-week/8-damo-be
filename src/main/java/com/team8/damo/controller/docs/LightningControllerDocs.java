@@ -28,6 +28,19 @@ public interface LightningControllerDocs {
     );
 
     @Operation(
+        summary = "번개 모임 모집 마감",
+        description = "번개 모임의 모집을 마감합니다. 모임장(LEADER)만 가능합니다."
+    )
+    @ApiResponse(responseCode = "204", description = "성공")
+    @ApiErrorResponses({LIGHTNING_PARTICIPANT_NOT_FOUND, LIGHTNING_CLOSE_ONLY_LEADER, LIGHTNING_ALREADY_CLOSED})
+    BaseResponse<Void> closeLightning(
+        @Parameter(hidden = true)
+        JwtUserDetails user,
+        @Parameter(description = "번개 모임 ID", required = true)
+        Long lightningId
+    );
+
+    @Operation(
         summary = "번개 모임 생성",
         description = """
             ### 새로운 번개 모임을 생성합니다.

@@ -531,6 +531,102 @@ class LightningServiceTest {
         then(participantRepository).should().save(any(LightningParticipant.class));
     }
 
+    @Test
+    @DisplayName("모임장이 OPEN 상태의 번개 모임을 성공적으로 마감한다.")
+    void closeLightning_success() {
+        // given
+        Long userId = 1L;
+        Long lightningId = 100L;
+
+        Lightning lightning = LightningFixture.create(lightningId, "restaurant-1");
+        User user = UserFixture.create(userId);
+        LightningParticipant leader = LightningParticipant.createLeader(1L, lightning, user);
+
+        given(participantRepository.findByLightningIdAndUserId(lightningId, userId))
+            .willReturn(Optional.of(leader));
+
+        // when
+        lightningService.closeLightning(userId, lightningId);
+
+        // then
+        assertThat(lightning.getLightningStatus()).isEqualTo(LightningStatus.CLOSED);
+        then(participantRepository).should().findByLightningIdAndUserId(lightningId, userId);
+        then(userRepository).should(never()).findById(any());
+        then(lightningRepository).should(never()).findById(any());
+        then(snowflake).should(never()).nextId();
+    }
+
+    @Test
+    @DisplayName("번개 모임 참여자가 아닌 경우 마감할 수 없다.")
+    void closeLightning_participantNotFound() {
+        // given
+        Long userId = 999L;
+        Long lightningId = 100L;
+
+        given(participantRepository.findByLightningIdAndUserId(lightningId, userId))
+            .willReturn(Optional.empty());
+
+        // when // then
+        assertThatThrownBy(() -> lightningService.closeLightning(userId, lightningId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", LIGHTNING_PARTICIPANT_NOT_FOUND);
+
+        then(userRepository).should(never()).findById(any());
+        then(lightningRepository).should(never()).findById(any());
+        then(snowflake).should(never()).nextId();
+    }
+
+    @Test
+    @DisplayName("PARTICIPANT 역할인 경우 마감할 수 없다.")
+    void closeLightning_notLeader() {
+        // given
+        Long userId = 1L;
+        Long lightningId = 100L;
+
+        Lightning lightning = LightningFixture.create(lightningId, "restaurant-1");
+        User user = UserFixture.create(userId);
+        LightningParticipant participant = LightningParticipant.createParticipant(1L, lightning, user);
+
+        given(participantRepository.findByLightningIdAndUserId(lightningId, userId))
+            .willReturn(Optional.of(participant));
+
+        // when // then
+        assertThatThrownBy(() -> lightningService.closeLightning(userId, lightningId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", LIGHTNING_CLOSE_ONLY_LEADER);
+
+        assertThat(lightning.getLightningStatus()).isEqualTo(LightningStatus.OPEN);
+        then(userRepository).should(never()).findById(any());
+        then(lightningRepository).should(never()).findById(any());
+        then(snowflake).should(never()).nextId();
+    }
+
+    @Test
+    @DisplayName("이미 마감된 번개 모임은 다시 마감할 수 없다.")
+    void closeLightning_alreadyClosed() {
+        // given
+        Long userId = 1L;
+        Long lightningId = 100L;
+
+        Lightning lightning = LightningFixture.create(lightningId, "restaurant-1");
+        ReflectionTestUtils.setField(lightning, "lightningStatus", LightningStatus.CLOSED);
+        User user = UserFixture.create(userId);
+        LightningParticipant leader = LightningParticipant.createLeader(1L, lightning, user);
+
+        given(participantRepository.findByLightningIdAndUserId(lightningId, userId))
+            .willReturn(Optional.of(leader));
+
+        // when // then
+        assertThatThrownBy(() -> lightningService.closeLightning(userId, lightningId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", LIGHTNING_ALREADY_CLOSED);
+
+        assertThat(lightning.getLightningStatus()).isEqualTo(LightningStatus.CLOSED);
+        then(userRepository).should(never()).findById(any());
+        then(lightningRepository).should(never()).findById(any());
+        then(snowflake).should(never()).nextId();
+    }
+
     @Nested
     @DisplayName("cutoffDate 경계값 테스트")
     class CutoffDateBoundaryTest {

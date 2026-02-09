@@ -21,7 +21,7 @@ public class ChatMessage extends BaseTimeEntity {
     private Long id;
 
     @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "lightning_gathering_id", nullable = false)
+    @JoinColumn(name = "lightning_id", nullable = false)
     private Lightning lightning;
 
     @ManyToOne(fetch = LAZY)

@@ -31,6 +31,16 @@ public class LightningController implements LightningControllerDocs {
     }
 
     @Override
+    @PatchMapping("/lightning/{lightningId}/close")
+    public BaseResponse<Void> closeLightning(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @PathVariable Long lightningId
+    ) {
+        lightningService.closeLightning(user.getUserId(), lightningId);
+        return BaseResponse.noContent();
+    }
+
+    @Override
     @PostMapping("/lightning")
     public BaseResponse<Long> createLightning(
         @AuthenticationPrincipal JwtUserDetails user,

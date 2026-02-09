@@ -132,6 +132,24 @@ public class LightningService {
             .toList();
     }
 
+    @Transactional
+    public void closeLightning(Long userId, Long lightningId) {
+        LightningParticipant participant = lightningParticipantRepository.findByLightningIdAndUserId(lightningId, userId)
+            .orElseThrow(() -> new CustomException(LIGHTNING_PARTICIPANT_NOT_FOUND));
+
+        if (participant.isNotLeader()) {
+            throw new CustomException(LIGHTNING_CLOSE_ONLY_LEADER);
+        }
+
+        Lightning lightning = participant.getLightning();
+
+        if (lightning.isClosed()) {
+            throw new CustomException(LIGHTNING_ALREADY_CLOSED);
+        }
+
+        lightning.close();
+    }
+
     private User findUserBy(Long userId) {
         return userRepository.findById(userId)
             .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
