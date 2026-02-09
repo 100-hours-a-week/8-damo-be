@@ -23,22 +23,25 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static com.team8.damo.exception.errorcode.ErrorCode.LIGHTNING_DATE_MUST_BE_AFTER_NOW;
-import static com.team8.damo.exception.errorcode.ErrorCode.USER_NOT_FOUND;
+import static com.team8.damo.exception.errorcode.ErrorCode.*;
+import static com.team8.damo.entity.enumeration.GatheringRole.PARTICIPANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 
 @ActiveProfiles("test")
@@ -347,6 +350,185 @@ class LightningServiceTest {
         assertThat(result.get(0))
             .extracting("lightningId", "participantsCount", "myRole")
             .contains(100L, 3, GatheringRole.LEADER);
+    }
+
+    @Test
+    @DisplayName("번개 모임에 성공적으로 참가한다.")
+    void joinLightning_success() {
+        // given
+        Long userId = 1L;
+        Long lightningId = 100L;
+        Long participantId = 200L;
+
+        Lightning lightning = LightningFixture.create(lightningId, "restaurant-1");
+        User user = UserFixture.create(userId);
+
+        given(lightningRepository.findById(lightningId)).willReturn(Optional.of(lightning));
+        given(participantRepository.existsByLightningIdAndUserId(lightningId, userId)).willReturn(false);
+        given(participantRepository.countByLightningId(lightningId)).willReturn(1L);
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(snowflake.nextId()).willReturn(participantId);
+
+        // when
+        Long result = lightningService.joinLightning(userId, lightningId);
+
+        // then
+        assertThat(result).isEqualTo(lightningId);
+
+        ArgumentCaptor<LightningParticipant> captor = ArgumentCaptor.forClass(LightningParticipant.class);
+        then(participantRepository).should().save(captor.capture());
+
+        LightningParticipant savedParticipant = captor.getValue();
+        assertThat(savedParticipant)
+            .extracting("id", "lightning", "user", "role")
+            .contains(participantId, lightning, user, PARTICIPANT);
+
+        InOrder inOrder = inOrder(lightningRepository, participantRepository, userRepository, snowflake);
+        inOrder.verify(lightningRepository).findById(lightningId);
+        inOrder.verify(participantRepository).existsByLightningIdAndUserId(lightningId, userId);
+        inOrder.verify(participantRepository).countByLightningId(lightningId);
+        inOrder.verify(userRepository).findById(userId);
+        inOrder.verify(snowflake).nextId();
+        inOrder.verify(participantRepository).save(any(LightningParticipant.class));
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 번개 모임에 참가할 수 없다.")
+    void joinLightning_lightningNotFound() {
+        // given
+        Long userId = 1L;
+        Long lightningId = 999L;
+
+        given(lightningRepository.findById(lightningId)).willReturn(Optional.empty());
+
+        // when // then
+        assertThatThrownBy(() -> lightningService.joinLightning(userId, lightningId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", LIGHTNING_NOT_FOUND);
+
+        then(participantRepository).should(never()).existsByLightningIdAndUserId(any(), any());
+        then(participantRepository).should(never()).countByLightningId(any());
+        then(userRepository).should(never()).findById(any());
+        then(snowflake).should(never()).nextId();
+        then(participantRepository).should(never()).save(any());
+    }
+
+    @Test
+    @DisplayName("모집이 마감된 번개 모임에 참가할 수 없다.")
+    void joinLightning_closed() {
+        // given
+        Long userId = 1L;
+        Long lightningId = 100L;
+
+        Lightning lightning = LightningFixture.create(lightningId, "restaurant-1");
+        ReflectionTestUtils.setField(lightning, "lightningStatus", LightningStatus.CLOSED);
+
+        given(lightningRepository.findById(lightningId)).willReturn(Optional.of(lightning));
+
+        // when // then
+        assertThatThrownBy(() -> lightningService.joinLightning(userId, lightningId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", LIGHTNING_CLOSED);
+
+        then(participantRepository).should(never()).existsByLightningIdAndUserId(any(), any());
+        then(participantRepository).should(never()).countByLightningId(any());
+        then(userRepository).should(never()).findById(any());
+        then(snowflake).should(never()).nextId();
+        then(participantRepository).should(never()).save(any());
+    }
+
+    @Test
+    @DisplayName("이미 참가중인 번개 모임에 중복 참가할 수 없다.")
+    void joinLightning_duplicateParticipant() {
+        // given
+        Long userId = 1L;
+        Long lightningId = 100L;
+
+        Lightning lightning = LightningFixture.create(lightningId, "restaurant-1");
+
+        given(lightningRepository.findById(lightningId)).willReturn(Optional.of(lightning));
+        given(participantRepository.existsByLightningIdAndUserId(lightningId, userId)).willReturn(true);
+
+        // when // then
+        assertThatThrownBy(() -> lightningService.joinLightning(userId, lightningId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", DUPLICATE_LIGHTNING_PARTICIPANT);
+
+        then(participantRepository).should(never()).countByLightningId(any());
+        then(userRepository).should(never()).findById(any());
+        then(snowflake).should(never()).nextId();
+        then(participantRepository).should(never()).save(any());
+    }
+
+    @Test
+    @DisplayName("정원이 가득 찬 번개 모임에 참가할 수 없다.")
+    void joinLightning_capacityExceeded() {
+        // given
+        Long userId = 1L;
+        Long lightningId = 100L;
+
+        Lightning lightning = LightningFixture.create(lightningId, "restaurant-1", 2);
+
+        given(lightningRepository.findById(lightningId)).willReturn(Optional.of(lightning));
+        given(participantRepository.existsByLightningIdAndUserId(lightningId, userId)).willReturn(false);
+        given(participantRepository.countByLightningId(lightningId)).willReturn(2L);
+
+        // when // then
+        assertThatThrownBy(() -> lightningService.joinLightning(userId, lightningId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", LIGHTNING_CAPACITY_EXCEEDED);
+
+        then(userRepository).should(never()).findById(any());
+        then(snowflake).should(never()).nextId();
+        then(participantRepository).should(never()).save(any());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 사용자는 번개 모임에 참가할 수 없다.")
+    void joinLightning_userNotFound() {
+        // given
+        Long userId = 999L;
+        Long lightningId = 100L;
+
+        Lightning lightning = LightningFixture.create(lightningId, "restaurant-1");
+
+        given(lightningRepository.findById(lightningId)).willReturn(Optional.of(lightning));
+        given(participantRepository.existsByLightningIdAndUserId(lightningId, userId)).willReturn(false);
+        given(participantRepository.countByLightningId(lightningId)).willReturn(1L);
+        given(userRepository.findById(userId)).willReturn(Optional.empty());
+
+        // when // then
+        assertThatThrownBy(() -> lightningService.joinLightning(userId, lightningId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", USER_NOT_FOUND);
+
+        then(snowflake).should(never()).nextId();
+        then(participantRepository).should(never()).save(any());
+    }
+
+    @Test
+    @DisplayName("정원이 정확히 한 자리 남았을 때 참가할 수 있다.")
+    void joinLightning_exactlyOneSpotLeft() {
+        // given
+        Long userId = 1L;
+        Long lightningId = 100L;
+        Long participantId = 200L;
+
+        Lightning lightning = LightningFixture.create(lightningId, "restaurant-1", 3);
+        User user = UserFixture.create(userId);
+
+        given(lightningRepository.findById(lightningId)).willReturn(Optional.of(lightning));
+        given(participantRepository.existsByLightningIdAndUserId(lightningId, userId)).willReturn(false);
+        given(participantRepository.countByLightningId(lightningId)).willReturn(2L);
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(snowflake.nextId()).willReturn(participantId);
+
+        // when
+        Long result = lightningService.joinLightning(userId, lightningId);
+
+        // then
+        assertThat(result).isEqualTo(lightningId);
+        then(participantRepository).should().save(any(LightningParticipant.class));
     }
 
     @Nested

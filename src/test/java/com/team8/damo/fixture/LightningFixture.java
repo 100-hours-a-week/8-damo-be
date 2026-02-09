@@ -25,4 +25,14 @@ public class LightningFixture {
             .lightningDate(lightningDate)
             .build();
     }
+
+    public static Lightning create(Long id, String restaurantId, int maxParticipants) {
+        return Lightning.builder()
+            .id(id)
+            .restaurantId(restaurantId)
+            .maxParticipants(maxParticipants)
+            .description("같이 밥 먹어요")
+            .lightningDate(LocalDateTime.of(2025, 1, 2, 18, 0))
+            .build();
+    }
 }

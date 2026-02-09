@@ -16,6 +16,10 @@ public interface LightningParticipantRepository extends JpaRepository<LightningP
 
     Optional<LightningParticipant> findByLightningIdAndUserId(Long lightningGatheringId, Long userId);
 
+    boolean existsByLightningIdAndUserId(Long lightningId, Long userId);
+
+    long countByLightningId(Long lightningId);
+
     @Query(
         "select lp from LightningParticipant lp " +
         "join fetch lp.lightning " +
