@@ -22,7 +22,7 @@ public class ChatMessage extends BaseTimeEntity {
 
     @ManyToOne(fetch = LAZY)
     @JoinColumn(name = "lightning_gathering_id", nullable = false)
-    private LightningGathering lightningGathering;
+    private Lightning lightning;
 
     @ManyToOne(fetch = LAZY)
     @JoinColumn(name = "users_id", nullable = false)
@@ -32,9 +32,9 @@ public class ChatMessage extends BaseTimeEntity {
     private String content;
 
     @Builder
-    public ChatMessage(Long id, LightningGathering lightningGathering, User user, String content) {
+    public ChatMessage(Long id, Lightning lightning, User user, String content) {
         this.id = id;
-        this.lightningGathering = lightningGathering;
+        this.lightning = lightning;
         this.user = user;
         this.content = content;
     }
