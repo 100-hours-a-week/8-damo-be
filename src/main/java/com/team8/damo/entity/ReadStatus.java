@@ -27,7 +27,7 @@ public class ReadStatus {
 
     @ManyToOne(fetch = LAZY)
     @JoinColumn(name = "lightning_gathering", nullable = false)
-    private LightningGathering lightningGathering;
+    private Lightning lightning;
 
     @Builder.Default
     @Column(name = "is_read")

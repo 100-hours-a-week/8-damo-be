@@ -1,19 +1,20 @@
 package com.team8.damo.entity;
 
-import com.team8.damo.entity.enumeration.GatheringStatus;
+import com.team8.damo.entity.enumeration.LightningStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
 @Table(name = "lightning_gathering")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class LightningGathering extends BaseTimeEntity {
+public class Lightning extends BaseTimeEntity {
 
     @Id
     @Column(name = "id", nullable = false)
@@ -30,22 +31,26 @@ public class LightningGathering extends BaseTimeEntity {
 
     @Column(name = "gathering_status")
     @Enumerated(EnumType.STRING)
-    private GatheringStatus gatheringStatus;
+    private LightningStatus lightningStatus;
+
+    @Column(name = "lightning_date", nullable = false)
+    private LocalDateTime lightningDate;
 
     @Builder
-    public LightningGathering(Long id, String restaurantId, int maxParticipants, String description) {
+    public Lightning(Long id, String restaurantId, int maxParticipants, String description, LocalDateTime lightningDate) {
         this.id = id;
         this.restaurantId = restaurantId;
         this.maxParticipants = maxParticipants;
         this.description = description;
-        this.gatheringStatus = GatheringStatus.OPEN;
+        this.lightningDate = lightningDate;
+        this.lightningStatus = LightningStatus.OPEN;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        LightningGathering that = (LightningGathering) o;
+        Lightning that = (Lightning) o;
         return Objects.equals(id, that.id);
     }
 

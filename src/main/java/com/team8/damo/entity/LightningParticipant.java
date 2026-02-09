@@ -14,18 +14,18 @@ import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.FetchType.LAZY;
 
 @Entity
-@Table(name = "lightning_gathering_participants")
+@Table(name = "lightning_participants")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class LightningGatheringParticipant extends BaseTimeEntity {
+public class LightningParticipant extends BaseTimeEntity {
 
     @Id
     @Column(name = "id", nullable = false)
     private Long id;
 
     @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "lightning_gathering_id", nullable = false)
-    private LightningGathering lightningGathering;
+    @JoinColumn(name = "lightning_id", nullable = false)
+    private Lightning lightning;
 
     @ManyToOne(fetch = LAZY)
     @JoinColumn(name = "users_id", nullable = false)
@@ -39,26 +39,26 @@ public class LightningGatheringParticipant extends BaseTimeEntity {
     private Long lastReadChatMessageId;
 
     @Builder
-    public LightningGatheringParticipant(Long id, LightningGathering lightningGathering, User user, GatheringRole role) {
+    public LightningParticipant(Long id, Lightning lightning, User user, GatheringRole role) {
         this.id = id;
-        this.lightningGathering = lightningGathering;
+        this.lightning = lightning;
         this.user = user;
         this.role = role;
     }
 
-    public static LightningGatheringParticipant createLeader(Long id, LightningGathering lightningGathering, User user) {
-        return LightningGatheringParticipant.builder()
+    public static LightningParticipant createLeader(Long id, Lightning lightning, User user) {
+        return LightningParticipant.builder()
             .id(id)
-            .lightningGathering(lightningGathering)
+            .lightning(lightning)
             .user(user)
             .role(LEADER)
             .build();
     }
 
-    public static LightningGatheringParticipant createParticipant(Long id, LightningGathering lightningGathering, User user) {
-        return LightningGatheringParticipant.builder()
+    public static LightningParticipant createParticipant(Long id, Lightning lightning, User user) {
+        return LightningParticipant.builder()
             .id(id)
-            .lightningGathering(lightningGathering)
+            .lightning(lightning)
             .user(user)
             .role(PARTICIPANT)
             .build();
@@ -72,7 +72,7 @@ public class LightningGatheringParticipant extends BaseTimeEntity {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        LightningGatheringParticipant that = (LightningGatheringParticipant) o;
+        LightningParticipant that = (LightningParticipant) o;
         return Objects.equals(id, that.id);
     }
 

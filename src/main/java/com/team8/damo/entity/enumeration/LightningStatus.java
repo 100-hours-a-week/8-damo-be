@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum GatheringStatus {
+public enum LightningStatus {
 
     OPEN("모집 중"),
     CLOSED("마감");
