@@ -68,6 +68,10 @@ public class LightningParticipant extends BaseTimeEntity {
         this.lastReadChatMessageId = messageId;
     }
 
+    public boolean isNotLeader() {
+        return this.role != LEADER;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

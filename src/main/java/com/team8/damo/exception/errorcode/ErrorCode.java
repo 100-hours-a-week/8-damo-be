@@ -52,7 +52,9 @@ public enum ErrorCode {
     LIGHTNING_CAPACITY_EXCEEDED(BAD_REQUEST, "번개 모임 정원이 가득 찼습니다."),
     DUPLICATE_LIGHTNING_PARTICIPANT(CONFLICT, "이미 참가중인 번개 모임입니다."),
     LIGHTNING_DATE_MUST_BE_AFTER_NOW(BAD_REQUEST, "번개 모임 날짜는 현재 시간 이후여야 합니다."),
-    GATHERING_PARTICIPANT_NOT_FOUND(NOT_FOUND, "번개 모임 참여자를 찾을 수 없습니다."),
+    LIGHTNING_PARTICIPANT_NOT_FOUND(NOT_FOUND, "번개 모임 참여자를 찾을 수 없습니다."),
+    LIGHTNING_CLOSE_ONLY_LEADER(FORBIDDEN, "번개 모임 마감은 모임장만 가능합니다."),
+    LIGHTNING_ALREADY_CLOSED(CONFLICT, "이미 마감된 번개 모임입니다."),
 
     // S3
     INVALID_FILE_TYPE(BAD_REQUEST, "허용되지 않은 파일 형식입니다. (허용: PNG, JPEG, JPG, WEBP)"),

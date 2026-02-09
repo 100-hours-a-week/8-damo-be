@@ -46,6 +46,14 @@ public class Lightning extends BaseTimeEntity {
         this.lightningStatus = LightningStatus.OPEN;
     }
 
+    public void close() {
+        this.lightningStatus = LightningStatus.CLOSED;
+    }
+
+    public boolean isClosed() {
+        return this.lightningStatus == LightningStatus.CLOSED;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

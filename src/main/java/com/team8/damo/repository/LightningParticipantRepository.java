@@ -14,7 +14,8 @@ public interface LightningParticipantRepository extends JpaRepository<LightningP
 
     List<LightningParticipant> findAllByLightningId(Long lightningGatheringId);
 
-    Optional<LightningParticipant> findByLightningIdAndUserId(Long lightningGatheringId, Long userId);
+    @EntityGraph(attributePaths = {"lightning"})
+    Optional<LightningParticipant> findByLightningIdAndUserId(Long lightningId, Long userId);
 
     boolean existsByLightningIdAndUserId(Long lightningId, Long userId);
 
