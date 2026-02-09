@@ -26,7 +26,7 @@ public class ReadStatus {
     private ChatMessage chatMessage;
 
     @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "lightning_gathering", nullable = false)
+    @JoinColumn(name = "lightning_id", nullable = false)
     private Lightning lightning;
 
     @Builder.Default

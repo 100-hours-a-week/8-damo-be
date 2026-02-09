@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
-@Table(name = "lightning_gathering")
+@Table(name = "lightning")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Lightning extends BaseTimeEntity {
@@ -29,7 +29,7 @@ public class Lightning extends BaseTimeEntity {
     @Column(name = "description", length = 30)
     private String description;
 
-    @Column(name = "gathering_status")
+    @Column(name = "lightning_status")
     @Enumerated(EnumType.STRING)
     private LightningStatus lightningStatus;
 
