@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jdk-alpine AS builder
+FROM eclipse-temurin:21-jdk AS builder
 WORKDIR /app
 
 COPY gradlew .
@@ -10,7 +10,7 @@ RUN ./gradlew --no-daemon dependencies
 COPY src/ src/
 RUN ./gradlew --no-daemon bootJar -x test
 
-FROM eclipse-temurin:21-jre-alpine AS runner
+FROM eclipse-temurin:21-jre AS runner
 WORKDIR /app
 ENV JAVA_OPTS=""
 
