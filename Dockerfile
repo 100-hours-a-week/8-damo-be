@@ -10,7 +10,7 @@ RUN ./gradlew --no-daemon dependencies
 COPY src/ src/
 RUN ./gradlew --no-daemon bootJar -x test
 
-FROM eclipse-temurin:21-jre AS runner
+FROM eclipse-temurin:21-jdk AS runner
 WORKDIR /app
 ENV JAVA_OPTS=""
 
