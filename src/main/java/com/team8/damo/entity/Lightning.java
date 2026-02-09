@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
@@ -32,12 +33,16 @@ public class Lightning extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private LightningStatus lightningStatus;
 
+    @Column(name = "lightning_date", nullable = false)
+    private LocalDateTime lightningDate;
+
     @Builder
-    public Lightning(Long id, String restaurantId, int maxParticipants, String description) {
+    public Lightning(Long id, String restaurantId, int maxParticipants, String description, LocalDateTime lightningDate) {
         this.id = id;
         this.restaurantId = restaurantId;
         this.maxParticipants = maxParticipants;
         this.description = description;
+        this.lightningDate = lightningDate;
         this.lightningStatus = LightningStatus.OPEN;
     }
 

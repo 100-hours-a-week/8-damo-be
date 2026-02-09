@@ -46,6 +46,10 @@ public enum ErrorCode {
     ANOTHER_RESTAURANT_ALREADY_CONFIRMED(CONFLICT, "이미 다른 추천 식당이 확정 완료되었습니다."),
     RECOMMEND_REFRESH_ONLY_IN_RESTAURANT_VOTING(BAD_REQUEST, "장소 재추천은 장소 투표 상태에서만 가능합니다."),
 
+    // Lightning Gathering
+    LIGHTNING_DATE_MUST_BE_AFTER_NOW(BAD_REQUEST, "번개 모임 날짜는 현재 시간 이후여야 합니다."),
+    GATHERING_PARTICIPANT_NOT_FOUND(NOT_FOUND, "번개 모임 참여자를 찾을 수 없습니다."),
+
     // S3
     INVALID_FILE_TYPE(BAD_REQUEST, "허용되지 않은 파일 형식입니다. (허용: PNG, JPEG, JPG, WEBP)"),
 
