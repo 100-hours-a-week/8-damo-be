@@ -11,6 +11,7 @@ import com.team8.damo.service.response.UserProfileResponse;
 import com.team8.damo.security.jwt.JwtUserDetails;
 import com.team8.damo.service.LightningService;
 import com.team8.damo.service.UserService;
+import com.team8.damo.service.response.AvailableLightningResponse;
 import com.team8.damo.service.response.LightningResponse;
 import com.team8.damo.util.CookieUtil;
 import jakarta.servlet.http.HttpServletResponse;
@@ -87,6 +88,13 @@ public class UserController implements UserControllerDocs {
         @AuthenticationPrincipal JwtUserDetails user
     ) {
         return BaseResponse.ok(lightningService.getParticipantLightningList(user.getUserId(), LocalDateTime.now(), 3));
+    }
+
+    @GetMapping("/me/lightning/available")
+    public BaseResponse<List<AvailableLightningResponse>> getAvailableLightningList(
+        @AuthenticationPrincipal JwtUserDetails user
+    ) {
+        return BaseResponse.ok(lightningService.getAvailableLightningList(user.getUserId()));
     }
 
     @DeleteMapping("/me")

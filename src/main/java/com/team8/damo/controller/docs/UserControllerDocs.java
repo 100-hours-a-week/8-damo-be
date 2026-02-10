@@ -5,6 +5,7 @@ import com.team8.damo.controller.request.UserCharacteristicsCreateRequest;
 import com.team8.damo.controller.request.ImagePathUpdateRequest;
 import com.team8.damo.controller.request.UserCharacteristicsUpdateRequest;
 import com.team8.damo.controller.response.BaseResponse;
+import com.team8.damo.service.response.AvailableLightningResponse;
 import com.team8.damo.service.response.LightningResponse;
 import com.team8.damo.service.response.UserBasicResponse;
 import com.team8.damo.service.response.UserProfileResponse;
@@ -146,6 +147,25 @@ public interface UserControllerDocs {
     @ApiResponse(responseCode = "200", description = "성공")
     @ApiErrorResponses({USER_NOT_FOUND})
     BaseResponse<List<LightningResponse>> getParticipantLightningList(
+        @Parameter(hidden = true)
+        JwtUserDetails user
+    );
+
+    @Operation(
+        summary = "참가하지 않은 전체 번개 목록 조회",
+        description = """
+            ### 사용자가 참가하지 않은 OPEN 상태의 번개 모임 목록을 조회합니다.
+            - lightningId: 번개 모임 ID
+            - restaurantName: 식당 이름
+            - description: 설명
+            - maxParticipants: 최대 참여 인원
+            - participantsCount: 현재 참여 인원
+            - lightningStatus: 상태 (OPEN)
+            """
+    )
+    @ApiResponse(responseCode = "200", description = "성공")
+    @ApiErrorResponses({USER_NOT_FOUND})
+    BaseResponse<List<AvailableLightningResponse>> getAvailableLightningList(
         @Parameter(hidden = true)
         JwtUserDetails user
     );
