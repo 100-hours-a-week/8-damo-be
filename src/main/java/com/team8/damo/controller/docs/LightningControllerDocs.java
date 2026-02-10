@@ -41,6 +41,19 @@ public interface LightningControllerDocs {
     );
 
     @Operation(
+        summary = "번개 모임 나가기",
+        description = "번개 모임에서 나갑니다. PARTICIPANT는 바로 나갈 수 있고, LEADER는 혼자일 때만 나갈 수 있습니다."
+    )
+    @ApiResponse(responseCode = "204", description = "성공")
+    @ApiErrorResponses({LIGHTNING_PARTICIPANT_NOT_FOUND, LIGHTNING_LEADER_CANNOT_LEAVE})
+    BaseResponse<Void> leaveLightning(
+        @Parameter(hidden = true)
+        JwtUserDetails user,
+        @Parameter(description = "번개 모임 ID", required = true)
+        Long lightningId
+    );
+
+    @Operation(
         summary = "번개 모임 생성",
         description = """
             ### 새로운 번개 모임을 생성합니다.

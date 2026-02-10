@@ -41,6 +41,16 @@ public class LightningController implements LightningControllerDocs {
     }
 
     @Override
+    @DeleteMapping("/lightning/{lightningId}/users/me")
+    public BaseResponse<Void> leaveLightning(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @PathVariable Long lightningId
+    ) {
+        lightningService.leaveLightning(user.getUserId(), lightningId);
+        return BaseResponse.noContent();
+    }
+
+    @Override
     @PostMapping("/lightning")
     public BaseResponse<Long> createLightning(
         @AuthenticationPrincipal JwtUserDetails user,

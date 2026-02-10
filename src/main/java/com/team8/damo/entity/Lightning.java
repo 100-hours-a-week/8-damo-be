@@ -50,6 +50,10 @@ public class Lightning extends BaseTimeEntity {
         this.lightningStatus = LightningStatus.CLOSED;
     }
 
+    public void delete() {
+        this.lightningStatus = LightningStatus.DELETED;
+    }
+
     public boolean isClosed() {
         return this.lightningStatus == LightningStatus.CLOSED;
     }

@@ -141,6 +141,26 @@ public class LightningService {
         lightning.close();
     }
 
+    @Transactional
+    @CustomLock(key = "#lightningId")
+    public void leaveLightning(Long userId, Long lightningId) {
+        LightningParticipant participant = lightningParticipantRepository.findByLightningIdAndUserId(lightningId, userId)
+            .orElseThrow(() -> new CustomException(LIGHTNING_PARTICIPANT_NOT_FOUND));
+
+        if (participant.isNotLeader()) {
+            lightningParticipantRepository.delete(participant);
+            return;
+        }
+
+        long participantCount = lightningParticipantRepository.countByLightningId(lightningId);
+        if (participantCount > 1) {
+            throw new CustomException(LIGHTNING_LEADER_CANNOT_LEAVE);
+        }
+
+        participant.getLightning().delete();
+        lightningParticipantRepository.delete(participant);
+    }
+
     public List<AvailableLightningResponse> getAvailableLightningList(Long userId) {
         findUserBy(userId);
 
