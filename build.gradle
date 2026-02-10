@@ -83,6 +83,9 @@ dependencies {
     // Prometheus (/actuator/prometheus)
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     runtimeOnly("io.micrometer:micrometer-registry-prometheus")
+
+    // Elastic APM
+    implementation 'co.elastic.apm:apm-agent-attach:1.55.4'
 }
 
 tasks.named('test') {
