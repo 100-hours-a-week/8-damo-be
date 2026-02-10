@@ -55,6 +55,7 @@ public enum ErrorCode {
     LIGHTNING_PARTICIPANT_NOT_FOUND(NOT_FOUND, "번개 모임 참여자를 찾을 수 없습니다."),
     LIGHTNING_CLOSE_ONLY_LEADER(FORBIDDEN, "번개 모임 마감은 모임장만 가능합니다."),
     LIGHTNING_ALREADY_CLOSED(CONFLICT, "이미 마감된 번개 모임입니다."),
+    LIGHTNING_LEADER_CANNOT_LEAVE(BAD_REQUEST, "참여중인 인원이 있어 나갈 수 없습니다."),
 
     // S3
     INVALID_FILE_TYPE(BAD_REQUEST, "허용되지 않은 파일 형식입니다. (허용: PNG, JPEG, JPG, WEBP)"),
