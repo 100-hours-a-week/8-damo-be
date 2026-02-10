@@ -12,6 +12,7 @@ import com.team8.damo.repository.LightningRepository;
 import com.team8.damo.repository.RestaurantRepository;
 import com.team8.damo.repository.UserRepository;
 import com.team8.damo.service.request.LightningCreateServiceRequest;
+import com.team8.damo.service.response.AvailableLightningResponse;
 import com.team8.damo.service.response.LightningResponse;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
@@ -100,24 +101,14 @@ public class LightningService {
             .map(p -> p.getLightning().getId())
             .toList();
 
-        Map<Long, Long> participantsCountMap = lightningParticipantRepository.findAllByLightningIdIn(lightningIds)
-            .stream()
-            .collect(Collectors.groupingBy(
-                p -> p.getLightning().getId(),
-                Collectors.counting()
-            ));
+        Map<Long, Long> participantsCountMap = createParticipantCountingMap(lightningIds);
 
         List<String> restaurantIds = lightningParticipants.stream()
             .map(p -> p.getLightning().getRestaurantId())
             .distinct()
             .toList();
 
-        Map<String, String> restaurantNameMap = restaurantRepository.findAllById(restaurantIds)
-            .stream()
-            .collect(Collectors.toMap(
-                Restaurant::getId,
-                Restaurant::getPlaceName
-            ));
+        Map<String, String> restaurantNameMap = createRestaurantNameMap(restaurantIds);
 
         return lightningParticipants.stream()
             .map(p -> {
@@ -148,6 +139,57 @@ public class LightningService {
         }
 
         lightning.close();
+    }
+
+    public List<AvailableLightningResponse> getAvailableLightningList(Long userId) {
+        findUserBy(userId);
+
+        List<Lightning> availableLightnings = lightningRepository.findAllByStatusAndUserNotParticipating(
+            LightningStatus.OPEN, userId
+        );
+
+        if (availableLightnings.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> lightningIds = availableLightnings.stream()
+            .map(Lightning::getId)
+            .toList();
+
+        Map<Long, Long> participantsCountMap = createParticipantCountingMap(lightningIds);
+
+        List<String> restaurantIds = availableLightnings.stream()
+            .map(Lightning::getRestaurantId)
+            .distinct()
+            .toList();
+
+        Map<String, String> restaurantNameMap = createRestaurantNameMap(restaurantIds);
+
+        return availableLightnings.stream()
+            .map(lightning -> AvailableLightningResponse.of(
+                lightning,
+                restaurantNameMap.getOrDefault(lightning.getRestaurantId(), ""),
+                participantsCountMap.getOrDefault(lightning.getId(), 0L).intValue()
+            ))
+            .toList();
+    }
+
+    private Map<String, String> createRestaurantNameMap(List<String> restaurantIds) {
+        return restaurantRepository.findAllById(restaurantIds)
+            .stream()
+            .collect(Collectors.toMap(
+                Restaurant::getId,
+                Restaurant::getPlaceName
+            ));
+    }
+
+    private Map<Long, Long> createParticipantCountingMap(List<Long> lightningIds) {
+        return lightningParticipantRepository.findAllByLightningIdIn(lightningIds)
+            .stream()
+            .collect(Collectors.groupingBy(
+                p -> p.getLightning().getId(),
+                Collectors.counting()
+            ));
     }
 
     private User findUserBy(Long userId) {
