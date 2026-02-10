@@ -17,8 +17,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.BDDMockito.willThrow;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -44,6 +48,24 @@ class LightningControllerTest {
         mockMvc = MockMvcBuilders.standaloneSetup(lightningController)
             .setValidator(new org.springframework.validation.beanvalidation.LocalValidatorFactoryBean())
             .build();
+    }
+
+    @Test
+    @DisplayName("번개 모임에서 성공적으로 나간다.")
+    void leaveLightning_success() throws Exception {
+        // given
+        Long lightningId = 100L;
+
+        willDoNothing().given(lightningService).leaveLightning(any(), eq(lightningId));
+
+        // when // then
+        mockMvc.perform(
+                delete("/api/v1/lightning/{lightningId}/users/me", lightningId)
+            )
+            .andDo(print())
+            .andExpect(status().isOk());
+
+        then(lightningService).should().leaveLightning(any(), eq(lightningId));
     }
 
     @Test

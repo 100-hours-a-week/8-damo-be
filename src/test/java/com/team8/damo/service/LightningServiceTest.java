@@ -627,6 +627,99 @@ class LightningServiceTest {
         then(snowflake).should(never()).nextId();
     }
 
+    @Test
+    @DisplayName("PARTICIPANT 역할의 참여자는 번개 모임에서 나갈 수 있다.")
+    void leaveLightning_participantSuccess() {
+        // given
+        Long userId = 1L;
+        Long lightningId = 100L;
+
+        Lightning lightning = LightningFixture.create(lightningId, "restaurant-1");
+        User user = UserFixture.create(userId);
+        LightningParticipant participant = LightningParticipant.createParticipant(1L, lightning, user);
+
+        given(participantRepository.findByLightningIdAndUserId(lightningId, userId))
+            .willReturn(Optional.of(participant));
+
+        // when
+        lightningService.leaveLightning(userId, lightningId);
+
+        // then
+        assertThat(lightning.getLightningStatus()).isEqualTo(LightningStatus.OPEN);
+        then(participantRepository).should().delete(participant);
+        then(participantRepository).should(never()).countByLightningId(any());
+    }
+
+    @Test
+    @DisplayName("LEADER가 혼자일 때 나가면 번개 상태가 DELETED로 변경된다.")
+    void leaveLightning_leaderAloneSuccess() {
+        // given
+        Long userId = 1L;
+        Long lightningId = 100L;
+
+        Lightning lightning = LightningFixture.create(lightningId, "restaurant-1");
+        User user = UserFixture.create(userId);
+        LightningParticipant leader = LightningParticipant.createLeader(1L, lightning, user);
+
+        given(participantRepository.findByLightningIdAndUserId(lightningId, userId))
+            .willReturn(Optional.of(leader));
+        given(participantRepository.countByLightningId(lightningId))
+            .willReturn(1L);
+
+        // when
+        lightningService.leaveLightning(userId, lightningId);
+
+        // then
+        assertThat(lightning.getLightningStatus()).isEqualTo(LightningStatus.DELETED);
+        then(participantRepository).should().countByLightningId(lightningId);
+        then(participantRepository).should().delete(leader);
+    }
+
+    @Test
+    @DisplayName("LEADER가 나갈 때 참여자가 2명 이상이면 예외가 발생한다.")
+    void leaveLightning_leaderCannotLeaveWhenParticipantsRemain() {
+        // given
+        Long userId = 1L;
+        Long lightningId = 100L;
+
+        Lightning lightning = LightningFixture.create(lightningId, "restaurant-1");
+        User user = UserFixture.create(userId);
+        LightningParticipant leader = LightningParticipant.createLeader(1L, lightning, user);
+
+        given(participantRepository.findByLightningIdAndUserId(lightningId, userId))
+            .willReturn(Optional.of(leader));
+        given(participantRepository.countByLightningId(lightningId))
+            .willReturn(2L);
+
+        // when // then
+        assertThatThrownBy(() -> lightningService.leaveLightning(userId, lightningId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", LIGHTNING_LEADER_CANNOT_LEAVE);
+
+        assertThat(lightning.getLightningStatus()).isEqualTo(LightningStatus.OPEN);
+        then(participantRepository).should().countByLightningId(lightningId);
+        then(participantRepository).should(never()).delete(any());
+    }
+
+    @Test
+    @DisplayName("참여 정보가 없으면 번개 모임에서 나갈 수 없다.")
+    void leaveLightning_participantNotFound() {
+        // given
+        Long userId = 999L;
+        Long lightningId = 100L;
+
+        given(participantRepository.findByLightningIdAndUserId(lightningId, userId))
+            .willReturn(Optional.empty());
+
+        // when // then
+        assertThatThrownBy(() -> lightningService.leaveLightning(userId, lightningId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", LIGHTNING_PARTICIPANT_NOT_FOUND);
+
+        then(participantRepository).should(never()).countByLightningId(any());
+        then(participantRepository).should(never()).delete(any());
+    }
+
     @Nested
     @DisplayName("cutoffDate 경계값 테스트")
     class CutoffDateBoundaryTest {
