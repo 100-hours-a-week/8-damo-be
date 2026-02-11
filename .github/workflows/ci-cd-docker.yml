@@ -144,6 +144,19 @@ jobs:
           sudo chmod 600 /etc/wireguard/wg0.conf
           sudo wg-quick up wg0
 
+      - name: Debug WireGuard connection
+        run: |
+          echo "=== WireGuard status ==="
+          sudo wg show
+          echo "=== Routing table ==="
+          ip route
+          echo "=== Ping VPN gateway ==="
+          ping -c 3 10.10.0.1 || true
+          echo "=== Ping target server ==="
+          ping -c 3 ${{ secrets.BACK_DEV_SERVER_HOST }} || true
+          echo "=== NC test SSH port ==="
+          nc -zv ${{ secrets.BACK_DEV_SERVER_HOST }} 22 || true
+
       - name: Deploy via SSH (pull/run)
         uses: appleboy/ssh-action@master
         with:
