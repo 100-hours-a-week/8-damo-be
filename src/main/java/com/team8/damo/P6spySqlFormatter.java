@@ -38,7 +38,7 @@ public class P6spySqlFormatter implements MessageFormattingStrategy {
         if(sql == null || sql.trim().isEmpty()) return sql;
 
         // Only format Statement, distinguish DDL And DML
-        if (Category.STATEMENT.getName().equals(category)) {
+        if (Category.STATEMENT.getName().equals(category) || Category.BATCH.getName().equals(category)) {
             String tmpsql = sql.trim().toLowerCase(Locale.ROOT);
             if(tmpsql.startsWith("create") || tmpsql.startsWith("alter") || tmpsql.startsWith("comment")) {
                 sql = FormatStyle.DDL.getFormatter().format(sql);
