@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import org.springframework.data.domain.Persistable;
+
 import java.util.Objects;
 
 import static jakarta.persistence.FetchType.LAZY;
@@ -14,7 +16,7 @@ import static jakarta.persistence.FetchType.LAZY;
 @Table(name = "recommend_restaurants")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class RecommendRestaurant extends BaseTimeEntity {
+public class RecommendRestaurant extends BaseTimeEntity implements Persistable<Long> {
 
     @Id
     @Column(name = "id", nullable = false)
@@ -64,6 +66,11 @@ public class RecommendRestaurant extends BaseTimeEntity {
 
     public boolean isConfirmed() {
         return this.confirmedStatus;
+    }
+
+    @Override
+    public boolean isNew() {
+        return getCreatedAt() == null;
     }
 
     @Override

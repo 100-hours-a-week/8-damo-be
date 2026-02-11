@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import org.springframework.data.domain.Persistable;
+
 import java.util.Objects;
 
 import static com.team8.damo.entity.enumeration.GatheringRole.*;
@@ -17,7 +19,7 @@ import static jakarta.persistence.FetchType.LAZY;
 @Table(name = "lightning_participants")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class LightningParticipant extends BaseTimeEntity {
+public class LightningParticipant extends BaseTimeEntity implements Persistable<Long> {
 
     @Id
     @Column(name = "id", nullable = false)
@@ -70,6 +72,11 @@ public class LightningParticipant extends BaseTimeEntity {
 
     public boolean isNotLeader() {
         return this.role != LEADER;
+    }
+
+    @Override
+    public boolean isNew() {
+        return getCreatedAt() == null;
     }
 
     @Override

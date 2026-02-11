@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.domain.Persistable;
 
 import java.util.Objects;
 
@@ -14,8 +15,7 @@ import static jakarta.persistence.FetchType.LAZY;
 @Table(name = "chat_messages")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ChatMessage extends BaseTimeEntity {
-
+public class ChatMessage extends BaseTimeEntity implements Persistable<Long> {
     @Id
     @Column(name = "id", nullable = false)
     private Long id;
@@ -50,5 +50,10 @@ public class ChatMessage extends BaseTimeEntity {
     @Override
     public int hashCode() {
         return Objects.hashCode(id);
+    }
+
+    @Override
+    public boolean isNew() {
+        return getCreatedAt() == null;
     }
 }

@@ -2,6 +2,7 @@ package com.team8.damo.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.domain.Persistable;
 
 import static jakarta.persistence.FetchType.*;
 
@@ -11,7 +12,7 @@ import static jakarta.persistence.FetchType.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class ReadStatus {
+public class ReadStatus extends BaseTimeEntity implements Persistable<Long> {
 
     @Id
     @Column(name = "id", nullable = false)
@@ -32,4 +33,9 @@ public class ReadStatus {
     @Builder.Default
     @Column(name = "is_read")
     private boolean isRead = false;
+
+    @Override
+    public boolean isNew() {
+        return getCreatedAt() == null;
+    }
 }

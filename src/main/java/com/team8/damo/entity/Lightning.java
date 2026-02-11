@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import org.springframework.data.domain.Persistable;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -14,7 +16,7 @@ import java.util.Objects;
 @Table(name = "lightning")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Lightning extends BaseTimeEntity {
+public class Lightning extends BaseTimeEntity implements Persistable<Long> {
 
     @Id
     @Column(name = "id", nullable = false)
@@ -56,6 +58,11 @@ public class Lightning extends BaseTimeEntity {
 
     public boolean isClosed() {
         return this.lightningStatus == LightningStatus.CLOSED;
+    }
+
+    @Override
+    public boolean isNew() {
+        return getCreatedAt() == null;
     }
 
     @Override
