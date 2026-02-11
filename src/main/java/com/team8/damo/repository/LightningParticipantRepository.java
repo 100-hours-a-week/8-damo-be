@@ -12,7 +12,10 @@ import java.util.Optional;
 
 public interface LightningParticipantRepository extends JpaRepository<LightningParticipant, Long> {
 
-    List<LightningParticipant> findAllByLightningId(Long lightningGatheringId);
+    @Query("select lp from LightningParticipant lp " +
+        "join fetch lp.user " +
+        "where lp.lightning.id = :lightningId")
+    List<LightningParticipant> findAllByLightningIdWithUser(Long lightningId);
 
     @EntityGraph(attributePaths = {"lightning"})
     Optional<LightningParticipant> findByLightningIdAndUserId(Long lightningId, Long userId);

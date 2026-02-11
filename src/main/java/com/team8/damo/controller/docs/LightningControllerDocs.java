@@ -3,6 +3,7 @@ package com.team8.damo.controller.docs;
 import com.team8.damo.controller.request.LightningCreateRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.security.jwt.JwtUserDetails;
+import com.team8.damo.service.response.LightningDetailResponse;
 import com.team8.damo.swagger.annotation.ApiErrorResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -13,6 +14,19 @@ import static com.team8.damo.exception.errorcode.ErrorCode.*;
 
 @Tag(name = "Lightning Gathering API", description = "번개 모임 관련 API")
 public interface LightningControllerDocs {
+
+    @Operation(
+        summary = "번개 모임 상세 조회",
+        description = "번개 모임의 상세 정보를 조회합니다. 참여자 목록, 식당 위치 정보를 포함합니다."
+    )
+    @ApiResponse(responseCode = "200", description = "성공")
+    @ApiErrorResponses({LIGHTNING_NOT_FOUND})
+    BaseResponse<LightningDetailResponse> getLightningDetail(
+        @Parameter(hidden = true)
+        JwtUserDetails user,
+        @Parameter(description = "번개 모임 ID", required = true)
+        Long lightningId
+    );
 
     @Operation(
         summary = "번개 모임 참가",
