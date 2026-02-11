@@ -5,6 +5,7 @@ import com.team8.damo.controller.request.LightningCreateRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.security.jwt.JwtUserDetails;
 import com.team8.damo.service.LightningService;
+import com.team8.damo.service.response.LightningDetailResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,6 +19,15 @@ import java.time.LocalDateTime;
 public class LightningController implements LightningControllerDocs {
 
     private final LightningService lightningService;
+
+    @Override
+    @GetMapping("/lightning/{lightningId}")
+    public BaseResponse<LightningDetailResponse> getLightningDetail(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @PathVariable Long lightningId
+    ) {
+        return BaseResponse.ok(lightningService.getLightningDetail(lightningId));
+    }
 
     @Override
     @PostMapping("/lightning/{lightningId}/users/me")

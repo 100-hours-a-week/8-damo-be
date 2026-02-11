@@ -13,6 +13,7 @@ import com.team8.damo.repository.RestaurantRepository;
 import com.team8.damo.repository.UserRepository;
 import com.team8.damo.service.request.LightningCreateServiceRequest;
 import com.team8.damo.service.response.AvailableLightningResponse;
+import com.team8.damo.service.response.LightningDetailResponse;
 import com.team8.damo.service.response.LightningResponse;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
@@ -159,6 +160,18 @@ public class LightningService {
 
         participant.getLightning().delete();
         lightningParticipantRepository.delete(participant);
+    }
+
+    public LightningDetailResponse getLightningDetail(Long lightningId) {
+        Lightning lightning = lightningRepository.findById(lightningId)
+            .filter(l -> l.getLightningStatus() != LightningStatus.DELETED)
+            .orElseThrow(() -> new CustomException(LIGHTNING_NOT_FOUND));
+
+        List<LightningParticipant> participants = lightningParticipantRepository.findAllByLightningIdWithUser(lightningId);
+
+        Restaurant restaurant = restaurantRepository.findById(lightning.getRestaurantId()).orElse(null);
+
+        return LightningDetailResponse.of(lightning, restaurant, participants);
     }
 
     public List<AvailableLightningResponse> getAvailableLightningList(Long userId) {
