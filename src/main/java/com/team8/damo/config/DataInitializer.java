@@ -83,10 +83,6 @@ public class DataInitializer implements ApplicationRunner {
     }
 
     private void initTestDataIfEmpty() {
-        if (userRepository.count() > 0) {
-            return;
-        }
-
         List<User> users = createUsers();
         List<Group> groups = createGroups();
         createUserGroups(users, groups);
