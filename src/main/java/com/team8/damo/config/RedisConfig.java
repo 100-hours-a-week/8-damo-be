@@ -1,5 +1,6 @@
 package com.team8.damo.config;
 
+import com.team8.damo.chat.consumer.RedisListener;
 import io.lettuce.core.api.StatefulConnection;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +14,9 @@ import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettucePoolingClientConfiguration;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.listener.ChannelTopic;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
 import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
@@ -36,6 +40,8 @@ public class RedisConfig {
 
     @Value("${spring.data.redis.port}")
     private int port;
+
+    public static final String CHANNEL = "chat:broadcast";
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
@@ -109,5 +115,19 @@ public class RedisConfig {
             .build();
     }
 
+    @Bean
+    public RedisMessageListenerContainer listenerContainer(
+        RedisConnectionFactory connectionFactory,
+        MessageListenerAdapter chatListener
+    ) {
+        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+        container.setConnectionFactory(connectionFactory);
+        container.addMessageListener(chatListener, new ChannelTopic(CHANNEL));
+        return container;
+    }
 
+    @Bean
+    public MessageListenerAdapter messageListenerAdapter(RedisListener listener) {
+        return new MessageListenerAdapter(listener, "onMessage");
+    }
 }

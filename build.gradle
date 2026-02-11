@@ -86,6 +86,10 @@ dependencies {
 
     // Elastic APM
     implementation 'co.elastic.apm:apm-agent-attach:1.55.4'
+
+    // websocket
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework.security:spring-security-messaging'
 }
 
 tasks.named('test') {
