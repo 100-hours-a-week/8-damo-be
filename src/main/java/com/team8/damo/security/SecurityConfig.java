@@ -37,7 +37,7 @@ public class SecurityConfig {
         "/swagger-ui/**",
         "/v3/api-docs/**",
         "/api-test",
-        "/ws-stomp",
+        "/api/ws-stomp",
         "/sub/**",
         "/pub/**",
         "/actuator/health",
