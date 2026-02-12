@@ -12,7 +12,9 @@ import java.util.Objects;
 import static jakarta.persistence.FetchType.LAZY;
 
 @Entity
-@Table(name = "chat_messages")
+@Table(name = "chat_messages", indexes = {
+        @Index(name = "idx_chat_messages_lightning", columnList = "lightning_id")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatMessage extends BaseTimeEntity implements Persistable<Long> {
