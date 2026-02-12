@@ -16,7 +16,12 @@ import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.FetchType.LAZY;
 
 @Entity
-@Table(name = "lightning_participants")
+@Table(name = "lightning_participants", indexes = {
+        @Index(
+            name = "idx_lightning_participants_user_lightning_last_read",
+            columnList = "users_id, lightning_id, last_read_chat_messages_id"
+        )
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class LightningParticipant extends BaseTimeEntity implements Persistable<Long> {
@@ -46,6 +51,7 @@ public class LightningParticipant extends BaseTimeEntity implements Persistable<
         this.lightning = lightning;
         this.user = user;
         this.role = role;
+        this.lastReadChatMessageId = 0L;
     }
 
     public static LightningParticipant createLeader(Long id, Lightning lightning, User user) {

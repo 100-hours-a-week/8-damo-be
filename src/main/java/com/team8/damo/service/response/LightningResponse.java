@@ -14,6 +14,7 @@ public record LightningResponse(
     int participantsCount,
     LightningStatus lightningStatus,
     GatheringRole myRole,
+    Integer unreadCount,
     LocalDateTime lightningDate
 ) {
 
@@ -21,6 +22,7 @@ public record LightningResponse(
         Lightning lightning,
         String restaurantName,
         int participantsCount,
+        Integer unreadCount,
         GatheringRole myRole
     ) {
         return new LightningResponse(
@@ -31,6 +33,7 @@ public record LightningResponse(
             participantsCount,
             lightning.getLightningStatus(),
             myRole,
+            unreadCount,
             lightning.getLightningDate()
         );
     }

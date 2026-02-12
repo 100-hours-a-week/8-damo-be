@@ -7,10 +7,8 @@ import com.team8.damo.entity.Restaurant;
 import com.team8.damo.entity.User;
 import com.team8.damo.entity.enumeration.LightningStatus;
 import com.team8.damo.exception.CustomException;
-import com.team8.damo.repository.LightningParticipantRepository;
-import com.team8.damo.repository.LightningRepository;
-import com.team8.damo.repository.RestaurantRepository;
-import com.team8.damo.repository.UserRepository;
+import com.team8.damo.repository.*;
+import com.team8.damo.repository.projections.UnreadCount;
 import com.team8.damo.service.request.LightningCreateServiceRequest;
 import com.team8.damo.service.response.AvailableLightningResponse;
 import com.team8.damo.service.response.LightningDetailResponse;
@@ -37,6 +35,7 @@ public class LightningService {
     private final LightningRepository lightningRepository;
     private final LightningParticipantRepository lightningParticipantRepository;
     private final RestaurantRepository restaurantRepository;
+    private final ChatMessageRepository chatMessageRepository;
 
     @Transactional
     @CustomLock(key = "#lightningId")
@@ -111,6 +110,8 @@ public class LightningService {
 
         Map<String, String> restaurantNameMap = createRestaurantNameMap(restaurantIds);
 
+        Map<Long, Integer> unreadCountMap = createUnreadCountMap(userId);
+
         return lightningParticipants.stream()
             .map(p -> {
                 Lightning lightning = p.getLightning();
@@ -118,6 +119,7 @@ public class LightningService {
                     lightning,
                     restaurantNameMap.getOrDefault(lightning.getRestaurantId(), ""),
                     participantsCountMap.getOrDefault(lightning.getId(), 0L).intValue(),
+                    unreadCountMap.getOrDefault(lightning.getId(), 0),
                     p.getRole()
                 );
             })
@@ -222,6 +224,14 @@ public class LightningService {
             .collect(Collectors.groupingBy(
                 p -> p.getLightning().getId(),
                 Collectors.counting()
+            ));
+    }
+
+    private Map<Long, Integer> createUnreadCountMap(Long userId) {
+        return chatMessageRepository.countUnreadMessagesByUser(userId).stream()
+            .collect(Collectors.toMap(
+                UnreadCount::getLightningId,
+                UnreadCount::getUnreadCount
             ));
     }
 
