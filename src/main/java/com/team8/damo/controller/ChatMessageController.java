@@ -9,6 +9,8 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
+
 @RestController
 @RequiredArgsConstructor
 public class ChatMessageController {
@@ -22,6 +24,6 @@ public class ChatMessageController {
         ChatMessageRequest request
     ) {
         JwtUserDetails user = (JwtUserDetails) authentication.getPrincipal();
-        chatService.createChatMessage(user.getUserId(), lightningId, request);
+        chatService.createChatMessage(user.getUserId(), lightningId, request, LocalDateTime.now());
     }
 }

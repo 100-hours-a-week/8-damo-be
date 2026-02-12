@@ -19,9 +19,8 @@ public class RedisPublisher implements ChatProducer {
     private final ObjectMapper objectMapper;
     private final StringRedisTemplate stringRedisTemplate;
 
-    public void send(Long senderId, Long lightningId, ChatMessageRequest request) {
+    public void send(ChatBroadcastMessage message) {
         try {
-            ChatBroadcastMessage message = new ChatBroadcastMessage(senderId, lightningId, request.chatType(), request.content(), LocalDateTime.now());
             stringRedisTemplate.convertAndSend(CHANNEL, objectMapper.writeValueAsString(message));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
