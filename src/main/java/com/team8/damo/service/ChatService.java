@@ -5,6 +5,9 @@ import com.team8.damo.controller.request.ChatMessageRequest;
 import com.team8.damo.entity.ChatMessage;
 import com.team8.damo.entity.Lightning;
 import com.team8.damo.entity.User;
+import com.team8.damo.event.EventType;
+import com.team8.damo.event.handler.CommonEventPublisher;
+import com.team8.damo.event.payload.CreateChatMessageEventPayload;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.repository.ChatMessageRepository;
 import com.team8.damo.repository.LightningRepository;
@@ -15,8 +18,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 import static com.team8.damo.exception.errorcode.ErrorCode.LIGHTNING_NOT_FOUND;
 import static com.team8.damo.exception.errorcode.ErrorCode.USER_NOT_FOUND;
+import static net.logstash.logback.argument.StructuredArguments.kv;
 
 @Slf4j
 @Service
@@ -27,12 +33,10 @@ public class ChatService {
     private final UserRepository userRepository;
     private final LightningRepository lightningRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final CommonEventPublisher commonEventPublisher;
 
     @Transactional
-    public void createChatMessage(Long senderId, Long lightningId, ChatMessageRequest request) {
-        chatProducer.send(senderId, lightningId, request);
-
-        log.info("[ChatService.createChatMessage] Lightning Id : {} SenderId : {}",  lightningId, senderId);
+    public void createChatMessage(Long senderId, Long lightningId, ChatMessageRequest request, LocalDateTime currentTime) {
         User sender = findUserBy(senderId);
         Lightning lightning = findLightningBy(lightningId);
 
@@ -43,6 +47,18 @@ public class ChatService {
             .content(request.content())
             .build();
         chatMessageRepository.save(chatMessage);
+
+        commonEventPublisher.publish(
+            EventType.CREATE_CHAT_MESSAGE,
+            CreateChatMessageEventPayload.builder()
+                .messageId(chatMessage.getId())
+                .senderId(senderId)
+                .lightningId(lightningId)
+                .chatType(request.chatType())
+                .content(request.content())
+                .createdAt(currentTime)
+                .build()
+        );
     }
 
     private User findUserBy(Long userId) {

@@ -1,7 +1,7 @@
 package com.team8.damo.chat.producer;
 
-import com.team8.damo.controller.request.ChatMessageRequest;
+import com.team8.damo.chat.message.ChatBroadcastMessage;
 
 public interface ChatProducer {
-    void send(Long senderId, Long lightningId, ChatMessageRequest request);
+    void send(ChatBroadcastMessage message);
 }
