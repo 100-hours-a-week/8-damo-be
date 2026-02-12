@@ -12,6 +12,7 @@ public record CreateChatMessageEventPayload(
     Long lightningId,
     ChatType chatType,
     String content,
-    LocalDateTime createdAt
+    LocalDateTime createdAt,
+    String senderNickname
 ) implements EventPayload {
 }

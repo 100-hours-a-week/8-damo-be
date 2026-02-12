@@ -57,6 +57,7 @@ public class ChatService {
                 .chatType(request.chatType())
                 .content(request.content())
                 .createdAt(currentTime)
+                .senderNickname(sender.getNickname())
                 .build()
         );
     }
