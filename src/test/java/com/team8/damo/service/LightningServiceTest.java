@@ -10,6 +10,7 @@ import com.team8.damo.exception.CustomException;
 import com.team8.damo.fixture.LightningFixture;
 import com.team8.damo.fixture.RestaurantFixture;
 import com.team8.damo.fixture.UserFixture;
+import com.team8.damo.repository.ChatMessageRepository;
 import com.team8.damo.repository.LightningParticipantRepository;
 import com.team8.damo.repository.LightningRepository;
 import com.team8.damo.repository.RestaurantRepository;
@@ -62,6 +63,9 @@ class LightningServiceTest {
 
     @Mock
     private RestaurantRepository restaurantRepository;
+
+    @Mock
+    private ChatMessageRepository chatMessageRepository;
 
     @InjectMocks
     private LightningService lightningService;
@@ -226,16 +230,18 @@ class LightningServiceTest {
             .willReturn(List.of(participant1, participant2, otherParticipant));
         given(restaurantRepository.findAllById(List.of("restaurant-1", "restaurant-2")))
             .willReturn(List.of(restaurant1, restaurant2));
+        given(chatMessageRepository.countUnreadMessagesByUser(userId))
+            .willReturn(List.of());
 
         // when
         List<LightningResponse> result = lightningService.getParticipantLightningList(userId, currentTime, cutoff);
 
         // then
         assertThat(result).hasSize(2)
-            .extracting("lightningId", "restaurantName", "maxParticipants", "participantsCount", "lightningStatus", "myRole")
+            .extracting("lightningId", "restaurantName", "maxParticipants", "participantsCount", "lightningStatus", "myRole", "unreadCount")
             .containsExactlyInAnyOrder(
-                tuple(100L, "맛있는 식당", 4, 2, LightningStatus.OPEN, GatheringRole.LEADER),
-                tuple(200L, "좋은 식당", 4, 1, LightningStatus.OPEN, GatheringRole.PARTICIPANT)
+                tuple(100L, "맛있는 식당", 4, 2, LightningStatus.OPEN, GatheringRole.LEADER, 0),
+                tuple(200L, "좋은 식당", 4, 1, LightningStatus.OPEN, GatheringRole.PARTICIPANT, 0)
             );
 
         then(userRepository).should().findById(userId);
@@ -304,6 +310,8 @@ class LightningServiceTest {
             .willReturn(List.of(participant));
         given(restaurantRepository.findAllById(List.of("unknown-restaurant")))
             .willReturn(List.of());
+        given(chatMessageRepository.countUnreadMessagesByUser(userId))
+            .willReturn(List.of());
 
         // when
         List<LightningResponse> result = lightningService.getParticipantLightningList(userId, currentTime, cutoff);
@@ -311,8 +319,8 @@ class LightningServiceTest {
         // then
         assertThat(result).hasSize(1);
         assertThat(result.get(0))
-            .extracting("lightningId", "restaurantName")
-            .contains(100L, "");
+            .extracting("lightningId", "restaurantName", "unreadCount")
+            .contains(100L, "", 0);
     }
 
     @Test
@@ -341,6 +349,8 @@ class LightningServiceTest {
             .willReturn(List.of(leader, participant2, participant3));
         given(restaurantRepository.findAllById(List.of("restaurant-1")))
             .willReturn(List.of(restaurant));
+        given(chatMessageRepository.countUnreadMessagesByUser(userId))
+            .willReturn(List.of());
 
         // when
         List<LightningResponse> result = lightningService.getParticipantLightningList(userId, currentTime, cutoff);
@@ -348,8 +358,8 @@ class LightningServiceTest {
         // then
         assertThat(result).hasSize(1);
         assertThat(result.get(0))
-            .extracting("lightningId", "participantsCount", "myRole")
-            .contains(100L, 3, GatheringRole.LEADER);
+            .extracting("lightningId", "participantsCount", "myRole", "unreadCount")
+            .contains(100L, 3, GatheringRole.LEADER, 0);
     }
 
     @Test
@@ -745,6 +755,8 @@ class LightningServiceTest {
                 .willReturn(List.of(participant));
             given(restaurantRepository.findAllById(List.of("restaurant-1")))
                 .willReturn(List.of(restaurant));
+            given(chatMessageRepository.countUnreadMessagesByUser(userId))
+                .willReturn(List.of());
 
             // when
             List<LightningResponse> result = lightningService.getParticipantLightningList(userId, currentTime, cutoff);
@@ -805,6 +817,8 @@ class LightningServiceTest {
                 .willReturn(List.of(participant));
             given(restaurantRepository.findAllById(List.of("restaurant-1")))
                 .willReturn(List.of(restaurant));
+            given(chatMessageRepository.countUnreadMessagesByUser(userId))
+                .willReturn(List.of());
 
             // when
             List<LightningResponse> result = lightningService.getParticipantLightningList(userId, currentTime, cutoff);
