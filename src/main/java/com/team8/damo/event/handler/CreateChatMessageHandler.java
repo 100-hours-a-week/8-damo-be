@@ -25,7 +25,7 @@ public class CreateChatMessageHandler implements EventHandler<CreateChatMessageE
         log.info("[ChatService.createChatMessage] {} {} {}",
             kv("messageId", payload.messageId()),
             kv("lightningId", payload.lightningId()),
-            kv("senderId", payload.senderId())
+            kv("sender", payload.senderNickname())
         );
     }
 

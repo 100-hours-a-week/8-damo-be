@@ -10,7 +10,8 @@ public record ChatBroadcastMessage(
     Long lightningId,
     ChatType chatType,
     String content,
-    LocalDateTime createdAt
+    LocalDateTime createdAt,
+    String senderNickname
 ) {
     public static ChatBroadcastMessage from(CreateChatMessageEventPayload payload) {
         return new ChatBroadcastMessage(
@@ -19,7 +20,8 @@ public record ChatBroadcastMessage(
             payload.lightningId(),
             payload.chatType(),
             payload.content(),
-            payload.createdAt()
+            payload.createdAt(),
+            payload.senderNickname()
         );
     }
 }

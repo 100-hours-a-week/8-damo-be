@@ -13,7 +13,7 @@ import static jakarta.persistence.FetchType.LAZY;
 
 @Entity
 @Table(name = "chat_messages", indexes = {
-        @Index(name = "idx_chat_messages_lightning", columnList = "lightning_id")
+        @Index(name = "idx_chat_messages_lightning", columnList = "lightning_id, id")
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
