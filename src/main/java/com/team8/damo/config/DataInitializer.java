@@ -41,6 +41,7 @@ public class DataInitializer implements ApplicationRunner {
     private final RecommendRestaurantVoteRepository recommendRestaurantVoteRepository;
     private final LightningRepository lightningRepository;
     private final LightningParticipantRepository lightningParticipantRepository;
+    private final ChatMessageRepository chatMessageRepository;
     private final Snowflake snowflake;
 
     @Override
@@ -461,5 +462,36 @@ public class DataInitializer implements ApplicationRunner {
         lightningParticipantRepository.saveAll(otherParticipants);
 
         log.info("Lightning data initialized: {} lightnings (user1: 3, others: 5)", lightnings.size() + otherLightnings.size());
+
+        // Lightning 1, 2, 3에 채팅 메시지 생성 (각 20개, 총 60개)
+        createChatMessages(lightnings, List.of(user1, users.get(1), users.get(2)));
+    }
+
+    private void createChatMessages(List<Lightning> lightnings, List<User> chatUsers) {
+        String[] sampleMessages = {
+            "안녕하세요!", "오늘 몇 시에 만나요?", "저 조금 늦을 것 같아요",
+            "메뉴 뭐 먹을까요?", "좋아요!", "네 알겠습니다~",
+            "거기 맛있대요", "추천 메뉴 있나요?", "저도 참여할게요!",
+            "위치 공유해주세요", "거의 다 왔어요", "먼저 자리 잡고 있을게요",
+            "사진 찍어요!", "다음에 또 만나요", "오늘 즐거웠어요",
+            "다들 조심히 들어가세요~", "후기 남겨야겠다", "다음 번개는 언제?",
+            "여기 분위기 좋네요", "디저트도 시킬까요?"
+        };
+
+        List<ChatMessage> allMessages = new ArrayList<>();
+        for (Lightning lightning : lightnings) {
+            for (int i = 0; i < 20; i++) {
+                User sender = chatUsers.get(i % chatUsers.size());
+                ChatMessage message = ChatMessage.builder()
+                    .id(snowflake.nextId())
+                    .lightning(lightning)
+                    .user(sender)
+                    .content(sampleMessages[i])
+                    .build();
+                allMessages.add(message);
+            }
+        }
+        chatMessageRepository.saveAll(allMessages);
+        log.info("Chat messages initialized: {} messages for {} lightnings", allMessages.size(), lightnings.size());
     }
 }
