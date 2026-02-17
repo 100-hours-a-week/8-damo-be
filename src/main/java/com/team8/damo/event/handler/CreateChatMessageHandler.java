@@ -1,6 +1,7 @@
 package com.team8.damo.event.handler;
 
 import com.team8.damo.chat.message.ChatBroadcastMessage;
+import com.team8.damo.chat.message.WsEventMessage;
 import com.team8.damo.chat.producer.ChatProducer;
 import com.team8.damo.event.Event;
 import com.team8.damo.event.EventType;
@@ -20,7 +21,10 @@ public class CreateChatMessageHandler implements EventHandler<CreateChatMessageE
     @Override
     public void handle(Event<CreateChatMessageEventPayload> event) {
         CreateChatMessageEventPayload payload = event.getPayload();
-        chatProducer.send(ChatBroadcastMessage.from(payload));
+        chatProducer.send(WsEventMessage.createChatMessage(
+            payload.lightningId(),
+            ChatBroadcastMessage.from(payload))
+        );
 
         log.info("[ChatService.createChatMessage] {} {} {}",
             kv("messageId", payload.messageId()),

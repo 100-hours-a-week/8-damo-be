@@ -1,6 +1,6 @@
 package com.team8.damo.config;
 
-import com.team8.damo.chat.consumer.RedisListener;
+import com.team8.damo.redis.listener.RedisListener;
 import io.lettuce.core.api.StatefulConnection;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.springframework.beans.factory.annotation.Value;
@@ -118,11 +118,11 @@ public class RedisConfig {
     @Bean
     public RedisMessageListenerContainer listenerContainer(
         RedisConnectionFactory connectionFactory,
-        MessageListenerAdapter chatListener
+        MessageListenerAdapter messageListenerAdapter
     ) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
-        container.addMessageListener(chatListener, new ChannelTopic(CHANNEL));
+        container.addMessageListener(messageListenerAdapter, new ChannelTopic(CHANNEL));
         return container;
     }
 
