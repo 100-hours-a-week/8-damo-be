@@ -17,29 +17,28 @@ import com.team8.damo.repository.LightningRepository;
 import com.team8.damo.repository.UserRepository;
 import com.team8.damo.service.request.ChatMessagePageServiceRequest;
 import com.team8.damo.service.response.ChatMessagePageResponse;
-import com.team8.damo.service.response.ChatMessagePageResponse.InitialScrollMode;
-import com.team8.damo.service.response.ChatMessagePageResponse.MessageItem;
-import com.team8.damo.service.response.ChatMessagePageResponse.PageInfo;
-import com.team8.damo.service.response.ChatMessagePageResponse.PageParam;
-import com.team8.damo.service.response.ChatMessagePageResponse.ReadBoundary;
+import com.team8.damo.service.response.ChatMessagePageResponse.*;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.team8.damo.exception.errorcode.ErrorCode.*;
+import static com.team8.damo.redis.key.RedisKeyPrefix.LIGHTNING_SUBSCRIBE_USERS;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ChatService {
     private final Snowflake snowflake;
     private final ChatProducer chatProducer;
@@ -48,6 +47,7 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final LightningParticipantRepository lightningParticipantRepository;
     private final CommonEventPublisher commonEventPublisher;
+    private final RedisTemplate<String, String> redisTemplate;
 
     @Transactional
     public void createChatMessage(Long senderId, Long lightningId, ChatMessageRequest request, LocalDateTime currentTime) {
@@ -62,6 +62,9 @@ public class ChatService {
             .build();
         chatMessageRepository.save(chatMessage);
 
+        long totalParticipant = lightningParticipantRepository.countByLightningId(lightningId);
+        long userCount = redisTemplate.opsForSet().size(LIGHTNING_SUBSCRIBE_USERS.key(lightningId));
+
         commonEventPublisher.publish(
             EventType.CREATE_CHAT_MESSAGE,
             CreateChatMessageEventPayload.builder()
@@ -72,11 +75,11 @@ public class ChatService {
                 .content(request.content())
                 .createdAt(currentTime)
                 .senderNickname(sender.getNickname())
+                .unreadCount(totalParticipant - userCount)
                 .build()
         );
     }
 
-    @Transactional
     public ChatMessagePageResponse getChatMessages(Long userId, Long lightningId, ChatMessagePageServiceRequest request) {
         LightningParticipant participant = lightningParticipantRepository.findByLightningIdAndUserId(lightningId, userId)
             .orElseThrow(() -> new CustomException(LIGHTNING_PARTICIPANT_NOT_FOUND));
@@ -86,58 +89,62 @@ public class ChatService {
         Long cursorId = request.cursorId();
         int size = request.size();
 
+        NavigableMap<Long, Long> unreadCountMap = getUnreadCountMap(lightningId, userId);
+
         if (cursorId == null) {
-            ChatMessagePageResponse response = buildInitialResponse(lightningId, anchorCursor, size);
-            updateLastReadToLatest(participant, lightningId);
-            return response;
+            return buildInitialResponse(lightningId, anchorCursor, size, unreadCountMap);
         }
+
         Direction effectiveDirection = direction == null ? Direction.NEXT : direction;
-        return buildDirectionalResponse(lightningId, effectiveDirection, cursorId, size, anchorCursor);
+        return buildDirectionalResponse(lightningId, effectiveDirection, cursorId, size, anchorCursor, unreadCountMap);
     }
 
-    private ChatMessagePageResponse buildInitialResponse(Long lightningId, Long anchorCursor, int size) {
+    private ChatMessagePageResponse buildInitialResponse(Long lightningId, Long anchorCursor, int size, NavigableMap<Long, Long> unreadCountMap) {
         Long latestMessageId = chatMessageRepository.findLatestMessageId(lightningId);
 
         if (latestMessageId == null) {
             return buildResponse(
                 List.of(), null, null, false, false, size, anchorCursor,
                 InitialScrollMode.TOP,
-                new ReadBoundary(false, null, null)
+                new ReadBoundary(false, null, null),
+                unreadCountMap
             );
         }
 
         if (anchorCursor <= 0L) {
-            return buildTopInitialResponse(lightningId, anchorCursor, size);
+            return buildTopInitialResponse(lightningId, anchorCursor, size, unreadCountMap);
         }
 
         if (latestMessageId <= anchorCursor) {
-            return buildBottomInitialResponse(lightningId, anchorCursor, size);
+            return buildBottomInitialResponse(lightningId, anchorCursor, size, unreadCountMap);
         }
 
-        return buildCenteredInitialResponse(lightningId, anchorCursor, size);
+        return buildCenteredInitialResponse(lightningId, anchorCursor, size, unreadCountMap);
     }
 
-    private ChatMessagePageResponse buildTopInitialResponse(Long lightningId, Long anchorCursor, int size) {
+    private ChatMessagePageResponse buildTopInitialResponse(Long lightningId, Long anchorCursor, int size, NavigableMap<Long, Long> unreadCountMap) {
         MessageSlice nextSlice = fetchNextSlice(lightningId, 0L, size);
         return buildResponse(
             nextSlice.messages(), null, null, false, nextSlice.hasMore(), size, anchorCursor,
             InitialScrollMode.TOP,
-            new ReadBoundary(false, null, null)
+            new ReadBoundary(false, null, null),
+            unreadCountMap
         );
     }
 
-    private ChatMessagePageResponse buildBottomInitialResponse(Long lightningId, Long anchorCursor, int size) {
+    private ChatMessagePageResponse buildBottomInitialResponse(Long lightningId, Long anchorCursor, int size, NavigableMap<Long, Long> unreadCountMap) {
         MessageSlice prevSlice = fetchPrevSlice(lightningId, Long.MAX_VALUE, size);
         Long displayedLastRead = prevSlice.messages().isEmpty() ? null : prevSlice.messages().getLast().getId();
 
         return buildResponse(
             prevSlice.messages(), null, null, prevSlice.hasMore(), false, size, anchorCursor,
             InitialScrollMode.BOTTOM,
-            new ReadBoundary(false, displayedLastRead, null)
+            new ReadBoundary(false, displayedLastRead, null),
+            unreadCountMap
         );
     }
 
-    private ChatMessagePageResponse buildCenteredInitialResponse(Long lightningId, Long anchorCursor, int size) {
+    private ChatMessagePageResponse buildCenteredInitialResponse(Long lightningId, Long anchorCursor, int size, NavigableMap<Long, Long> unreadCountMap) {
         MessageSlice prevSlice = fetchPrevOrEqualSlice(lightningId, anchorCursor, size);
         MessageSlice nextSlice = fetchNextSlice(lightningId, anchorCursor, size);
 
@@ -193,24 +200,27 @@ public class ChatService {
         return buildResponse(
             merged, null, null, hasPreviousPage, hasNextPage, size, anchorCursor,
             InitialScrollMode.CENTER,
-            new ReadBoundary(showDivider, lastReadMessageId, firstUnreadMessageId)
+            new ReadBoundary(showDivider, lastReadMessageId, firstUnreadMessageId),
+            unreadCountMap
         );
     }
 
-    private ChatMessagePageResponse buildDirectionalResponse(Long lightningId, Direction direction, Long cursorId, int size, Long anchorCursor) {
+    private ChatMessagePageResponse buildDirectionalResponse(Long lightningId, Direction direction, Long cursorId, int size, Long anchorCursor, NavigableMap<Long, Long> unreadCountMap) {
         if (direction == Direction.PREV) {
             MessageSlice prevSlice = fetchPrevSlice(lightningId, cursorId, size);
             return buildResponse(
                 prevSlice.messages(), Direction.PREV, cursorId, prevSlice.hasMore(), false, size, anchorCursor,
                 InitialScrollMode.NONE,
-                new ReadBoundary(false, null, null)
+                new ReadBoundary(false, null, null),
+                unreadCountMap
             );
         } else {
             MessageSlice nextSlice = fetchNextSlice(lightningId, cursorId, size);
             return buildResponse(
                 nextSlice.messages(), Direction.NEXT, cursorId, false, nextSlice.hasMore(), size, anchorCursor,
                 InitialScrollMode.NONE,
-                new ReadBoundary(false, null, null)
+                new ReadBoundary(false, null, null),
+                unreadCountMap
             );
         }
     }
@@ -283,7 +293,8 @@ public class ChatService {
         int size,
         Long anchorCursor,
         InitialScrollMode initialScrollMode,
-        ReadBoundary readBoundary
+        ReadBoundary readBoundary,
+        NavigableMap<Long, Long> unreadCountMap
     ) {
         List<MessageItem> items = messages.stream()
             .map(cm -> new MessageItem(
@@ -291,7 +302,8 @@ public class ChatService {
                 cm.getUser().getId(),
                 cm.getUser().getNickname(),
                 cm.getContent(),
-                cm.getCreatedAt()
+                cm.getCreatedAt(),
+                unreadForMessage(unreadCountMap, cm.getId())
             ))
             .toList();
 
@@ -329,5 +341,32 @@ public class ChatService {
     private Lightning findLightningBy(Long lightningId) {
         return lightningRepository.findById(lightningId)
             .orElseThrow(() -> new CustomException(LIGHTNING_NOT_FOUND));
+    }
+
+    private NavigableMap<Long, Long> getUnreadCountMap(Long lightningId, Long userId) {
+        List<Long> lastChatMessageIds = lightningParticipantRepository.findParticipantsLastChatMessageIds(lightningId, userId);
+        NavigableMap<Long, Long> countMap = lastChatMessageIds.stream()
+            .collect(Collectors.groupingBy(
+                Function.identity(),
+                TreeMap::new,
+                Collectors.counting())
+            );
+
+        long sum = 0L;
+        for (Map.Entry<Long, Long> e : countMap.entrySet()) {
+            sum += e.getValue();
+            e.setValue(sum);
+        }
+
+        for (Map.Entry<Long, Long> e : countMap.entrySet()) {
+            System.out.println("key: " + e.getKey() + " value: " + e.getValue());
+        }
+
+        return countMap;
+    }
+
+    private long unreadForMessage(NavigableMap<Long, Long> unreadPrefixMap, Long messageId) {
+        Map.Entry<Long, Long> e = unreadPrefixMap.lowerEntry(messageId);
+        return e == null ? 0L : e.getValue();
     }
 }

@@ -18,7 +18,8 @@ public record ChatMessagePageResponse(
         Long senderId,
         String senderNickname,
         String content,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        Long unreadCount
     ) {
     }
 
