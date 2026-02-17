@@ -13,6 +13,7 @@ public record CreateChatMessageEventPayload(
     ChatType chatType,
     String content,
     LocalDateTime createdAt,
-    String senderNickname
+    String senderNickname,
+    Long unreadCount
 ) implements EventPayload {
 }

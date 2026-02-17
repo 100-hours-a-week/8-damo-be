@@ -1,6 +1,6 @@
-package com.team8.damo.chat.consumer;
+package com.team8.damo.redis.listener;
 
-import com.team8.damo.chat.message.ChatBroadcastMessage;
+import com.team8.damo.chat.message.WsEventMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -17,7 +17,7 @@ public class RedisListener {
 
     public void onMessage(String jsonMessage) {
         try {
-            ChatBroadcastMessage message = objectMapper.readValue(jsonMessage, ChatBroadcastMessage.class);
+            WsEventMessage message = objectMapper.readValue(jsonMessage, WsEventMessage.class);
             messageSendingOperations.convertAndSend("/sub/lightning/" + message.lightningId(), message);
         } catch (Exception e) {
             log.error(e.getMessage(), e);

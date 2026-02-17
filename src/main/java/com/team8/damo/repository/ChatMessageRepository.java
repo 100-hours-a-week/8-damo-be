@@ -12,10 +12,10 @@ import java.util.List;
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
 
     @Query("SELECT chat.lightning.id as lightningId, COUNT(chat) as unreadCount " +
-            "FROM ChatMessage chat " +
-            "JOIN LightningParticipant lp ON lp.lightning.id = chat.lightning.id AND lp.user.id = :userId " +
-            "WHERE chat.id > lp.lastReadChatMessageId " +
-            "GROUP BY chat.lightning.id")
+        "FROM ChatMessage chat " +
+        "JOIN LightningParticipant lp ON lp.lightning.id = chat.lightning.id AND lp.user.id = :userId " +
+        "WHERE chat.id > lp.lastReadChatMessageId " +
+        "GROUP BY chat.lightning.id")
     List<UnreadCount> countUnreadMessagesByUser(@Param("userId") Long userId);
 
     @Query("SELECT cm FROM ChatMessage cm " +
@@ -33,6 +33,12 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
         "WHERE cm.lightning.id = :lightningId AND cm.id > :cursorId")
     List<ChatMessage> findNextMessages(@Param("lightningId") Long lightningId, @Param("cursorId") Long cursorId, Pageable pageable);
 
-    @Query("SELECT MAX(cm.id) FROM ChatMessage cm WHERE cm.lightning.id = :lightningId")
+    @Query(value = """
+        SELECT cm.id
+        FROM chat_messages cm
+        WHERE cm.lightning_id = :lightningId
+        ORDER BY cm.id DESC
+        LIMIT 1
+        """, nativeQuery = true)
     Long findLatestMessageId(@Param("lightningId") Long lightningId);
 }

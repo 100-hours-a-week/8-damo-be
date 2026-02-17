@@ -10,7 +10,8 @@ public enum EventType {
     RESTAURANT_RECOMMENDATION(RecommendationEventPayload.class),
     RESTAURANT_RECOMMENDATION_REFRESH(RecommendationRefreshEventPayload.class),
     USER_PERSONA(UserPersonaPayload.class),
-    CREATE_CHAT_MESSAGE(CreateChatMessageEventPayload.class)
+    CREATE_CHAT_MESSAGE(CreateChatMessageEventPayload.class),
+    UPDATE_UNREAD_COUNT(UpdateUnreadCountEventPayload.class)
     ;
 
     private final Class<? extends EventPayload> payloadClass;

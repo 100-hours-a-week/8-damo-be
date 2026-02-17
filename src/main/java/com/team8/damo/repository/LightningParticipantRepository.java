@@ -3,6 +3,7 @@ package com.team8.damo.repository;
 import com.team8.damo.entity.LightningParticipant;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -35,4 +36,22 @@ public interface LightningParticipantRepository extends JpaRepository<LightningP
     );
 
     List<LightningParticipant> findAllByLightningIdIn(List<Long> lightningIds);
+
+    @Query("select lp.lastReadChatMessageId from LightningParticipant lp " +
+        "where lp.lightning.id = :lightningId " +
+        "and lp.lastReadChatMessageId is not null " +
+        "and lp.user.id <> :userId")
+    List<Long> findParticipantsLastChatMessageIds(
+        @Param("lightningId") Long lightningId,
+        @Param("userId") Long userId
+    );
+
+    @Modifying
+    @Query("update LightningParticipant lp set lp.lastReadChatMessageId = :lastReadChatMessageId " +
+        "where lp.lightning.id = :lightningId and lp.user.id = :userId")
+    void updateLastReadChatMessageId(
+        @Param("userId") Long userId,
+        @Param("lightningId") Long lightningId,
+        @Param("lastReadChatMessageId") Long lastReadChatMessageId
+    );
 }

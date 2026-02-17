@@ -6,6 +6,9 @@ import com.team8.damo.entity.LightningParticipant;
 import com.team8.damo.entity.Restaurant;
 import com.team8.damo.entity.User;
 import com.team8.damo.entity.enumeration.LightningStatus;
+import com.team8.damo.event.EventType;
+import com.team8.damo.event.handler.CommonEventPublisher;
+import com.team8.damo.event.payload.UpdateUnreadCountEventPayload;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.repository.*;
 import com.team8.damo.repository.projections.UnreadCount;
@@ -36,6 +39,7 @@ public class LightningService {
     private final LightningParticipantRepository lightningParticipantRepository;
     private final RestaurantRepository restaurantRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final CommonEventPublisher commonEventPublisher;
 
     @Transactional
     @CustomLock(key = "#lightningId")
@@ -209,6 +213,33 @@ public class LightningService {
             .toList();
     }
 
+    @Transactional
+    public void onSubscribe(Long userId, Long lightningId) {
+        LightningParticipant participant = findParticipantBy(userId, lightningId);
+//        lightningParticipantRepository.updateLastReadChatMessageId(userId, lightningId, null);
+
+        Long startChatMessageId = participant.getLastReadChatMessageId();
+        Long endChatMessageId = chatMessageRepository.findLatestMessageId(lightningId);
+
+        participant.updateLastReadChatMessageId(null);
+
+        commonEventPublisher.publish(
+            EventType.UPDATE_UNREAD_COUNT,
+            UpdateUnreadCountEventPayload.builder()
+                .userId(userId)
+                .lightningId(lightningId)
+                .startChatMessageId(startChatMessageId)
+                .endChatMessageId(endChatMessageId)
+                .build()
+        );
+    }
+
+    @Transactional
+    public void onUnsubscribe(Long userId, Long lightningId) {
+        Long latestMessageId = chatMessageRepository.findLatestMessageId(lightningId);
+        lightningParticipantRepository.updateLastReadChatMessageId(userId, lightningId, latestMessageId);
+    }
+
     private Map<String, String> createRestaurantNameMap(List<String> restaurantIds) {
         return restaurantRepository.findAllById(restaurantIds)
             .stream()
@@ -243,5 +274,10 @@ public class LightningService {
     private Lightning findLightningBy(Long lightningId) {
         return lightningRepository.findById(lightningId)
             .orElseThrow(() -> new CustomException(LIGHTNING_NOT_FOUND));
+    }
+
+    private LightningParticipant findParticipantBy(Long userId, Long lightningId) {
+        return lightningParticipantRepository.findByLightningIdAndUserId(lightningId, userId)
+            .orElseThrow(() -> new CustomException(LIGHTNING_PARTICIPANT_NOT_FOUND));
     }
 }
