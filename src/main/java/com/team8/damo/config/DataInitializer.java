@@ -42,6 +42,7 @@ public class DataInitializer implements ApplicationRunner {
     private final LightningRepository lightningRepository;
     private final LightningParticipantRepository lightningParticipantRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final SatisfactionCategoryRepository satisfactionCategoryRepository;
     private final Snowflake snowflake;
 
     @Override
@@ -50,6 +51,7 @@ public class DataInitializer implements ApplicationRunner {
         initAllergyCategoriesIfEmpty();
         initLikeFoodCategoriesIfEmpty();
         initLikeIngredientCategoriesIfEmpty();
+        initSatisfactionCategoriesIfEmpty();
         initTestDataIfEmpty();
     }
 
@@ -81,6 +83,16 @@ public class DataInitializer implements ApplicationRunner {
             .map(LikeIngredientCategory::new)
             .toList();
         likeIngredientCategoryRepository.saveAll(categories);
+    }
+
+    private void initSatisfactionCategoriesIfEmpty() {
+        if (satisfactionCategoryRepository.count() > 0) {
+            return;
+        }
+        List<SatisfactionCategory> categories = Arrays.stream(SatisfactionType.values())
+            .map(SatisfactionCategory::new)
+            .toList();
+        satisfactionCategoryRepository.saveAll(categories);
     }
 
     private void initTestDataIfEmpty() {
@@ -358,6 +370,7 @@ public class DataInitializer implements ApplicationRunner {
             .budget(50000)
             .diningStatus(DiningStatus.CONFIRMED)
             .build();
+        dining.changeRecommendationCount(1);
         diningRepository.save(dining);
 
         // All members voted ATTEND
@@ -376,18 +389,25 @@ public class DataInitializer implements ApplicationRunner {
         // Update attendanceVoteDoneCount
         diningRepository.setAttendanceVoteDoneCount(dining.getId(), MEMBERS_PER_GROUP);
 
+        List<String> restaurantIds = List.of(
+            "6976b54010e1fa815903d4ce",
+            "6976b57f10e1fa815903d4cf",
+            "6976b58610e1fa815903d4d0"
+        );
+
         // Create 5 recommended restaurants, first one is confirmed
         List<RecommendRestaurant> restaurants = new ArrayList<>();
         for (int i = 1; i <= RESTAURANTS_PER_DINING; i++) {
             RecommendRestaurant restaurant = RecommendRestaurant.builder()
                 .id(snowflake.nextId())
                 .dining(dining)
-                .restaurantId("restaurant_" + dining.getId() + "_" + i)
+                .restaurantId(restaurantIds.get(i % 3))
                 .confirmedStatus(i == 1) // First restaurant is confirmed
                 .likeCount(i == 1 ? 8 : 2) // Confirmed has most likes
                 .dislikeCount(i == 1 ? 1 : 5)
                 .point(100 - (i * 10))
                 .reasoningDescription("추천 이유 " + i + ": 맛있고 분위기 좋은 식당입니다.")
+                .recommendationCount(1)
                 .build();
             restaurants.add(restaurant);
         }
