@@ -46,6 +46,12 @@ public enum ErrorCode {
     ANOTHER_RESTAURANT_ALREADY_CONFIRMED(CONFLICT, "이미 다른 추천 식당이 확정 완료되었습니다."),
     RECOMMEND_REFRESH_ONLY_IN_RESTAURANT_VOTING(BAD_REQUEST, "장소 재추천은 장소 투표 상태에서만 가능합니다."),
 
+    // Review
+    REVIEW_NOT_FOUND(NOT_FOUND, "리뷰를 찾을 수 없습니다."),
+    DINING_NOT_COMPLETE(BAD_REQUEST, "완료된 회식에만 리뷰를 작성할 수 있습니다."),
+    DINING_PARTICIPANT_REQUIRED_FOR_REVIEW(FORBIDDEN, "회식 참여자만 리뷰를 작성할 수 있습니다."),
+    DUPLICATE_SATISFACTION_TAG(BAD_REQUEST, "동일한 만족 태그를 중복 선택할 수 없습니다."),
+
     // Lightning Gathering
     LIGHTNING_NOT_FOUND(NOT_FOUND, "번개 모임을 찾을 수 없습니다."),
     LIGHTNING_CLOSED(BAD_REQUEST, "모집이 마감된 번개 모임입니다."),
