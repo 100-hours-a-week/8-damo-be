@@ -1,6 +1,6 @@
 package com.team8.damo.service;
 
-import com.team8.damo.chat.producer.ChatProducer;
+import com.team8.damo.chat.producer.ChatMessageBroker;
 import com.team8.damo.controller.request.ChatMessageRequest;
 import com.team8.damo.entity.ChatMessage;
 import com.team8.damo.entity.Lightning;
@@ -41,7 +41,7 @@ import static com.team8.damo.redis.key.RedisKeyPrefix.LIGHTNING_SUBSCRIBE_USERS;
 @Transactional(readOnly = true)
 public class ChatService {
     private final Snowflake snowflake;
-    private final ChatProducer chatProducer;
+    private final ChatMessageBroker chatMessageBroker;
     private final UserRepository userRepository;
     private final LightningRepository lightningRepository;
     private final ChatMessageRepository chatMessageRepository;

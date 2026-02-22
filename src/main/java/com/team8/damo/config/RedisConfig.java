@@ -1,6 +1,6 @@
 package com.team8.damo.config;
 
-import com.team8.damo.redis.listener.RedisListener;
+import com.team8.damo.chat.producer.RedisMessageBroker;
 import io.lettuce.core.api.StatefulConnection;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.springframework.beans.factory.annotation.Value;
@@ -127,7 +127,7 @@ public class RedisConfig {
     }
 
     @Bean
-    public MessageListenerAdapter messageListenerAdapter(RedisListener listener) {
-        return new MessageListenerAdapter(listener, "onMessage");
+    public MessageListenerAdapter messageListenerAdapter(RedisMessageBroker broker) {
+        return new MessageListenerAdapter(broker, "onMessage");
     }
 }

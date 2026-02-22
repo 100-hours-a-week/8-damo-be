@@ -1,7 +1,7 @@
 package com.team8.damo.event.handler;
 
 import com.team8.damo.chat.message.WsEventMessage;
-import com.team8.damo.chat.producer.ChatProducer;
+import com.team8.damo.chat.producer.ChatMessageBroker;
 import com.team8.damo.event.Event;
 import com.team8.damo.event.EventType;
 import com.team8.damo.event.payload.UpdateUnreadCountEventPayload;
@@ -12,12 +12,12 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class UpdateUnreadCountHandler implements EventHandler<UpdateUnreadCountEventPayload> {
 
-    private final ChatProducer chatProducer;
+    private final ChatMessageBroker chatMessageBroker;
 
     @Override
     public void handle(Event<UpdateUnreadCountEventPayload> event) {
         UpdateUnreadCountEventPayload payload = event.getPayload();
-        chatProducer.send(WsEventMessage.createUnreadUpdate(
+        chatMessageBroker.send(WsEventMessage.createUnreadUpdate(
             payload.lightningId(),
             payload
         ));
