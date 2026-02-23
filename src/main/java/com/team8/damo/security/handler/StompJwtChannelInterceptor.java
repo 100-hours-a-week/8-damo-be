@@ -1,12 +1,9 @@
 package com.team8.damo.security.handler;
 
-import com.team8.damo.repository.LightningParticipantRepository;
 import com.team8.damo.security.jwt.JwtProvider;
 import com.team8.damo.security.jwt.JwtUserDetails;
-import com.team8.damo.service.LightningService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -21,9 +18,6 @@ import org.springframework.stereotype.Component;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.team8.damo.redis.key.RedisKeyPrefix.LIGHTNING_SUBSCRIBE_USERS;
-import static com.team8.damo.redis.key.RedisKeyPrefix.STOMP_SUBSCRIPTION;
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -35,11 +29,8 @@ public class StompJwtChannelInterceptor implements ChannelInterceptor {
     private static final Pattern SUB_DEST =
         Pattern.compile("^/sub/lightning/(\\d+)$");
 
-    private final RedisTemplate<String, String> redisTemplate;
-
     private final JwtProvider jwtProvider;
-    private final LightningService lightningService;
-    private final LightningParticipantRepository lightningParticipantRepository;
+    private final StompSubscriptionCleanupManager subscriptionCleanupManager;
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -50,7 +41,8 @@ public class StompJwtChannelInterceptor implements ChannelInterceptor {
         switch (command) {
             case CONNECT -> authenticate(accessor);
             case SUBSCRIBE -> addSubscriber(accessor, command);
-            case UNSUBSCRIBE -> removeSubscriber(accessor, command);
+            case UNSUBSCRIBE -> removeSubscriber(accessor);
+            case DISCONNECT -> removeAllSubscribers(accessor);
             case SEND -> authorize(accessor, command);
         }
 
@@ -89,38 +81,28 @@ public class StompJwtChannelInterceptor implements ChannelInterceptor {
         JwtUserDetails user = authorize(accessor, command);
         Long lightningId = extractLightningId(accessor.getDestination(), command);
 
-        String sessionKey = accessor.getSessionId() + ":" + accessor.getSubscriptionId();
-        redisTemplate.opsForValue().set(
-            STOMP_SUBSCRIPTION.key(sessionKey), lightningId.toString()
+        subscriptionCleanupManager.registerSubscription(
+            user.getUserId(),
+            accessor.getSessionId(),
+            accessor.getSubscriptionId(),
+            lightningId
         );
-
-        redisTemplate.opsForSet().add(
-            LIGHTNING_SUBSCRIBE_USERS.key(lightningId),
-            user.getUserId().toString()
-        );
-
-        lightningService.onSubscribe(user.getUserId(), lightningId);
     }
 
-    private void removeSubscriber(StompHeaderAccessor accessor, StompCommand command) {
-        String key = STOMP_SUBSCRIPTION.key(accessor.getSessionId(), accessor.getSubscriptionId());
-        String lightningIdStr = redisTemplate.opsForValue().get(key);
-
-        if (lightningIdStr == null) {
-            log.warn("No subscription mapping found for {}", key);
-            return;
-        }
-
+    private void removeSubscriber(StompHeaderAccessor accessor) {
         JwtUserDetails user = extractUser(accessor);
-        Long lightningId = Long.valueOf(lightningIdStr);
-
-        redisTemplate.opsForSet().remove(
-            LIGHTNING_SUBSCRIBE_USERS.key(lightningId),
-            user.getUserId().toString()
+        subscriptionCleanupManager.unregisterSubscription(
+            user.getUserId(),
+            accessor.getSessionId(),
+            accessor.getSubscriptionId()
         );
+    }
 
-        lightningService.onUnsubscribe(user.getUserId(), lightningId);
-        redisTemplate.delete(key);
+    private void removeAllSubscribers(StompHeaderAccessor accessor) {
+        subscriptionCleanupManager.unregisterAllBySession(
+            extractUserIdOrNull(accessor),
+            accessor.getSessionId()
+        );
     }
 
     private JwtUserDetails extractUser(StompHeaderAccessor accessor) {
@@ -130,6 +112,14 @@ public class StompJwtChannelInterceptor implements ChannelInterceptor {
             throw new AccessDeniedException("Unauthenticated STOMP session");
         }
         return user;
+    }
+
+    private Long extractUserIdOrNull(StompHeaderAccessor accessor) {
+        if (accessor.getUser() instanceof Authentication authentication
+            && authentication.getPrincipal() instanceof JwtUserDetails user) {
+            return user.getUserId();
+        }
+        return null;
     }
 
     private Long extractLightningId(String destination, StompCommand command) {

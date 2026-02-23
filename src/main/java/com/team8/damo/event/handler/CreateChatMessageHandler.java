@@ -2,7 +2,7 @@ package com.team8.damo.event.handler;
 
 import com.team8.damo.chat.message.ChatBroadcastMessage;
 import com.team8.damo.chat.message.WsEventMessage;
-import com.team8.damo.chat.producer.ChatProducer;
+import com.team8.damo.chat.producer.ChatMessageBroker;
 import com.team8.damo.event.Event;
 import com.team8.damo.event.EventType;
 import com.team8.damo.event.payload.CreateChatMessageEventPayload;
@@ -16,12 +16,12 @@ import static net.logstash.logback.argument.StructuredArguments.kv;
 @Component
 @RequiredArgsConstructor
 public class CreateChatMessageHandler implements EventHandler<CreateChatMessageEventPayload> {
-    private final ChatProducer chatProducer;
+    private final ChatMessageBroker chatMessageBroker;
 
     @Override
     public void handle(Event<CreateChatMessageEventPayload> event) {
         CreateChatMessageEventPayload payload = event.getPayload();
-        chatProducer.send(WsEventMessage.createChatMessage(
+        chatMessageBroker.send(WsEventMessage.createChatMessage(
             payload.lightningId(),
             ChatBroadcastMessage.from(payload))
         );

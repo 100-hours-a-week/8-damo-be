@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 public enum RedisKeyPrefix {
     LIGHTNING_SUBSCRIBE_USERS("lightning:subscribe:users:"),
     STOMP_SUBSCRIPTION("lightning:subscription:"),
+    STOMP_SESSION_SUBSCRIPTIONS("lightning:session:subscriptions:"),
+    STOMP_SESSION_USER("lightning:session:user:"),
     ;
 
     private final String prefix;
