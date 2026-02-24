@@ -7,12 +7,28 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum EventType {
-    RESTAURANT_RECOMMENDATION(RecommendationEventPayload.class),
-    RESTAURANT_RECOMMENDATION_REFRESH(RecommendationRefreshEventPayload.class),
-    USER_PERSONA(UserPersonaPayload.class),
-    CREATE_CHAT_MESSAGE(CreateChatMessageEventPayload.class),
-    UPDATE_UNREAD_COUNT(UpdateUnreadCountEventPayload.class)
+    RECOMMENDATION_REQUEST(RecommendationEventPayload.class, Topic.RECOMMENDATION_REQUEST),
+    RECOMMENDATION_REFRESH_REQUEST(RecommendationRefreshEventPayload.class, ""),
+    USER_PERSONA(UserPersonaPayload.class, Topic.USER_PERSONA),
+    CREATE_CHAT_MESSAGE(CreateChatMessageEventPayload.class, ""),
+    UPDATE_UNREAD_COUNT(UpdateUnreadCountEventPayload.class, "")
     ;
 
     private final Class<? extends EventPayload> payloadClass;
+    private final String topic;
+
+    public static EventType from(String type) {
+        try {
+            return valueOf(type);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public static class Topic {
+        public static final String RECOMMENDATION_REQUEST = "recommendation-request";
+        public static final String RECOMMENDATION_RESPONSE = "recommendation-response";
+        public static final String RECOMMENDATION_REFRESH_REQUEST = "recommendation-refresh-request";
+        public static final String USER_PERSONA = "user-persona";
+    }
 }
