@@ -31,6 +31,7 @@ public class SecurityConfig {
         "/api/v1/auth/oauth",
         "/api/v1/auth/reissue",
         "/api/v1/auth/test",
+        "/api/v1/auth/test/**",
         "/api/v1/s3",
         "/login",
         "/api/healthy",
