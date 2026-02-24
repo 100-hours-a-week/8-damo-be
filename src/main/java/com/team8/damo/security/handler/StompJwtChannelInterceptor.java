@@ -1,7 +1,12 @@
 package com.team8.damo.security.handler;
 
+import com.team8.damo.exception.CustomException;
+import com.team8.damo.exception.errorcode.ErrorCode;
 import com.team8.damo.security.jwt.JwtProvider;
 import com.team8.damo.security.jwt.JwtUserDetails;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -53,12 +58,21 @@ public class StompJwtChannelInterceptor implements ChannelInterceptor {
         String authHeader = accessor.getFirstNativeHeader(HttpHeaders.AUTHORIZATION);
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new AccessDeniedException("Missing Authorization header");
+            throw new CustomException(ErrorCode.JWT_FILTER_ERROR);
         }
 
         String token = authHeader.substring(7);
-        if (!jwtProvider.validateToken(token)) {
-            throw new AccessDeniedException("Invalid JWT token");
+        try {
+            jwtProvider.validateToken(token);
+            accessor.setUser(jwtProvider.getAuthentication(token));
+        } catch (io.jsonwebtoken.security.SecurityException | MalformedJwtException e) {
+            throw new CustomException(ErrorCode.JWT_INVALID_TOKEN_ERROR);
+        } catch (ExpiredJwtException e) {
+            throw new CustomException(ErrorCode.JWT_EXPIRED_TOKEN_ERROR);
+        } catch (UnsupportedJwtException e) {
+            throw new CustomException(ErrorCode.JWT_UNSUPPORTED_TOKEN_ERROR);
+        } catch (IllegalArgumentException e) {
+            throw new CustomException(ErrorCode.JWT_CLAIMS_EMPTY_ERROR);
         }
 
         Authentication authentication = jwtProvider.getAuthentication(token);
