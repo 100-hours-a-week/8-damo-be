@@ -1,6 +1,7 @@
 package com.team8.damo.service;
 
 import com.team8.damo.client.AiService;
+import com.team8.damo.client.request.DiningData;
 import com.team8.damo.entity.Dining;
 import com.team8.damo.entity.DiningParticipant;
 import com.team8.damo.entity.Group;
@@ -17,6 +18,7 @@ import com.team8.damo.event.EventType;
 import com.team8.damo.event.handler.CommonEventPublisher;
 import com.team8.damo.event.payload.RecommendationEventPayload;
 import com.team8.damo.event.payload.RecommendationRefreshEventPayload;
+import com.team8.damo.event.payload.RecommendationV2EventPayload;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.DiningCreateServiceRequest;
@@ -213,6 +215,29 @@ public class DiningService {
             RecommendationEventPayload.builder()
                 .group(group)
                 .dining(dining)
+                .userIds(userIds)
+                .build()
+        );
+
+        refreshDining.startRecommendationPending();
+    }
+
+    // kafka 도입 후 해당 메서드를 수행
+    private void triggerRestaurantRecommendationV2(Long groupId, Dining dining) {
+        int voteDoneCount = diningRepository.getAttendanceVoteDoneCount(dining.getId());
+        int totalParticipants = diningParticipantRepository.countByDiningId(dining.getId());
+
+        if (voteDoneCount < totalParticipants) return;
+
+        // 모두 참석 투표를 완료하면 AI 장소 추천 요청
+        Group group = findGroupBy(groupId);
+        Dining refreshDining = findDiningBy(dining.getId());
+        List<Long> userIds = createAttendParticipantIds(dining);
+
+        commonEventPublisher.publish(
+            EventType.RECOMMENDATION_REQUEST,
+            RecommendationV2EventPayload.builder()
+                .diningData(createDiningData(group, dining))
                 .userIds(userIds)
                 .build()
         );
@@ -434,4 +459,14 @@ public class DiningService {
         return !userGroupRepository.existsByUserIdAndGroupIdAndRole(userId, groupId, GroupRole.LEADER);
     }
 
+    private DiningData createDiningData(Group group, Dining dining) {
+        return new DiningData(
+            dining.getId(),
+            group.getId(),
+            dining.getDiningDate(),
+            dining.getBudget(),
+            String.valueOf(group.getLongitude()),
+            String.valueOf(group.getLatitude())
+        );
+    }
 }
