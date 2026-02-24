@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum EventType {
     RECOMMENDATION_REQUEST(RecommendationEventPayload.class, Topic.RECOMMENDATION_REQUEST),
+    RECOMMENDATION_RESPONSE(RecommendationDoneEventPayload.class, Topic.RECOMMENDATION_RESPONSE),
     RECOMMENDATION_REFRESH_REQUEST(RecommendationRefreshEventPayload.class, ""),
     USER_PERSONA(UserPersonaPayload.class, Topic.USER_PERSONA),
     CREATE_CHAT_MESSAGE(CreateChatMessageEventPayload.class, ""),
