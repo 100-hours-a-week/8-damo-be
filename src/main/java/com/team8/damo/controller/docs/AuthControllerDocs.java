@@ -2,11 +2,13 @@ package com.team8.damo.controller.docs;
 
 import com.team8.damo.controller.request.OAuthLoginRequest;
 import com.team8.damo.controller.response.BaseResponse;
+import com.team8.damo.service.response.JwtTokenResponse;
 import com.team8.damo.service.response.OAuthLoginResponse;
 import com.team8.damo.swagger.annotation.ApiErrorResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -66,6 +68,48 @@ public interface AuthControllerDocs {
     BaseResponse<?> reissue(
         @Parameter(hidden = true)
         HttpServletRequest request,
+        @Parameter(hidden = true)
+        HttpServletResponse response
+    );
+
+    @Operation(
+        summary = "[테스트] 기본 테스트 토큰 발급",
+        description = """
+            ### 테스트용 JWT 토큰을 발급합니다.
+            - 기본 사용자에 대한 액세스/리프레시 토큰을 발급합니다.
+
+            **쿠키 설정**:
+            - access_token: 액세스 토큰 (HttpOnly, Secure, SameSite=Lax)
+            - refresh_token: 리프레시 토큰 (HttpOnly, Secure, SameSite=Strict)
+            """
+    )
+    @ApiResponse(responseCode = "204", description = "성공")
+    @SecurityRequirements(value = {})
+    BaseResponse<Void> test(
+        @Parameter(hidden = true)
+        HttpServletResponse response
+    );
+
+    @Operation(
+        summary = "[테스트] 특정 사용자 테스트 토큰 발급",
+        description = """
+            ### 특정 사용자에 대한 테스트용 JWT 토큰을 발급합니다.
+            - userId를 지정하여 해당 사용자의 액세스/리프레시 토큰을 발급합니다.
+
+            **응답**:
+            - accessToken: 액세스 토큰
+            - refreshToken: 리프레시 토큰
+
+            **쿠키 설정**:
+            - access_token: 액세스 토큰 (HttpOnly, Secure, SameSite=Lax)
+            - refresh_token: 리프레시 토큰 (HttpOnly, Secure, SameSite=Strict)
+            """
+    )
+    @ApiResponse(responseCode = "200", description = "성공")
+    @SecurityRequirements(value = {})
+    BaseResponse<JwtTokenResponse> test(
+        @Parameter(description = "사용자 ID", required = true, example = "1")
+        Long userId,
         @Parameter(hidden = true)
         HttpServletResponse response
     );
