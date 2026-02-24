@@ -47,6 +47,6 @@ public class RecommendationRefreshHandler implements EventHandler<Recommendation
 
     @Override
     public boolean supports(Event<RecommendationRefreshEventPayload> event) {
-        return EventType.RESTAURANT_RECOMMENDATION_REFRESH == event.getEventType();
+        return EventType.RECOMMENDATION_REFRESH_REQUEST == event.getEventType();
     }
 }

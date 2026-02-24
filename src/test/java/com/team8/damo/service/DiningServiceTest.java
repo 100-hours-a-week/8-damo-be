@@ -2632,7 +2632,7 @@ class DiningServiceTest {
         then(userGroupRepository).should().existsByUserIdAndGroupIdAndRole(userId, groupId, GroupRole.LEADER);
         then(diningRepository).should().findById(diningId);
         then(groupRepository).should().findById(groupId);
-        then(commonEventPublisher).should().publish(eq(EventType.RESTAURANT_RECOMMENDATION_REFRESH), any(RecommendationRefreshEventPayload.class));
+        then(commonEventPublisher).should().publish(eq(EventType.RECOMMENDATION_REFRESH_REQUEST), any(RecommendationRefreshEventPayload.class));
     }
 
     @Test
@@ -2806,6 +2806,6 @@ class DiningServiceTest {
 
         // then
         assertThat(dining.getDiningStatus()).isEqualTo(DiningStatus.RECOMMENDATION_PENDING);
-        then(commonEventPublisher).should().publish(eq(EventType.RESTAURANT_RECOMMENDATION_REFRESH), any(RecommendationRefreshEventPayload.class));
+        then(commonEventPublisher).should().publish(eq(EventType.RECOMMENDATION_REFRESH_REQUEST), any(RecommendationRefreshEventPayload.class));
     }
 }

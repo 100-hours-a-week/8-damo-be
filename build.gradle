@@ -90,6 +90,10 @@ dependencies {
     // websocket
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'org.springframework.security:spring-security-messaging'
+
+    // kafka
+    implementation 'org.springframework.boot:spring-boot-starter-kafka'
+    testImplementation 'org.springframework.boot:spring-boot-starter-kafka-test'
 }
 
 tasks.named('test') {
