@@ -9,9 +9,9 @@ import lombok.RequiredArgsConstructor;
 public enum EventType {
     RECOMMENDATION_REQUEST(RecommendationEventPayload.class, Topic.RECOMMENDATION_REQUEST),
     RECOMMENDATION_RESPONSE(RecommendationDoneEventPayload.class, Topic.RECOMMENDATION_RESPONSE),
-    RECOMMENDATION_REFRESH_REQUEST(RecommendationRefreshEventPayload.class, ""),
-    USER_PERSONA(UserPersonaPayload.class, ""),
+    RECOMMENDATION_REFRESH_REQUEST(RecommendationRefreshEventPayload.class, Topic.RECOMMENDATION_REFRESH_REQUEST),
     USER_PERSONA_UPDATE(UserPersonaEventPayload.class, Topic.USER_PERSONA_UPDATE),
+    USER_PERSONA(UserPersonaPayload.class, ""),
     CREATE_CHAT_MESSAGE(CreateChatMessageEventPayload.class, ""),
     UPDATE_UNREAD_COUNT(UpdateUnreadCountEventPayload.class, "")
     ;
@@ -32,5 +32,9 @@ public enum EventType {
         public static final String RECOMMENDATION_RESPONSE = "recommendation-response";
         public static final String RECOMMENDATION_REFRESH_REQUEST = "recommendation-refresh-request";
         public static final String USER_PERSONA_UPDATE = "user-persona-update";
+        public static final String RECOMMENDATION_STREAMING = "recommendation-streaming";
+        public static final String RESTAURANT_CONFIRMED = "restaurant-confirmed";
+        public static final String RECEIPT_OCR_REQUEST = "receipt-ocr-request";
+        public static final String RECEIPT_OCR_RESPONSE = "receipt-ocr-response";
     }
 }
