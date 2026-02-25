@@ -292,7 +292,7 @@ public class UserService {
         List<FoodType> likeFoods,
         List<IngredientType> likeIngredients
     ) {
-        commonEventPublisher.publish(
+        commonEventPublisher.publishKafka(
             EventType.USER_PERSONA_UPDATE,
             UserPersonaEventPayload.builder()
                 .userId(user.getId())

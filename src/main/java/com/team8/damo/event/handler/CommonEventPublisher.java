@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CommonEventPublisher {
 
-    private Snowflake snowflake;
+    private final Snowflake snowflake;
     private final ApplicationEventPublisher eventPublisher;
 
     public void publish(EventType eventType, EventPayload payload) {

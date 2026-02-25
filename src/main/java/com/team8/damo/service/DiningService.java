@@ -182,7 +182,7 @@ public class DiningService {
 
         if (isFirstVote) {
             diningRepository.increaseAttendanceVoteDoneCount(diningId);
-            triggerRestaurantRecommendation(groupId, dining);
+            triggerRestaurantRecommendationV2(groupId, dining);
         }
 
         return participant.getAttendanceVoteStatus();
@@ -223,7 +223,7 @@ public class DiningService {
         Dining refreshDining = findDiningBy(dining.getId());
         List<Long> userIds = createAttendParticipantIds(dining);
 
-        commonEventPublisher.publish(
+        commonEventPublisher.publishKafka(
             EventType.RECOMMENDATION_REQUEST,
             RecommendationV2EventPayload.builder()
                 .diningData(createDiningData(group, dining))
@@ -281,7 +281,7 @@ public class DiningService {
         List<Long> userIds = createAttendParticipantIds(dining);
         List<RestaurantVoteResult> voteResultList = createVoteResult(diningId, dining.getRecommendationCount());
 
-        commonEventPublisher.publish(
+        commonEventPublisher.publishKafka(
             EventType.RECOMMENDATION_REFRESH_REQUEST,
             RecommendationRefreshV2EventPayload.builder()
                 .userIds(userIds)
