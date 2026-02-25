@@ -11,6 +11,7 @@ public enum EventType {
     RECOMMENDATION_RESPONSE(RecommendationDoneEventPayload.class, Topic.RECOMMENDATION_RESPONSE),
     RECOMMENDATION_REFRESH_REQUEST(RecommendationRefreshEventPayload.class, Topic.RECOMMENDATION_REFRESH_REQUEST),
     USER_PERSONA_UPDATE(UserPersonaEventPayload.class, Topic.USER_PERSONA_UPDATE),
+    RESTAURANT_CONFIRMED(RestaurantConfirmedEventPayload.class, Topic.RESTAURANT_CONFIRMED),
     USER_PERSONA(UserPersonaPayload.class, ""),
     CREATE_CHAT_MESSAGE(CreateChatMessageEventPayload.class, ""),
     UPDATE_UNREAD_COUNT(UpdateUnreadCountEventPayload.class, "")
