@@ -28,13 +28,16 @@ public enum EventType {
     }
 
     public static class Topic {
+        // produce topic
         public static final String RECOMMENDATION_REQUEST = "recommendation-request";
-        public static final String RECOMMENDATION_RESPONSE = "recommendation-response";
         public static final String RECOMMENDATION_REFRESH_REQUEST = "recommendation-refresh-request";
         public static final String USER_PERSONA_UPDATE = "user-persona-update";
-        public static final String RECOMMENDATION_STREAMING = "recommendation-streaming";
         public static final String RESTAURANT_CONFIRMED = "restaurant-confirmed";
         public static final String RECEIPT_OCR_REQUEST = "receipt-ocr-request";
+
+        // consume topic
+        public static final String RECOMMENDATION_RESPONSE = "recommendation-response";
+        public static final String RECOMMENDATION_STREAMING = "recommendation-streaming";
         public static final String RECEIPT_OCR_RESPONSE = "receipt-ocr-response";
     }
 }
