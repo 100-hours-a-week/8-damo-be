@@ -10,10 +10,7 @@ import com.team8.damo.entity.enumeration.GroupRole;
 import com.team8.damo.entity.enumeration.RestaurantVoteStatus;
 import com.team8.damo.event.EventType;
 import com.team8.damo.event.handler.CommonEventPublisher;
-import com.team8.damo.event.payload.RecommendationEventPayload;
-import com.team8.damo.event.payload.RecommendationRefreshEventPayload;
-import com.team8.damo.event.payload.RecommendationRefreshV2EventPayload;
-import com.team8.damo.event.payload.RecommendationV2EventPayload;
+import com.team8.damo.event.payload.*;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.DiningCreateServiceRequest;
@@ -182,7 +179,7 @@ public class DiningService {
 
         if (isFirstVote) {
             diningRepository.increaseAttendanceVoteDoneCount(diningId);
-            triggerRestaurantRecommendation(groupId, dining);
+            triggerRestaurantRecommendationV2(groupId, dining);
         }
 
         return participant.getAttendanceVoteStatus();
@@ -223,7 +220,7 @@ public class DiningService {
         Dining refreshDining = findDiningBy(dining.getId());
         List<Long> userIds = createAttendParticipantIds(dining);
 
-        commonEventPublisher.publish(
+        commonEventPublisher.publishKafka(
             EventType.RECOMMENDATION_REQUEST,
             RecommendationV2EventPayload.builder()
                 .diningData(createDiningData(group, dining))
@@ -281,7 +278,7 @@ public class DiningService {
         List<Long> userIds = createAttendParticipantIds(dining);
         List<RestaurantVoteResult> voteResultList = createVoteResult(diningId, dining.getRecommendationCount());
 
-        commonEventPublisher.publish(
+        commonEventPublisher.publishKafka(
             EventType.RECOMMENDATION_REFRESH_REQUEST,
             RecommendationRefreshV2EventPayload.builder()
                 .userIds(userIds)
@@ -471,6 +468,45 @@ public class DiningService {
 
         Group group = findGroupBy(groupId);
         aiService.sendConfirmRestaurant(group, dining, restaurant.getId(), recommendRestaurant);
+
+        return DiningConfirmedResponse.of(recommendRestaurant, restaurant);
+    }
+
+    @Transactional
+    public DiningConfirmedResponse confirmDiningRestaurantV2(
+        Long userId, Long groupId, Long diningId, Long recommendRestaurantId
+    ) {
+        if (isNotGroupLeader(userId, groupId)) {
+            throw new CustomException(ONLY_GROUP_LEADER_CAN_CONFIRM);
+        }
+
+        Dining dining = findDiningBy(diningId);
+        RecommendRestaurant recommendRestaurant = findRecommendRestaurantBy(recommendRestaurantId);
+
+        if (recommendRestaurant.isConfirmed()) {
+            throw new CustomException(RECOMMEND_RESTAURANT_ALREADY_CONFIRMED);
+        }
+
+        if (recommendRestaurantRepository.existsByDiningIdAndRecommendationCountAndConfirmedStatusTrue(diningId, dining.getRecommendationCount())) {
+            throw new CustomException(ANOTHER_RESTAURANT_ALREADY_CONFIRMED);
+        }
+
+        recommendRestaurant.confirmed();
+        dining.confirmed();
+
+        Restaurant restaurant = restaurantRepository.findById(recommendRestaurant.getRestaurantId())
+            .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+
+        Group group = findGroupBy(groupId);
+
+        commonEventPublisher.publishKafka(
+            EventType.RESTAURANT_CONFIRMED,
+            RestaurantConfirmedEventPayload.builder()
+                .diningData(createDiningData(group, dining))
+                .restaurantId(recommendRestaurant.getRestaurantId())
+                .voteResultList(createVoteResult(diningId, dining.getRecommendationCount()))
+                .build()
+        );
 
         return DiningConfirmedResponse.of(recommendRestaurant, restaurant);
     }
