@@ -10,7 +10,8 @@ public enum EventType {
     RECOMMENDATION_REQUEST(RecommendationEventPayload.class, Topic.RECOMMENDATION_REQUEST),
     RECOMMENDATION_RESPONSE(RecommendationDoneEventPayload.class, Topic.RECOMMENDATION_RESPONSE),
     RECOMMENDATION_REFRESH_REQUEST(RecommendationRefreshEventPayload.class, ""),
-    USER_PERSONA(UserPersonaPayload.class, Topic.USER_PERSONA),
+    USER_PERSONA(UserPersonaPayload.class, ""),
+    USER_PERSONA_UPDATE(UserPersonaEventPayload.class, Topic.USER_PERSONA_UPDATE),
     CREATE_CHAT_MESSAGE(CreateChatMessageEventPayload.class, ""),
     UPDATE_UNREAD_COUNT(UpdateUnreadCountEventPayload.class, "")
     ;
@@ -30,6 +31,6 @@ public enum EventType {
         public static final String RECOMMENDATION_REQUEST = "recommendation-request";
         public static final String RECOMMENDATION_RESPONSE = "recommendation-response";
         public static final String RECOMMENDATION_REFRESH_REQUEST = "recommendation-refresh-request";
-        public static final String USER_PERSONA = "user-persona";
+        public static final String USER_PERSONA_UPDATE = "user-persona-update";
     }
 }

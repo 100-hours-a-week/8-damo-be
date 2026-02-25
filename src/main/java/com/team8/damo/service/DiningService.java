@@ -2,14 +2,8 @@ package com.team8.damo.service;
 
 import com.team8.damo.client.AiService;
 import com.team8.damo.client.request.DiningData;
-import com.team8.damo.entity.Dining;
-import com.team8.damo.entity.DiningParticipant;
-import com.team8.damo.entity.Group;
-import com.team8.damo.entity.RecommendRestaurant;
-import com.team8.damo.entity.RecommendRestaurantVote;
-import com.team8.damo.entity.Restaurant;
-import com.team8.damo.entity.User;
-import com.team8.damo.entity.UserGroup;
+import com.team8.damo.client.request.RestaurantVoteResult;
+import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
 import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.entity.enumeration.GroupRole;
@@ -18,18 +12,13 @@ import com.team8.damo.event.EventType;
 import com.team8.damo.event.handler.CommonEventPublisher;
 import com.team8.damo.event.payload.RecommendationEventPayload;
 import com.team8.damo.event.payload.RecommendationRefreshEventPayload;
+import com.team8.damo.event.payload.RecommendationRefreshV2EventPayload;
 import com.team8.damo.event.payload.RecommendationV2EventPayload;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.DiningCreateServiceRequest;
 import com.team8.damo.service.request.RestaurantVoteServiceRequest;
-import com.team8.damo.service.response.AttendanceVoteDetailResponse;
-import com.team8.damo.service.response.DiningDetailResponse;
-import com.team8.damo.service.response.DiningParticipantResponse;
-import com.team8.damo.service.response.DiningResponse;
-import com.team8.damo.service.response.RestaurantVoteDetailResponse;
-import com.team8.damo.service.response.DiningConfirmedResponse;
-import com.team8.damo.service.response.RestaurantVoteResponse;
+import com.team8.damo.service.response.*;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -273,6 +262,37 @@ public class DiningService {
         dining.startRecommendationPending();
     }
 
+    @Transactional
+    public void refreshRecommendRestaurantsV2(
+        Long userId, Long groupId, Long diningId
+    ) {
+        if (isNotGroupLeader(userId, groupId)) {
+            throw new CustomException(ONLY_GROUP_LEADER_CAN_REFRESH);
+        }
+
+        Dining dining = findDiningBy(diningId);
+        if (dining.isNotRestaurantVoting()) {
+            throw new CustomException(RECOMMEND_REFRESH_ONLY_IN_RESTAURANT_VOTING);
+        }
+
+        Group group = findGroupBy(groupId);
+
+        DiningData diningData = createDiningData(group, dining);
+        List<Long> userIds = createAttendParticipantIds(dining);
+        List<RestaurantVoteResult> voteResultList = createVoteResult(diningId, dining.getRecommendationCount());
+
+        commonEventPublisher.publish(
+            EventType.RECOMMENDATION_REFRESH_REQUEST,
+            RecommendationRefreshV2EventPayload.builder()
+                .userIds(userIds)
+                .diningData(diningData)
+                .voteResultList(voteResultList)
+                .build()
+        );
+
+        dining.startRecommendationPending();
+    }
+
     private List<Long> createAttendParticipantIds(Dining dining) {
         List<DiningParticipant> attendParticipants = diningParticipantRepository.findAllByDiningAndAttendanceVoteStatus(dining, AttendanceVoteStatus.ATTEND);
         return attendParticipants.stream()
@@ -468,5 +488,49 @@ public class DiningService {
             String.valueOf(group.getLongitude()),
             String.valueOf(group.getLatitude())
         );
+    }
+
+    private List<RestaurantVoteResult> createVoteResult(Long diningId, int recommendationCount) {
+        Map<Long, RecommendRestaurant> recommendRestaurantMap = recommendRestaurantRepository
+            .findByDiningIdAndRecommendationCount(diningId, recommendationCount)
+            .stream().collect(Collectors.toMap(
+                RecommendRestaurant::getId,
+                recommendRestaurant -> recommendRestaurant
+            ));
+
+        List<RecommendRestaurantVote> votes = recommendRestaurantVoteRepository.findByRecommendRestaurantIdIn(recommendRestaurantMap.keySet());
+
+        Map<Long, List<Long>> likeUserMap = votes.stream()
+            .filter(vote -> vote.getStatus() == RestaurantVoteStatus.LIKE)
+            .collect(Collectors.groupingBy(
+                    vote  -> vote.getRecommendRestaurant().getId(),
+                    Collectors.mapping(vote -> vote.getUser().getId(), Collectors.toList())
+            ));
+
+        Map<Long, List<Long>> dislikeUserMap = votes.stream()
+            .filter(vote -> vote.getStatus() == RestaurantVoteStatus.DISLIKE)
+            .collect(Collectors.groupingBy(
+                vote  -> vote.getRecommendRestaurant().getId(),
+                Collectors.mapping(vote -> vote.getUser().getId(), Collectors.toList())
+            ));
+
+        Map<Long, String> restaurantIdMap = recommendRestaurantMap.values().stream()
+            .collect(Collectors.toMap(RecommendRestaurant::getId, RecommendRestaurant::getRestaurantId));
+        log.info(
+            "[DiningService.createVoteResult] \n diningId={}, recommendationCount={} \n restaurantIdMap={} \n likeUserMap={} \n dislikeUserMap={}",
+            diningId, recommendationCount, restaurantIdMap, likeUserMap, dislikeUserMap
+        );
+
+        return recommendRestaurantMap.values().stream()
+            .map(recommendRestaurant ->
+                RestaurantVoteResult.builder()
+                    .restaurantId(recommendRestaurant.getRestaurantId())
+                    .likeCount(recommendRestaurant.getLikeCount())
+                    .dislikeCount(recommendRestaurant.getDislikeCount())
+                    .likedUserIds(likeUserMap.getOrDefault(recommendRestaurant.getId(), List.of()))
+                    .dislikedUserIds(dislikeUserMap.getOrDefault(recommendRestaurant.getId(), List.of()))
+                    .build()
+            )
+            .toList();
     }
 }

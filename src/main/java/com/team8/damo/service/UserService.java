@@ -7,6 +7,7 @@ import com.team8.damo.entity.enumeration.IngredientType;
 import com.team8.damo.entity.enumeration.OnboardingStep;
 import com.team8.damo.event.EventType;
 import com.team8.damo.event.handler.CommonEventPublisher;
+import com.team8.damo.event.payload.UserPersonaEventPayload;
 import com.team8.damo.event.payload.UserPersonaPayload;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.exception.errorcode.ErrorCode;
@@ -283,5 +284,26 @@ public class UserService {
         if (!toAdd.isEmpty()) {
             saveUserLikeIngredients(user, toAdd);
         }
+    }
+
+    private void userPersonaEvent(
+        User user,
+        List<AllergyType> allergies,
+        List<FoodType> likeFoods,
+        List<IngredientType> likeIngredients
+    ) {
+        commonEventPublisher.publish(
+            EventType.USER_PERSONA_UPDATE,
+            UserPersonaEventPayload.builder()
+                .userId(user.getId())
+                .gender(user.getGender())
+                .nickname(user.getNickname())
+                .ageGroup(user.getAgeGroup())
+                .otherCharacteristics(user.getOtherCharacteristics())
+                .allergies(allergies)
+                .likeFoods(likeFoods)
+                .likeIngredients(likeIngredients)
+                .build()
+        );
     }
 }
