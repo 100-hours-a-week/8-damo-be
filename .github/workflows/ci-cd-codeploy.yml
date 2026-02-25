@@ -8,8 +8,8 @@ env:
   JAVA_VERSION: "21"
   AWS_REGION: ap-northeast-2
   ECR_REPO: 080598576517.dkr.ecr.ap-northeast-2.amazonaws.com/prod/be
-  CODEDEPLOY_APP: damo-backend
-  CODEDEPLOY_GROUP: damo-backend-prod
+  CODEDEPLOY_APP: damo-be
+  CODEDEPLOY_GROUP: prod-damo-be
   S3_BUCKET: damo-deploy-s3
   S3_KEY_PREFIX: codeploy/prod/be
 
