@@ -185,6 +185,17 @@ chmod +x ./install
 ./install auto
 service codedeploy-agent start
 ```
+우분투용 USER DATA
+```bash
+#!/bin/bash                                                                                                                                                                        
+apt-get update                                                                                                                                                                     
+apt-get install -y ruby wget                                                                                                                                                       
+                                                                                                                                                                                     
+cd /home/ubuntu                                                                                                                                                                    
+wget https://aws-codedeploy-ap-northeast-2.s3.ap-northeast-2.amazonaws.com/latest/install                                                                                          
+chmod +x ./install                                                                                                                                                                 
+./install auto    
+```
 
 ---
 
