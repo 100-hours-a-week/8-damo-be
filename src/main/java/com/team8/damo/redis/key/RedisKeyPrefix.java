@@ -11,6 +11,7 @@ public enum RedisKeyPrefix {
     STOMP_SUBSCRIPTION("lightning:subscription:"),
     STOMP_SESSION_SUBSCRIPTIONS("lightning:session:subscriptions:"),
     STOMP_SESSION_USER("lightning:session:user:"),
+    DINING_RECOMMENDATION_STREAMING("dining:recommendation:streaming:"),
     ;
 
     private final String prefix;
