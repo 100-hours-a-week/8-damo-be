@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import static com.team8.damo.exception.errorcode.ErrorCode.*;
 
@@ -320,5 +321,35 @@ public interface DiningControllerDocs {
         Long groupId,
         @Parameter(description = "회식 ID", required = true)
         Long diningId
+    );
+
+    @Operation(
+        summary = "식당 추천 SSE 스트리밍 구독",
+        description = """
+            ### AI 식당 추천 결과를 실시간 SSE 스트리밍으로 수신합니다.
+            - Content-Type: `text/event-stream`
+            - 연결 후 `connected` 이벤트가 즉시 전송됩니다.
+
+            **SSE 이벤트 형식**:
+            - eventId: 이벤트 ID (Snowflake)
+            - userId: 추천 요청 사용자 ID
+            - nickname: 사용자 닉네임
+            - content: 스트리밍 콘텐츠
+            - createdAt: 이벤트 생성 시간
+
+            **연결 종료 조건**:
+            - 추천 완료 시 서버에서 연결을 종료합니다.
+            - 타임아웃: 10분
+            - 클라이언트 연결 해제 시 자동 정리
+            """
+    )
+    @ApiResponse(responseCode = "200", description = "SSE 스트림 연결 성공")
+    SseEmitter streamingSubscribe(
+        @Parameter(description = "그룹 ID", required = true)
+        Long groupId,
+        @Parameter(description = "회식 ID", required = true)
+        Long diningId,
+        @Parameter(hidden = true)
+        JwtUserDetails user
     );
 }

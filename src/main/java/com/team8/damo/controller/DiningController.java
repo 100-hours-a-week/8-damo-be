@@ -9,6 +9,7 @@ import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
 import com.team8.damo.security.jwt.JwtUserDetails;
 import com.team8.damo.service.DiningService;
+import com.team8.damo.service.SseEmitterService;
 import com.team8.damo.service.response.AttendanceVoteDetailResponse;
 import com.team8.damo.service.response.DiningConfirmedResponse;
 import com.team8.damo.service.response.DiningDetailResponse;
@@ -17,8 +18,10 @@ import com.team8.damo.service.response.RestaurantVoteDetailResponse;
 import com.team8.damo.service.response.RestaurantVoteResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,6 +32,7 @@ import java.util.List;
 public class DiningController implements DiningControllerDocs {
 
     private final DiningService diningService;
+    private final SseEmitterService emitterService;
 
     @Override
     @PostMapping("/groups/{groupId}/dining")
@@ -156,5 +160,18 @@ public class DiningController implements DiningControllerDocs {
     ) {
         diningService.refreshRecommendRestaurants(user.getUserId(), groupId, diningId);
         return BaseResponse.noContent();
+    }
+
+    @Override
+    @GetMapping(
+        value = "/groups/{groupId}/dining/{diningId}/recommendation-streaming",
+        produces = MediaType.TEXT_EVENT_STREAM_VALUE
+    )
+    public SseEmitter streamingSubscribe(
+        @PathVariable Long groupId,
+        @PathVariable Long diningId,
+        @AuthenticationPrincipal JwtUserDetails user
+    ) {
+        return emitterService.subscribe(user.getUserId(), diningId);
     }
 }
