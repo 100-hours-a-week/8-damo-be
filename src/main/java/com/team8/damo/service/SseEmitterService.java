@@ -2,17 +2,21 @@ package com.team8.damo.service;
 
 import com.team8.damo.entity.User;
 import com.team8.damo.event.payload.RecommendationStreamingEventPayload;
+import com.team8.damo.redis.key.RedisKeyPrefix;
 import com.team8.damo.repository.UserRepository;
 import com.team8.damo.service.response.RecommendationStreamingResponse;
 import com.team8.damo.service.response.SseEventType;
+import com.team8.damo.util.DataSerializer;
 import com.team8.damo.util.Snowflake;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,6 +40,7 @@ public class SseEmitterService {
 
     private final Snowflake snowflake;
     private final UserRepository userRepository;
+    private final RedisTemplate<String, String> redisTemplate;
 
     public SseEmitter subscribe(Long userId, Long diningId) {
         SseEmitter newEmitter = new SseEmitter(TIMEOUT);
@@ -123,11 +128,6 @@ public class SseEmitterService {
     }
 
     public void broadcast(Long diningId, String eventName, RecommendationStreamingEventPayload data) {
-        Map<Long, SseEmitter> emitters = sseStreamingMap.get(diningId);
-        if (emitters == null || emitters.isEmpty()) {
-            return;
-        }
-
         User user = userRepository.findById(data.userId()).orElse(null);
 
         RecommendationStreamingResponse streamingResponse = RecommendationStreamingResponse.builder()
@@ -138,9 +138,14 @@ public class SseEmitterService {
             .createdAt(LocalDateTime.now())
             .build();
 
-        emitters.forEach((userId, emitter) ->
-            sendEvent(diningId, userId, emitter, STREAMING, streamingResponse)
-        );
+        String key = RedisKeyPrefix.DINING_RECOMMENDATION_STREAMING.key(diningId);
+        redisTemplate.opsForList().rightPush(key, DataSerializer.serialize(streamingResponse));
+        redisTemplate.expire(key, Duration.ofMinutes(30));
+
+        sseStreamingMap.get(diningId)
+            .forEach((userId, emitter) ->
+                sendEvent(diningId, userId, emitter, STREAMING, streamingResponse)
+            );
     }
 
     public void completeAll(Long diningId) {

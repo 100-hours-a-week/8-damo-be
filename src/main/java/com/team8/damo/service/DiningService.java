@@ -12,14 +12,17 @@ import com.team8.damo.event.EventType;
 import com.team8.damo.event.handler.CommonEventPublisher;
 import com.team8.damo.event.payload.*;
 import com.team8.damo.exception.CustomException;
+import com.team8.damo.redis.key.RedisKeyPrefix;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.DiningCreateServiceRequest;
 import com.team8.damo.service.request.RestaurantVoteServiceRequest;
 import com.team8.damo.service.response.*;
+import com.team8.damo.util.DataSerializer;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,6 +54,7 @@ public class DiningService {
     private final ApplicationEventPublisher eventPublisher;
     private final AiService aiService;
     private final CommonEventPublisher commonEventPublisher;
+    private final RedisTemplate<String, String> redisTemplate;
 
     @Transactional
     public Long createDining(Long userId, Long groupId, DiningCreateServiceRequest request, LocalDateTime currentDataTime) {
@@ -509,6 +513,13 @@ public class DiningService {
         );
 
         return DiningConfirmedResponse.of(recommendRestaurant, restaurant);
+    }
+
+    public List<RecommendationStreamingResponse> getRecommendationStreaming(Long diningId) {
+        String key = RedisKeyPrefix.DINING_RECOMMENDATION_STREAMING.key(diningId);
+        return redisTemplate.opsForList().range(key, 0, -1).stream()
+            .map(value -> DataSerializer.deserialize(value, RecommendationStreamingResponse.class))
+            .toList();
     }
 
     private boolean isNotGroupLeader(Long userId, Long groupId) {
