@@ -3,7 +3,7 @@ package com.team8.damo.event.payload;
 import java.util.List;
 
 public record RecommendationDoneEventPayload(
-    Long groupId,
+    Long diningId,
     int recommendationCount,
     List<RecommendedItem> recommendedItems
 ) implements EventPayload {
