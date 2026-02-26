@@ -80,7 +80,7 @@ jobs:
         run: ./gradlew bootJar
 
   build_push:
-    name: Build & Push (ECR)
+    name: Build & Push
     runs-on: ubuntu-24.04-arm
     needs: [ci]
     if: needs.ci.result == 'success'
