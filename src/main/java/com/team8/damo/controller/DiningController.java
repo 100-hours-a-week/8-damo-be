@@ -172,11 +172,13 @@ public class DiningController implements DiningControllerDocs {
 
     @Override
     @GetMapping("/groups/{groupId}/dining/{diningId}/recommendation-streaming/history")
-    public BaseResponse<List<RecommendationStreamingResponse>> getRecommendationStreaming(
+    public BaseResponse<CursorPageResponse<RecommendationStreamingResponse>> getRecommendationStreaming(
         @PathVariable Long groupId,
         @PathVariable Long diningId,
+        @RequestParam(required = false) Long cursor,
+        @RequestParam(required = false) int limit,
         @AuthenticationPrincipal JwtUserDetails user
     ) {
-        return BaseResponse.ok(diningService.getRecommendationStreaming(diningId));
+        return BaseResponse.ok(diningService.getRecommendationStreaming(diningId, cursor, limit));
     }
 }

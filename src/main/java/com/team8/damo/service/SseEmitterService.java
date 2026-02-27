@@ -12,7 +12,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -40,7 +40,7 @@ public class SseEmitterService {
 
     private final Snowflake snowflake;
     private final UserRepository userRepository;
-    private final RedisTemplate<String, String> redisTemplate;
+    private final StringRedisTemplate redisTemplate;
 
     public SseEmitter subscribe(Long userId, Long diningId) {
         SseEmitter newEmitter = new SseEmitter(TIMEOUT);
