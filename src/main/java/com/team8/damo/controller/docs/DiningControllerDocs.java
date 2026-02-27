@@ -11,6 +11,7 @@ import com.team8.damo.service.response.AttendanceVoteDetailResponse;
 import com.team8.damo.service.response.DiningConfirmedResponse;
 import com.team8.damo.service.response.DiningDetailResponse;
 import com.team8.damo.service.response.DiningResponse;
+import com.team8.damo.service.response.CursorPageResponse;
 import com.team8.damo.service.response.RecommendationStreamingResponse;
 import com.team8.damo.service.response.RestaurantVoteDetailResponse;
 import com.team8.damo.service.response.RestaurantVoteResponse;
@@ -357,24 +358,36 @@ public interface DiningControllerDocs {
     @Operation(
         summary = "식당 추천 스트리밍 이력 조회",
         description = """
-            ### 특정 회식의 AI 식당 추천 스트리밍 이력을 조회합니다.
+            ### 특정 회식의 AI 식당 추천 스트리밍 이력을 커서 기반으로 조회합니다.
             - SSE 연결 이전에 이미 전송된 스트리밍 데이터를 확인할 때 사용합니다.
+            - 최신 내역부터 limit 개수만큼 반환하며, 위로 스크롤하여 이전 내역을 조회합니다.
+
+            **요청**:
+            - cursor: 이전 응답의 nextCursor 값 (첫 요청 시 생략)
+            - limit: 조회 할 내역 개수
 
             **응답 정보**:
-            - eventId: 이벤트 ID
-            - userId: 추천 요청 사용자 ID
-            - nickname: 사용자 닉네임
-            - content: 스트리밍 콘텐츠
-            - createdAt: 이벤트 생성 시간
+            - data: 스트리밍 이력 목록 (최신순)
+              - eventId: 이벤트 ID
+              - userId: 추천 요청 사용자 ID
+              - nickname: 사용자 닉네임
+              - content: 스트리밍 콘텐츠
+              - createdAt: 이벤트 생성 시간
+            - nextCursor: 다음 페이지 조회용 커서 (더 이상 데이터가 없으면 null)
+            - hasNext: 다음 페이지 존재 여부
             """
     )
     @ApiResponse(responseCode = "200", description = "성공")
     @ApiErrorResponses({DINING_NOT_FOUND})
-    BaseResponse<List<RecommendationStreamingResponse>> getRecommendationStreaming(
+    BaseResponse<CursorPageResponse<RecommendationStreamingResponse>> getRecommendationStreaming(
         @Parameter(description = "그룹 ID", required = true)
         Long groupId,
         @Parameter(description = "회식 ID", required = true)
         Long diningId,
+        @Parameter(description = "이전 페이지의 nextCursor 값 (첫 요청 시 생략)")
+        Long cursor,
+        @Parameter(description = "조회 할 내역 개수")
+        int limit,
         @Parameter(hidden = true)
         JwtUserDetails user
     );

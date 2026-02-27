@@ -16,7 +16,7 @@ public class RecommendationStreamingHandler implements EventHandler<Recommendati
     @Override
     public void handle(Event<RecommendationStreamingEventPayload> event) {
         RecommendationStreamingEventPayload payload = event.getPayload();
-        sseEmitterService.broadcast(payload.diningId(), "streaming", payload);
+        sseEmitterService.streamingBroadcast(payload.diningId(), payload);
     }
 
     @Override

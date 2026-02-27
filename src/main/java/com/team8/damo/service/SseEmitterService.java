@@ -12,7 +12,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -40,7 +40,7 @@ public class SseEmitterService {
 
     private final Snowflake snowflake;
     private final UserRepository userRepository;
-    private final RedisTemplate<String, String> redisTemplate;
+    private final StringRedisTemplate redisTemplate;
 
     public SseEmitter subscribe(Long userId, Long diningId) {
         SseEmitter newEmitter = new SseEmitter(TIMEOUT);
@@ -127,7 +127,7 @@ public class SseEmitterService {
         }
     }
 
-    public void broadcast(Long diningId, String eventName, RecommendationStreamingEventPayload data) {
+    public void streamingBroadcast(Long diningId, RecommendationStreamingEventPayload data) {
         User user = userRepository.findById(data.userId()).orElse(null);
 
         RecommendationStreamingResponse streamingResponse = RecommendationStreamingResponse.builder()
@@ -138,17 +138,24 @@ public class SseEmitterService {
             .createdAt(LocalDateTime.now())
             .build();
 
-        String key = RedisKeyPrefix.DINING_RECOMMENDATION_STREAMING.key(diningId);
+        String key = generateStreamingKey(diningId);
         redisTemplate.opsForList().rightPush(key, DataSerializer.serialize(streamingResponse));
         redisTemplate.expire(key, Duration.ofMinutes(30));
 
-        sseStreamingMap.get(diningId)
-            .forEach((userId, emitter) ->
-                sendEvent(diningId, userId, emitter, STREAMING, streamingResponse)
-            );
+        Map<Long, SseEmitter> emitters = sseStreamingMap.get(diningId);
+        if (emitters == null || emitters.isEmpty()) {
+            return;
+        }
+
+        emitters.forEach((userId, emitter) ->
+            sendEvent(diningId, userId, emitter, STREAMING, streamingResponse)
+        );
     }
 
     public void completeAll(Long diningId) {
+        String key = generateStreamingKey(diningId);
+        redisTemplate.delete(key);
+
         Map<Long, SseEmitter> emitters = sseStreamingMap.remove(diningId);
         if (emitters == null) {
             return;
@@ -156,6 +163,7 @@ public class SseEmitterService {
 
         emitters.forEach((userId, emitter) -> {
             try {
+                sendEvent(diningId, userId, emitter, DONE, "done");
                 emitter.complete();
             } catch (Exception e) {
                 log.warn(
@@ -164,6 +172,10 @@ public class SseEmitterService {
                 );
             }
         });
+    }
+
+    private static String generateStreamingKey(Long diningId) {
+        return RedisKeyPrefix.DINING_RECOMMENDATION_STREAMING.key(diningId);
     }
 
     private boolean sendEvent(Long diningId, Long userId, SseEmitter emitter, SseEventType eventType, Object data) {

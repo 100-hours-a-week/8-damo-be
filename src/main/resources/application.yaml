@@ -6,6 +6,9 @@ spring:
   profiles:
     active: ${ACTIVE_PROFILE}
 
+  jackson:
+    time-zone: Asia/Seoul
+
   security:
     oauth2:
       client:
@@ -94,6 +97,7 @@ spring:
         show_sql: false
         jdbc:
           batch_size: 100
+          time_zone: Asia/Seoul
     defer-datasource-initialization: true
 
   sql:
@@ -154,13 +158,14 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
       hibernate:
         format_sql: true
         show_sql: false
         jdbc:
           batch_size: 100
+          time_zone: Asia/Seoul
     defer-datasource-initialization: true
 
   sql:

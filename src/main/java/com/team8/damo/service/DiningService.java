@@ -22,13 +22,14 @@ import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.team8.damo.exception.errorcode.ErrorCode.*;
@@ -54,7 +55,7 @@ public class DiningService {
     private final ApplicationEventPublisher eventPublisher;
     private final AiService aiService;
     private final CommonEventPublisher commonEventPublisher;
-    private final RedisTemplate<String, String> redisTemplate;
+    private final StringRedisTemplate redisTemplate;
 
     @Transactional
     public Long createDining(Long userId, Long groupId, DiningCreateServiceRequest request, LocalDateTime currentDataTime) {
@@ -515,11 +516,25 @@ public class DiningService {
         return DiningConfirmedResponse.of(recommendRestaurant, restaurant);
     }
 
-    public List<RecommendationStreamingResponse> getRecommendationStreaming(Long diningId) {
+    public CursorPageResponse<RecommendationStreamingResponse> getRecommendationStreaming(Long diningId, Long cursor, int limit) {
         String key = RedisKeyPrefix.DINING_RECOMMENDATION_STREAMING.key(diningId);
-        return redisTemplate.opsForList().range(key, 0, -1).stream()
+
+        long start = ((cursor == null ? 0 : cursor - 1) + limit) * -1;
+        long end = cursor == null ? -1 : -1 * cursor;
+
+        List<String> values = redisTemplate.opsForList().range(key, start, end);
+        if (values == null || values.isEmpty()) {
+            return new CursorPageResponse<>(List.of(), null, false);
+        }
+
+        List<RecommendationStreamingResponse> items = values.stream()
             .map(value -> DataSerializer.deserialize(value, RecommendationStreamingResponse.class))
             .toList();
+
+        boolean hasNext = items.size() >= limit;
+        Long nextCursor = (start - 1) * -1;
+
+        return new CursorPageResponse<>(items, nextCursor, hasNext);
     }
 
     private boolean isNotGroupLeader(Long userId, Long groupId) {
