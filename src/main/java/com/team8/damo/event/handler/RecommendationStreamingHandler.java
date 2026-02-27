@@ -21,6 +21,6 @@ public class RecommendationStreamingHandler implements EventHandler<Recommendati
 
     @Override
     public boolean supports(Event<RecommendationStreamingEventPayload> event) {
-        return event.getEventType() == EventType.CONSENSUS_DIALOGUE;
+        return event.getEventType() == EventType.RECOMMENDATION_STREAMING;
     }
 }
