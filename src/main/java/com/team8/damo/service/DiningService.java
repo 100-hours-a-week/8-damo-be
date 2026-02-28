@@ -516,25 +516,32 @@ public class DiningService {
         return DiningConfirmedResponse.of(recommendRestaurant, restaurant);
     }
 
-    public CursorPageResponse<RecommendationStreamingResponse> getRecommendationStreaming(Long diningId, Long cursor, int limit) {
+//    public CursorPageResponse<RecommendationStreamingResponse> getRecommendationStreaming(Long diningId, Long cursor, int limit) {
+//        String key = RedisKeyPrefix.DINING_RECOMMENDATION_STREAMING.key(diningId);
+//
+//        long start = ((cursor == null ? 0 : cursor - 1) + limit) * -1;
+//        long end = cursor == null ? -1 : -1 * cursor;
+//
+//        List<String> values = redisTemplate.opsForList().range(key, start, end);
+//        if (values == null || values.isEmpty()) {
+//            return new CursorPageResponse<>(List.of(), null, false);
+//        }
+//
+//        List<RecommendationStreamingResponse> items = values.stream()
+//            .map(value -> DataSerializer.deserialize(value, RecommendationStreamingResponse.class))
+//            .toList();
+//
+//        boolean hasNext = items.size() >= limit;
+//        Long nextCursor = (start - 1) * -1;
+//
+//        return new CursorPageResponse<>(items, nextCursor, hasNext);
+//    }
+
+    public List<RecommendationStreamingResponse> getRecommendationStreaming(Long diningId) {
         String key = RedisKeyPrefix.DINING_RECOMMENDATION_STREAMING.key(diningId);
-
-        long start = ((cursor == null ? 0 : cursor - 1) + limit) * -1;
-        long end = cursor == null ? -1 : -1 * cursor;
-
-        List<String> values = redisTemplate.opsForList().range(key, start, end);
-        if (values == null || values.isEmpty()) {
-            return new CursorPageResponse<>(List.of(), null, false);
-        }
-
-        List<RecommendationStreamingResponse> items = values.stream()
+        return redisTemplate.opsForList().range(key, 0, -1).stream()
             .map(value -> DataSerializer.deserialize(value, RecommendationStreamingResponse.class))
             .toList();
-
-        boolean hasNext = items.size() >= limit;
-        Long nextCursor = (start - 1) * -1;
-
-        return new CursorPageResponse<>(items, nextCursor, hasNext);
     }
 
     private boolean isNotGroupLeader(Long userId, Long groupId) {
