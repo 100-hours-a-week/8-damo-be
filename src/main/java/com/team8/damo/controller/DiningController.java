@@ -175,10 +175,8 @@ public class DiningController implements DiningControllerDocs {
     public BaseResponse<CursorPageResponse<RecommendationStreamingResponse>> getRecommendationStreaming(
         @PathVariable Long groupId,
         @PathVariable Long diningId,
-        @RequestParam(required = false) Long cursor,
-        @RequestParam(required = false) int limit,
         @AuthenticationPrincipal JwtUserDetails user
     ) {
-        return BaseResponse.ok(diningService.getRecommendationStreaming(diningId, cursor, limit));
+        return BaseResponse.ok(diningService.getRecommendationStreaming(diningId));
     }
 }
