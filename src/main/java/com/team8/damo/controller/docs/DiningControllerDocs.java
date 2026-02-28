@@ -372,7 +372,7 @@ public interface DiningControllerDocs {
     )
     @ApiResponse(responseCode = "200", description = "성공")
     @ApiErrorResponses({DINING_NOT_FOUND})
-    BaseResponse<CursorPageResponse<RecommendationStreamingResponse>> getRecommendationStreaming(
+    BaseResponse<List<RecommendationStreamingResponse>> getRecommendationStreaming(
         @Parameter(description = "그룹 ID", required = true)
         Long groupId,
         @Parameter(description = "회식 ID", required = true)

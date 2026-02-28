@@ -172,7 +172,7 @@ public class DiningController implements DiningControllerDocs {
 
     @Override
     @GetMapping("/groups/{groupId}/dining/{diningId}/recommendation-streaming/history")
-    public BaseResponse<CursorPageResponse<RecommendationStreamingResponse>> getRecommendationStreaming(
+    public BaseResponse<List<RecommendationStreamingResponse>> getRecommendationStreaming(
         @PathVariable Long groupId,
         @PathVariable Long diningId,
         @AuthenticationPrincipal JwtUserDetails user
