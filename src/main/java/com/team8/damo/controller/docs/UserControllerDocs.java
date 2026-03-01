@@ -3,6 +3,7 @@ package com.team8.damo.controller.docs;
 import com.team8.damo.controller.request.UserBasicUpdateRequest;
 import com.team8.damo.controller.request.UserCharacteristicsCreateRequest;
 import com.team8.damo.controller.request.ImagePathUpdateRequest;
+import com.team8.damo.controller.request.PushNotificationUpdateRequest;
 import com.team8.damo.controller.request.UserCharacteristicsUpdateRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.service.response.AvailableLightningResponse;
@@ -128,6 +129,21 @@ public interface UserControllerDocs {
         @Parameter(hidden = true)
         JwtUserDetails user,
         UserCharacteristicsUpdateRequest request
+    );
+
+    @Operation(
+        summary = "푸시 알림 설정 변경",
+        description = """
+            ### 푸시 알림 설정을 변경합니다.
+            - isPushNotificationAllowed: 알림 허용 여부 (필수)
+            - fcmToken: FCM 토큰 (알림 허용 시 필수)
+            """
+    )
+    @ApiResponse(responseCode = "204", description = "성공")
+    @ApiErrorResponses({USER_NOT_FOUND, FCM_TOKEN_REQUIRED})
+    BaseResponse<Void> updatePushNotification(
+        @Parameter(hidden = true) JwtUserDetails user,
+        PushNotificationUpdateRequest request
     );
 
     @Operation(

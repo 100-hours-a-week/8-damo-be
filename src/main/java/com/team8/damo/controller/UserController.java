@@ -4,6 +4,7 @@ import com.team8.damo.controller.docs.UserControllerDocs;
 import com.team8.damo.controller.request.UserBasicUpdateRequest;
 import com.team8.damo.controller.request.UserCharacteristicsCreateRequest;
 import com.team8.damo.controller.request.ImagePathUpdateRequest;
+import com.team8.damo.controller.request.PushNotificationUpdateRequest;
 import com.team8.damo.controller.request.UserCharacteristicsUpdateRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.service.response.UserBasicResponse;
@@ -80,6 +81,15 @@ public class UserController implements UserControllerDocs {
         @Valid @RequestBody UserCharacteristicsUpdateRequest request
     ) {
         userService.updateUserCharacteristics(user.getUserId(), request.toServiceRequest());
+        return BaseResponse.noContent();
+    }
+
+    @PatchMapping("/me/push-notification")
+    public BaseResponse<Void> updatePushNotification(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @Valid @RequestBody PushNotificationUpdateRequest request
+    ) {
+        userService.updatePushNotification(user.getUserId(), request.toServiceRequest());
         return BaseResponse.noContent();
     }
 

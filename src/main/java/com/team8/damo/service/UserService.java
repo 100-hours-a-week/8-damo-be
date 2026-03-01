@@ -14,6 +14,7 @@ import com.team8.damo.exception.errorcode.ErrorCode;
 import com.team8.damo.kakao.KakaoUtil;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.UserBasicUpdateServiceRequest;
+import com.team8.damo.service.request.PushNotificationUpdateServiceRequest;
 import com.team8.damo.service.request.UserCharacteristicsCreateServiceRequest;
 import com.team8.damo.service.request.UserCharacteristicsUpdateServiceRequest;
 import com.team8.damo.service.response.UserBasicResponse;
@@ -177,6 +178,20 @@ public class UserService {
 
         refreshTokenRepository.findById(user.getEmail())
             .ifPresent(refreshTokenRepository::delete);
+    }
+
+    @Transactional
+    public void updatePushNotification(Long userId, PushNotificationUpdateServiceRequest request) {
+        User user = findUserBy(userId);
+
+        if (request.isPushNotificationAllowed()) {
+            if (request.fcmToken() == null || request.fcmToken().isBlank()) {
+                throw new CustomException(FCM_TOKEN_REQUIRED);
+            }
+            user.enablePushNotification(request.fcmToken());
+        } else {
+            user.disablePushNotification();
+        }
     }
 
     private User findUserBy(Long userId) {
