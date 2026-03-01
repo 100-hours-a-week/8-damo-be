@@ -17,6 +17,7 @@ public enum ErrorCode {
     DUPLICATE_ALLERGY_CATEGORY(CONFLICT, "알레르기 카테고리가 중복 선택 되었습니다."),
     DUPLICATE_LIKE_FOOD_CATEGORY(CONFLICT, "선호 음식 카테고리가 중복 선택 되었습니다."),
     DUPLICATE_LIKE_INGREDIENT_CATEGORY(CONFLICT, "선호 재료 카테고리가 중복 선택 되었습니다."),
+    FCM_TOKEN_REQUIRED(BAD_REQUEST, "알림을 허용하려면 FCM 토큰이 필요합니다."),
 
     // Group
     GROUP_NOT_FOUND(NOT_FOUND, "그룹을 찾을 수 없습니다."),
