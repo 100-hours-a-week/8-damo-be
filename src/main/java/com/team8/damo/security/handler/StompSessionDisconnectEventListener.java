@@ -7,6 +7,8 @@ import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
+import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 @Slf4j
@@ -22,7 +24,13 @@ public class StompSessionDisconnectEventListener {
         Long userId = extractUserId(event);
 
         subscriptionCleanupManager.unregisterAllBySession(userId, sessionId);
-        log.info("STOMP session disconnected. sessionId={}, userId={}", sessionId, userId);
+    }
+
+    @EventListener
+    public void onSessionDisconnectEvent(SessionDisconnectEvent event) {
+        if (event.getCloseStatus().equals(CloseStatus.NORMAL)) {
+            log.debug("[WS_DEBUG] abnormal disconnect");
+        }
     }
 
     private Long extractUserId(SessionDisconnectEvent event) {
