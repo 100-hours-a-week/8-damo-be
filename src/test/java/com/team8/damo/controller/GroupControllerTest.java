@@ -1,6 +1,7 @@
 package com.team8.damo.controller;
 
 import com.team8.damo.service.GroupService;
+import com.team8.damo.service.response.CursorPageResponse;
 import com.team8.damo.service.response.GroupDetailResponse;
 import com.team8.damo.service.response.UserGroupResponse;
 import jakarta.validation.Validation;
@@ -21,6 +22,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -297,12 +299,13 @@ class GroupControllerTest {
     @DisplayName("사용자가 속한 그룹 목록을 성공적으로 조회한다.")
     void getGroupList_success() throws Exception {
         // given
-        List<UserGroupResponse> response = List.of(
+        List<UserGroupResponse> data = List.of(
             new UserGroupResponse(100L, "맛집탐방대", "서울 맛집 모임", "https://example.com/group1.jpg"),
             new UserGroupResponse(101L, "카페투어", "카페 탐방 모임", "https://example.com/group2.jpg")
         );
+        CursorPageResponse<UserGroupResponse> response = new CursorPageResponse<>(data, null, false);
 
-        given(groupService.getGroupList(any())).willReturn(response);
+        given(groupService.getGroupList(any(), any(), anyInt())).willReturn(response);
 
         // when // then
         mockMvc.perform(
@@ -311,22 +314,26 @@ class GroupControllerTest {
             )
             .andDo(print())
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data").isArray())
-            .andExpect(jsonPath("$.data.length()").value(2))
-            .andExpect(jsonPath("$.data[0].groupId").value(100L))
-            .andExpect(jsonPath("$.data[0].name").value("맛집탐방대"))
-            .andExpect(jsonPath("$.data[0].introduction").value("서울 맛집 모임"))
-            .andExpect(jsonPath("$.data[1].groupId").value(101L))
-            .andExpect(jsonPath("$.data[1].name").value("카페투어"));
+            .andExpect(jsonPath("$.data.data").isArray())
+            .andExpect(jsonPath("$.data.data.length()").value(2))
+            .andExpect(jsonPath("$.data.data[0].groupId").value(100L))
+            .andExpect(jsonPath("$.data.data[0].name").value("맛집탐방대"))
+            .andExpect(jsonPath("$.data.data[0].introduction").value("서울 맛집 모임"))
+            .andExpect(jsonPath("$.data.data[1].groupId").value(101L))
+            .andExpect(jsonPath("$.data.data[1].name").value("카페투어"))
+            .andExpect(jsonPath("$.data.hasNext").value(false))
+            .andExpect(jsonPath("$.data.nextCursor").doesNotExist());
 
-        then(groupService).should().getGroupList(any());
+        then(groupService).should().getGroupList(any(), any(), anyInt());
     }
 
     @Test
     @DisplayName("속한 그룹이 없으면 빈 목록을 반환한다.")
     void getGroupList_emptyList() throws Exception {
         // given
-        given(groupService.getGroupList(any())).willReturn(List.of());
+        CursorPageResponse<UserGroupResponse> response = new CursorPageResponse<>(List.of(), null, false);
+
+        given(groupService.getGroupList(any(), any(), anyInt())).willReturn(response);
 
         // when // then
         mockMvc.perform(
@@ -335,10 +342,11 @@ class GroupControllerTest {
             )
             .andDo(print())
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data").isArray())
-            .andExpect(jsonPath("$.data.length()").value(0));
+            .andExpect(jsonPath("$.data.data").isArray())
+            .andExpect(jsonPath("$.data.data.length()").value(0))
+            .andExpect(jsonPath("$.data.hasNext").value(false));
 
-        then(groupService).should().getGroupList(any());
+        then(groupService).should().getGroupList(any(), any(), anyInt());
     }
 
     @Test

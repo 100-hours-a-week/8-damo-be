@@ -3,19 +3,17 @@ package com.team8.damo.controller.docs;
 import com.team8.damo.controller.request.GroupCreateRequest;
 import com.team8.damo.controller.request.ImagePathUpdateRequest;
 import com.team8.damo.controller.response.BaseResponse;
+import com.team8.damo.service.response.CursorPageResponse;
 import com.team8.damo.service.response.GroupDetailResponse;
 import com.team8.damo.security.jwt.JwtUserDetails;
 import com.team8.damo.swagger.annotation.ApiErrorResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import com.team8.damo.service.response.UserGroupResponse;
-
-import java.util.List;
 
 import static com.team8.damo.exception.errorcode.ErrorCode.*;
 
@@ -62,10 +60,10 @@ public interface GroupControllerDocs {
     @Operation(
         summary = "내 그룹 목록 조회",
         description = """
-            ### 사용자가 속한 그룹 목록을 조회합니다.
-            - groupId: 그룹 ID
-            - name: 그룹명
-            - introduction: 소개글
+            ### 사용자가 속한 그룹 목록을 커서 페이지네이션으로 조회합니다.
+            - lastGroupId: 이전 페이지의 마지막 그룹 ID (첫 페이지는 생략)
+            - size: 한 페이지에 조회할 개수 (기본값 20)
+            - 응답에 hasNext, nextCursor가 포함됩니다.
             """
     )
     @ApiResponse(
@@ -73,12 +71,16 @@ public interface GroupControllerDocs {
         description = "성공",
         content = @Content(
             mediaType = "application/json",
-            array = @ArraySchema(schema = @Schema(implementation = UserGroupResponse.class))
+            schema = @Schema(implementation = CursorPageResponse.class)
         )
     )
-    BaseResponse<List<UserGroupResponse>> groupList(
+    BaseResponse<CursorPageResponse<UserGroupResponse>> groupList(
         @Parameter(hidden = true)
-        JwtUserDetails user
+        JwtUserDetails user,
+        @Parameter(description = "이전 페이지의 마지막 그룹 ID (첫 페이지는 생략)")
+        Long lastGroupId,
+        @Parameter(description = "한 페이지에 조회할 개수 (기본값 20)")
+        int size
     );
 
     @Operation(

@@ -3,6 +3,7 @@ package com.team8.damo.controller;
 import com.team8.damo.controller.request.GroupCreateRequest;
 import com.team8.damo.controller.request.ImagePathUpdateRequest;
 import com.team8.damo.controller.response.BaseResponse;
+import com.team8.damo.service.response.CursorPageResponse;
 import com.team8.damo.service.response.GroupDetailResponse;
 import com.team8.damo.security.jwt.JwtUserDetails;
 import com.team8.damo.service.GroupService;
@@ -13,8 +14,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import com.team8.damo.controller.docs.GroupControllerDocs;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -43,10 +42,12 @@ public class GroupController implements GroupControllerDocs {
 
     @Override
     @GetMapping("/users/me/groups")
-    public BaseResponse<List<UserGroupResponse>> groupList(
-        @AuthenticationPrincipal JwtUserDetails user
+    public BaseResponse<CursorPageResponse<UserGroupResponse>> groupList(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @RequestParam(required = false) Long lastGroupId,
+        @RequestParam(defaultValue = "20") int size
     ) {
-        return BaseResponse.ok(groupService.getGroupList(user.getUserId()));
+        return BaseResponse.ok(groupService.getGroupList(user.getUserId(), lastGroupId, size));
     }
 
     @Override
