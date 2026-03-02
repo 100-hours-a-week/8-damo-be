@@ -86,8 +86,6 @@ public class StompJwtChannelInterceptor implements ChannelInterceptor {
         if (destination == null)
             throw new AccessDeniedException("Missing destination");
 
-        log.info("[ChannelInterceptor.authorize] userId : {}", user.getUserId());
-
         return user;
     }
 
