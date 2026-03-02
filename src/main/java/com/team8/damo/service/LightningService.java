@@ -59,8 +59,10 @@ public class LightningService {
         }
 
         User user = findUserBy(userId);
+        Long latestMessageId = chatMessageRepository.findLatestMessageId(lightningId);
 
         LightningParticipant participant = LightningParticipant.createParticipant(snowflake.nextId(), lightning, user);
+        participant.updateLastReadChatMessageId(latestMessageId);
         lightningParticipantRepository.save(participant);
 
         return lightningId;
