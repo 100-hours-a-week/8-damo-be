@@ -14,10 +14,12 @@ import com.team8.damo.repository.*;
 import com.team8.damo.repository.projections.UnreadCount;
 import com.team8.damo.service.request.LightningCreateServiceRequest;
 import com.team8.damo.service.response.AvailableLightningResponse;
+import com.team8.damo.service.response.CursorPageResponse;
 import com.team8.damo.service.response.LightningDetailResponse;
 import com.team8.damo.service.response.LightningResponse;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -91,16 +93,25 @@ public class LightningService {
         return lightning.getId();
     }
 
-    public List<LightningResponse> getParticipantLightningList(Long userId, LocalDateTime currentTime, int cutoff) {
+    public CursorPageResponse<LightningResponse> getParticipantLightningList(
+        Long userId, LocalDateTime currentTime, int cutoff, Long lastLightningId, int size
+    ) {
         findUserBy(userId);
 
         LocalDateTime cutoffDate = currentTime.minusDays(cutoff);
+        PageRequest pageable = PageRequest.of(0, size + 1);
 
-        List<LightningParticipant> lightningParticipants =
-            lightningParticipantRepository.findLightningByUserIdAndCutoffDate(userId, cutoffDate);
+        List<LightningParticipant> lightningParticipants = lastLightningId == null
+            ? lightningParticipantRepository.findLightningByUserIdAndCutoffDateWithCursor(userId, cutoffDate, pageable)
+            : lightningParticipantRepository.findLightningByUserIdAndCutoffDateWithCursorAfter(userId, cutoffDate, lastLightningId, pageable);
+
+        boolean hasNext = lightningParticipants.size() > size;
+        if (hasNext) {
+            lightningParticipants = lightningParticipants.subList(0, size);
+        }
 
         if (lightningParticipants.isEmpty()) {
-            return List.of();
+            return new CursorPageResponse<>(List.of(), null, false);
         }
 
         List<Long> lightningIds = lightningParticipants.stream()
@@ -118,7 +129,7 @@ public class LightningService {
 
         Map<Long, Integer> unreadCountMap = createUnreadCountMap(userId);
 
-        return lightningParticipants.stream()
+        List<LightningResponse> content = lightningParticipants.stream()
             .map(p -> {
                 Lightning lightning = p.getLightning();
                 return LightningResponse.of(
@@ -130,6 +141,9 @@ public class LightningService {
                 );
             })
             .toList();
+
+        Long nextCursor = hasNext ? content.get(content.size() - 1).lightningId() : null;
+        return new CursorPageResponse<>(content, nextCursor, hasNext);
     }
 
     @Transactional
@@ -182,15 +196,24 @@ public class LightningService {
         return LightningDetailResponse.of(lightning, restaurant, participants);
     }
 
-    public List<AvailableLightningResponse> getAvailableLightningList(Long userId) {
+    public CursorPageResponse<AvailableLightningResponse> getAvailableLightningList(
+        Long userId, Long lastLightningId, int size
+    ) {
         findUserBy(userId);
 
-        List<Lightning> availableLightnings = lightningRepository.findAllByStatusAndUserNotParticipating(
-            LightningStatus.OPEN, userId
-        );
+        PageRequest pageable = PageRequest.of(0, size + 1);
+
+        List<Lightning> availableLightnings = lastLightningId == null
+            ? lightningRepository.findAllByStatusAndUserNotParticipatingWithCursor(LightningStatus.OPEN, userId, pageable)
+            : lightningRepository.findAllByStatusAndUserNotParticipatingWithCursorAfter(LightningStatus.OPEN, userId, lastLightningId, pageable);
+
+        boolean hasNext = availableLightnings.size() > size;
+        if (hasNext) {
+            availableLightnings = availableLightnings.subList(0, size);
+        }
 
         if (availableLightnings.isEmpty()) {
-            return List.of();
+            return new CursorPageResponse<>(List.of(), null, false);
         }
 
         List<Long> lightningIds = availableLightnings.stream()
@@ -206,13 +229,16 @@ public class LightningService {
 
         Map<String, String> restaurantNameMap = createRestaurantNameMap(restaurantIds);
 
-        return availableLightnings.stream()
+        List<AvailableLightningResponse> content = availableLightnings.stream()
             .map(lightning -> AvailableLightningResponse.of(
                 lightning,
                 restaurantNameMap.getOrDefault(lightning.getRestaurantId(), ""),
                 participantsCountMap.getOrDefault(lightning.getId(), 0L).intValue()
             ))
             .toList();
+
+        Long nextCursor = hasNext ? content.get(content.size() - 1).lightningId() : null;
+        return new CursorPageResponse<>(content, nextCursor, hasNext);
     }
 
     @Transactional

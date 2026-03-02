@@ -13,6 +13,7 @@ import com.team8.damo.security.jwt.JwtUserDetails;
 import com.team8.damo.service.LightningService;
 import com.team8.damo.service.UserService;
 import com.team8.damo.service.response.AvailableLightningResponse;
+import com.team8.damo.service.response.CursorPageResponse;
 import com.team8.damo.service.response.LightningResponse;
 import com.team8.damo.util.CookieUtil;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,7 +23,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 
 
@@ -94,17 +94,25 @@ public class UserController implements UserControllerDocs {
     }
 
     @GetMapping("/me/lightning")
-    public BaseResponse<List<LightningResponse>> getParticipantLightningList(
-        @AuthenticationPrincipal JwtUserDetails user
+    public BaseResponse<CursorPageResponse<LightningResponse>> getParticipantLightningList(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @RequestParam(required = false) Long lastLightningId,
+        @RequestParam(defaultValue = "20") int size
     ) {
-        return BaseResponse.ok(lightningService.getParticipantLightningList(user.getUserId(), LocalDateTime.now(), 3));
+        return BaseResponse.ok(lightningService.getParticipantLightningList(
+            user.getUserId(), LocalDateTime.now(), 3, lastLightningId, size
+        ));
     }
 
     @GetMapping("/me/lightning/available")
-    public BaseResponse<List<AvailableLightningResponse>> getAvailableLightningList(
-        @AuthenticationPrincipal JwtUserDetails user
+    public BaseResponse<CursorPageResponse<AvailableLightningResponse>> getAvailableLightningList(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @RequestParam(required = false) Long lastLightningId,
+        @RequestParam(defaultValue = "20") int size
     ) {
-        return BaseResponse.ok(lightningService.getAvailableLightningList(user.getUserId()));
+        return BaseResponse.ok(lightningService.getAvailableLightningList(
+            user.getUserId(), lastLightningId, size
+        ));
     }
 
     @DeleteMapping("/me")
