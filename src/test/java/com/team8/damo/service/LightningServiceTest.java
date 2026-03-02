@@ -16,6 +16,7 @@ import com.team8.damo.repository.LightningRepository;
 import com.team8.damo.repository.RestaurantRepository;
 import com.team8.damo.repository.UserRepository;
 import com.team8.damo.service.request.LightningCreateServiceRequest;
+import com.team8.damo.service.response.CursorPageResponse;
 import com.team8.damo.service.response.LightningResponse;
 import com.team8.damo.util.Snowflake;
 import org.junit.jupiter.api.DisplayName;
@@ -27,6 +28,7 @@ import org.mockito.InjectMocks;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -223,8 +225,10 @@ class LightningServiceTest {
         Restaurant restaurant1 = RestaurantFixture.create("restaurant-1", "맛있는 식당");
         Restaurant restaurant2 = RestaurantFixture.create("restaurant-2", "좋은 식당");
 
+        PageRequest pageable = PageRequest.of(0, 11);
+
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
-        given(participantRepository.findLightningByUserIdAndCutoffDate(userId, currentTime.minusDays(cutoff)))
+        given(participantRepository.findLightningByUserIdAndCutoffDateWithCursor(userId, currentTime.minusDays(cutoff), pageable))
             .willReturn(List.of(participant1, participant2));
         given(participantRepository.findAllByLightningIdIn(List.of(100L, 200L)))
             .willReturn(List.of(participant1, participant2, otherParticipant));
@@ -234,18 +238,20 @@ class LightningServiceTest {
             .willReturn(List.of());
 
         // when
-        List<LightningResponse> result = lightningService.getParticipantLightningList(userId, currentTime, cutoff);
+        CursorPageResponse<LightningResponse> result = lightningService.getParticipantLightningList(userId, currentTime, cutoff, null, 10);
 
         // then
-        assertThat(result).hasSize(2)
+        assertThat(result.data()).hasSize(2)
             .extracting("lightningId", "restaurantName", "maxParticipants", "participantsCount", "lightningStatus", "myRole", "unreadCount")
             .containsExactlyInAnyOrder(
                 tuple(100L, "맛있는 식당", 4, 2, LightningStatus.OPEN, GatheringRole.LEADER, 0),
                 tuple(200L, "좋은 식당", 4, 1, LightningStatus.OPEN, GatheringRole.PARTICIPANT, 0)
             );
+        assertThat(result.hasNext()).isFalse();
+        assertThat(result.nextCursor()).isNull();
 
         then(userRepository).should().findById(userId);
-        then(participantRepository).should().findLightningByUserIdAndCutoffDate(userId, currentTime.minusDays(cutoff));
+        then(participantRepository).should().findLightningByUserIdAndCutoffDateWithCursor(userId, currentTime.minusDays(cutoff), pageable);
     }
 
     @Test
@@ -258,15 +264,18 @@ class LightningServiceTest {
 
         User user = UserFixture.create(userId);
 
+        PageRequest pageable = PageRequest.of(0, 11);
+
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
-        given(participantRepository.findLightningByUserIdAndCutoffDate(userId, currentTime.minusDays(cutoff)))
+        given(participantRepository.findLightningByUserIdAndCutoffDateWithCursor(userId, currentTime.minusDays(cutoff), pageable))
             .willReturn(List.of());
 
         // when
-        List<LightningResponse> result = lightningService.getParticipantLightningList(userId, currentTime, cutoff);
+        CursorPageResponse<LightningResponse> result = lightningService.getParticipantLightningList(userId, currentTime, cutoff, null, 10);
 
         // then
-        assertThat(result).isEmpty();
+        assertThat(result.data()).isEmpty();
+        assertThat(result.hasNext()).isFalse();
 
         then(participantRepository).should(never()).findAllByLightningIdIn(any());
         then(restaurantRepository).should(never()).findAllById(any());
@@ -283,11 +292,11 @@ class LightningServiceTest {
         given(userRepository.findById(userId)).willReturn(Optional.empty());
 
         // when // then
-        assertThatThrownBy(() -> lightningService.getParticipantLightningList(userId, currentTime, cutoff))
+        assertThatThrownBy(() -> lightningService.getParticipantLightningList(userId, currentTime, cutoff, null, 10))
             .isInstanceOf(CustomException.class)
             .hasFieldOrPropertyWithValue("errorCode", USER_NOT_FOUND);
 
-        then(participantRepository).should(never()).findLightningByUserIdAndCutoffDate(any(), any());
+        then(participantRepository).should(never()).findLightningByUserIdAndCutoffDateWithCursor(any(), any(), any());
     }
 
     @Test
@@ -303,8 +312,10 @@ class LightningServiceTest {
 
         LightningParticipant participant = LightningParticipant.createLeader(1L, lightning, user);
 
+        PageRequest pageable = PageRequest.of(0, 11);
+
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
-        given(participantRepository.findLightningByUserIdAndCutoffDate(userId, currentTime.minusDays(cutoff)))
+        given(participantRepository.findLightningByUserIdAndCutoffDateWithCursor(userId, currentTime.minusDays(cutoff), pageable))
             .willReturn(List.of(participant));
         given(participantRepository.findAllByLightningIdIn(List.of(100L)))
             .willReturn(List.of(participant));
@@ -314,11 +325,11 @@ class LightningServiceTest {
             .willReturn(List.of());
 
         // when
-        List<LightningResponse> result = lightningService.getParticipantLightningList(userId, currentTime, cutoff);
+        CursorPageResponse<LightningResponse> result = lightningService.getParticipantLightningList(userId, currentTime, cutoff, null, 10);
 
         // then
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0))
+        assertThat(result.data()).hasSize(1);
+        assertThat(result.data().get(0))
             .extracting("lightningId", "restaurantName", "unreadCount")
             .contains(100L, "", 0);
     }
@@ -342,8 +353,10 @@ class LightningServiceTest {
 
         Restaurant restaurant = RestaurantFixture.create("restaurant-1", "맛있는 식당");
 
+        PageRequest pageable = PageRequest.of(0, 11);
+
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
-        given(participantRepository.findLightningByUserIdAndCutoffDate(userId, currentTime.minusDays(cutoff)))
+        given(participantRepository.findLightningByUserIdAndCutoffDateWithCursor(userId, currentTime.minusDays(cutoff), pageable))
             .willReturn(List.of(leader));
         given(participantRepository.findAllByLightningIdIn(List.of(100L)))
             .willReturn(List.of(leader, participant2, participant3));
@@ -353,11 +366,11 @@ class LightningServiceTest {
             .willReturn(List.of());
 
         // when
-        List<LightningResponse> result = lightningService.getParticipantLightningList(userId, currentTime, cutoff);
+        CursorPageResponse<LightningResponse> result = lightningService.getParticipantLightningList(userId, currentTime, cutoff, null, 10);
 
         // then
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0))
+        assertThat(result.data()).hasSize(1);
+        assertThat(result.data().get(0))
             .extracting("lightningId", "participantsCount", "myRole", "unreadCount")
             .contains(100L, 3, GatheringRole.LEADER, 0);
     }
@@ -748,8 +761,10 @@ class LightningServiceTest {
             LightningParticipant participant = LightningParticipant.createLeader(1L, lightning, user);
             Restaurant restaurant = RestaurantFixture.create("restaurant-1", "맛있는 식당");
 
+            PageRequest pageable = PageRequest.of(0, 11);
+
             given(userRepository.findById(userId)).willReturn(Optional.of(user));
-            given(participantRepository.findLightningByUserIdAndCutoffDate(userId, cutoffDate))
+            given(participantRepository.findLightningByUserIdAndCutoffDateWithCursor(userId, cutoffDate, pageable))
                 .willReturn(List.of(participant));
             given(participantRepository.findAllByLightningIdIn(List.of(100L)))
                 .willReturn(List.of(participant));
@@ -759,15 +774,15 @@ class LightningServiceTest {
                 .willReturn(List.of());
 
             // when
-            List<LightningResponse> result = lightningService.getParticipantLightningList(userId, currentTime, cutoff);
+            CursorPageResponse<LightningResponse> result = lightningService.getParticipantLightningList(userId, currentTime, cutoff, null, 10);
 
             // then
-            assertThat(result).hasSize(1);
-            assertThat(result.get(0))
+            assertThat(result.data()).hasSize(1);
+            assertThat(result.data().get(0))
                 .extracting("lightningId", "restaurantName")
                 .contains(100L, "맛있는 식당");
 
-            then(participantRepository).should().findLightningByUserIdAndCutoffDate(userId, cutoffDate);
+            then(participantRepository).should().findLightningByUserIdAndCutoffDateWithCursor(userId, cutoffDate, pageable);
         }
 
         @Test
@@ -781,17 +796,20 @@ class LightningServiceTest {
 
             User user = UserFixture.create(userId);
 
+            PageRequest pageable = PageRequest.of(0, 11);
+
             given(userRepository.findById(userId)).willReturn(Optional.of(user));
-            given(participantRepository.findLightningByUserIdAndCutoffDate(userId, cutoffDate))
+            given(participantRepository.findLightningByUserIdAndCutoffDateWithCursor(userId, cutoffDate, pageable))
                 .willReturn(List.of());
 
             // when
-            List<LightningResponse> result = lightningService.getParticipantLightningList(userId, currentTime, cutoff);
+            CursorPageResponse<LightningResponse> result = lightningService.getParticipantLightningList(userId, currentTime, cutoff, null, 10);
 
             // then
-            assertThat(result).isEmpty();
+            assertThat(result.data()).isEmpty();
+            assertThat(result.hasNext()).isFalse();
 
-            then(participantRepository).should().findLightningByUserIdAndCutoffDate(userId, cutoffDate);
+            then(participantRepository).should().findLightningByUserIdAndCutoffDateWithCursor(userId, cutoffDate, pageable);
             then(participantRepository).should(never()).findAllByLightningIdIn(any());
         }
 
@@ -810,8 +828,10 @@ class LightningServiceTest {
             LightningParticipant participant = LightningParticipant.createLeader(1L, lightning, user);
             Restaurant restaurant = RestaurantFixture.create("restaurant-1", "맛있는 식당");
 
+            PageRequest pageable = PageRequest.of(0, 11);
+
             given(userRepository.findById(userId)).willReturn(Optional.of(user));
-            given(participantRepository.findLightningByUserIdAndCutoffDate(userId, cutoffDate))
+            given(participantRepository.findLightningByUserIdAndCutoffDateWithCursor(userId, cutoffDate, pageable))
                 .willReturn(List.of(participant));
             given(participantRepository.findAllByLightningIdIn(List.of(100L)))
                 .willReturn(List.of(participant));
@@ -821,15 +841,15 @@ class LightningServiceTest {
                 .willReturn(List.of());
 
             // when
-            List<LightningResponse> result = lightningService.getParticipantLightningList(userId, currentTime, cutoff);
+            CursorPageResponse<LightningResponse> result = lightningService.getParticipantLightningList(userId, currentTime, cutoff, null, 10);
 
             // then
-            assertThat(result).hasSize(1);
-            assertThat(result.get(0))
+            assertThat(result.data()).hasSize(1);
+            assertThat(result.data().get(0))
                 .extracting("lightningId", "lightningDate")
                 .contains(100L, futureDate);
 
-            then(participantRepository).should().findLightningByUserIdAndCutoffDate(userId, cutoffDate);
+            then(participantRepository).should().findLightningByUserIdAndCutoffDateWithCursor(userId, cutoffDate, pageable);
         }
     }
 }

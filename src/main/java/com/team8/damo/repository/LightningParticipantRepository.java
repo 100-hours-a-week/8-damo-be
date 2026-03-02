@@ -1,6 +1,7 @@
 package com.team8.damo.repository;
 
 import com.team8.damo.entity.LightningParticipant;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -33,6 +34,32 @@ public interface LightningParticipantRepository extends JpaRepository<LightningP
     List<LightningParticipant> findLightningByUserIdAndCutoffDate(
         @Param("userId") Long userId,
         @Param("cutoffDate") LocalDateTime cutoffDate
+    );
+
+    @Query(
+        "select lp from LightningParticipant lp " +
+        "join fetch lp.lightning " +
+        "where lp.user.id = :userId and lp.lightning.lightningDate >= :cutoffDate " +
+        "order by lp.lightning.id desc"
+    )
+    List<LightningParticipant> findLightningByUserIdAndCutoffDateWithCursor(
+        @Param("userId") Long userId,
+        @Param("cutoffDate") LocalDateTime cutoffDate,
+        Pageable pageable
+    );
+
+    @Query(
+        "select lp from LightningParticipant lp " +
+        "join fetch lp.lightning " +
+        "where lp.user.id = :userId and lp.lightning.lightningDate >= :cutoffDate " +
+        "and lp.lightning.id < :lastLightningId " +
+        "order by lp.lightning.id desc"
+    )
+    List<LightningParticipant> findLightningByUserIdAndCutoffDateWithCursorAfter(
+        @Param("userId") Long userId,
+        @Param("cutoffDate") LocalDateTime cutoffDate,
+        @Param("lastLightningId") Long lastLightningId,
+        Pageable pageable
     );
 
     List<LightningParticipant> findAllByLightningIdIn(List<Long> lightningIds);

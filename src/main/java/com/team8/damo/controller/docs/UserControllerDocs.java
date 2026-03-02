@@ -7,6 +7,7 @@ import com.team8.damo.controller.request.PushNotificationUpdateRequest;
 import com.team8.damo.controller.request.UserCharacteristicsUpdateRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.service.response.AvailableLightningResponse;
+import com.team8.damo.service.response.CursorPageResponse;
 import com.team8.damo.service.response.LightningResponse;
 import com.team8.damo.service.response.UserBasicResponse;
 import com.team8.damo.service.response.UserProfileResponse;
@@ -17,8 +18,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import static com.team8.damo.exception.errorcode.ErrorCode.*;
 
@@ -151,6 +151,7 @@ public interface UserControllerDocs {
         description = """
             ### 사용자가 참가중인 번개 모임 목록을 조회합니다.
             - lightningDate 기준 최근 3일 이내의 번개 모임만 반환
+            - 커서 기반 페이지네이션 (최신순, id DESC)
             - lightningId: 번개 모임 ID
             - restaurantName: 식당 이름
             - description: 설명
@@ -162,15 +163,20 @@ public interface UserControllerDocs {
     )
     @ApiResponse(responseCode = "200", description = "성공")
     @ApiErrorResponses({USER_NOT_FOUND})
-    BaseResponse<List<LightningResponse>> getParticipantLightningList(
+    BaseResponse<CursorPageResponse<LightningResponse>> getParticipantLightningList(
         @Parameter(hidden = true)
-        JwtUserDetails user
+        JwtUserDetails user,
+        @Parameter(description = "마지막 번개 모임 ID (다음 페이지 조회 시 사용)")
+        @RequestParam(required = false) Long lastLightningId,
+        @Parameter(description = "페이지 크기 (기본값: 10)")
+        @RequestParam(defaultValue = "10") int size
     );
 
     @Operation(
         summary = "참가하지 않은 전체 번개 목록 조회",
         description = """
             ### 사용자가 참가하지 않은 OPEN 상태의 번개 모임 목록을 조회합니다.
+            - 커서 기반 페이지네이션 (최신순, id DESC)
             - lightningId: 번개 모임 ID
             - restaurantName: 식당 이름
             - description: 설명
@@ -181,9 +187,13 @@ public interface UserControllerDocs {
     )
     @ApiResponse(responseCode = "200", description = "성공")
     @ApiErrorResponses({USER_NOT_FOUND})
-    BaseResponse<List<AvailableLightningResponse>> getAvailableLightningList(
+    BaseResponse<CursorPageResponse<AvailableLightningResponse>> getAvailableLightningList(
         @Parameter(hidden = true)
-        JwtUserDetails user
+        JwtUserDetails user,
+        @Parameter(description = "마지막 번개 모임 ID (다음 페이지 조회 시 사용)")
+        @RequestParam(required = false) Long lastLightningId,
+        @Parameter(description = "페이지 크기 (기본값: 10)")
+        @RequestParam(defaultValue = "10") int size
     );
 
     @Operation(
