@@ -9,10 +9,12 @@ import com.team8.damo.exception.CustomException;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.GroupCreateServiceRequest;
 import com.team8.damo.service.response.GroupDetailResponse;
+import com.team8.damo.service.response.CursorPageResponse;
 import com.team8.damo.service.response.UserGroupResponse;
 import com.team8.damo.util.QrCodeGenerator;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,11 +56,24 @@ public class GroupService {
         // 기존 이미지 삭제
     }
 
-    public List<UserGroupResponse> getGroupList(Long userId) {
-        List<UserGroup> userGroups = userGroupRepository.findAllByUserIdWithGroup(userId);
-        return userGroups.stream()
+    public CursorPageResponse<UserGroupResponse> getGroupList(Long userId, Long lastGroupId, int size) {
+        PageRequest pageable = PageRequest.of(0, size + 1);
+
+        List<UserGroup> userGroups = lastGroupId == null
+            ? userGroupRepository.findAllByUserIdWithGroupCursor(userId, pageable)
+            : userGroupRepository.findAllByUserIdWithGroupCursorAfter(userId, lastGroupId, pageable);
+
+        boolean hasNext = userGroups.size() > size;
+        if (hasNext) {
+            userGroups = userGroups.subList(0, size);
+        }
+
+        List<UserGroupResponse> content = userGroups.stream()
             .map(UserGroupResponse::from)
             .toList();
+
+        Long nextCursor = hasNext ? content.getLast().groupId() : null;
+        return new CursorPageResponse<>(content, nextCursor, hasNext);
     }
 
     public GroupDetailResponse getGroupDetail(Long userId, Long groupId) {

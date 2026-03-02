@@ -9,6 +9,7 @@ import com.team8.damo.fixture.DiningFixture;
 import com.team8.damo.fixture.GroupFixture;
 import com.team8.damo.fixture.UserFixture;
 import com.team8.damo.repository.*;
+import com.team8.damo.service.response.CursorPageResponse;
 import com.team8.damo.service.response.GroupDetailResponse;
 import com.team8.damo.service.response.UserGroupResponse;
 import com.team8.damo.service.request.GroupCreateServiceRequest;
@@ -173,7 +174,7 @@ class GroupServiceTest {
     }
 
     @Test
-    @DisplayName("사용자가 속한 그룹 목록을 성공적으로 조회한다.")
+    @DisplayName("사용자가 속한 그룹 목록을 커서 페이지네이션으로 성공적으로 조회한다.")
     void getGroupList_success() {
         // given
         Long userId = 1L;
@@ -190,22 +191,24 @@ class GroupServiceTest {
             .role(GroupRole.PARTICIPANT)
             .build();
 
-        given(userGroupRepository.findAllByUserIdWithGroup(userId))
+        given(userGroupRepository.findAllByUserIdWithGroupCursor(any(), any()))
             .willReturn(List.of(userGroup1, userGroup2));
 
         // when
-        List<UserGroupResponse> result = groupService.getGroupList(userId);
+        CursorPageResponse<UserGroupResponse> result = groupService.getGroupList(userId, null, 20);
 
         // then
-        assertThat(result).hasSize(2);
-        assertThat(result)
+        assertThat(result.data()).hasSize(2);
+        assertThat(result.data())
             .extracting("groupId", "name", "introduction")
             .containsExactly(
                 tuple(100L, "맛집탐방대", "서울 맛집 모임"),
                 tuple(101L, "카페투어", "카페 탐방 모임")
             );
+        assertThat(result.hasNext()).isFalse();
+        assertThat(result.nextCursor()).isNull();
 
-        then(userGroupRepository).should().findAllByUserIdWithGroup(userId);
+        then(userGroupRepository).should().findAllByUserIdWithGroupCursor(any(), any());
     }
 
     @Test
@@ -214,16 +217,18 @@ class GroupServiceTest {
         // given
         Long userId = 1L;
 
-        given(userGroupRepository.findAllByUserIdWithGroup(userId))
+        given(userGroupRepository.findAllByUserIdWithGroupCursor(any(), any()))
             .willReturn(List.of());
 
         // when
-        List<UserGroupResponse> result = groupService.getGroupList(userId);
+        CursorPageResponse<UserGroupResponse> result = groupService.getGroupList(userId, null, 20);
 
         // then
-        assertThat(result).isEmpty();
+        assertThat(result.data()).isEmpty();
+        assertThat(result.hasNext()).isFalse();
+        assertThat(result.nextCursor()).isNull();
 
-        then(userGroupRepository).should().findAllByUserIdWithGroup(userId);
+        then(userGroupRepository).should().findAllByUserIdWithGroupCursor(any(), any());
     }
 
     @Test
