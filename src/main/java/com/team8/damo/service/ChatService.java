@@ -1,5 +1,6 @@
 package com.team8.damo.service;
 
+import com.team8.damo.cache.store.UserCacheService;
 import com.team8.damo.chat.producer.ChatMessageBroker;
 import com.team8.damo.controller.request.ChatMessageRequest;
 import com.team8.damo.entity.ChatMessage;
@@ -48,16 +49,18 @@ public class ChatService {
     private final LightningParticipantRepository lightningParticipantRepository;
     private final CommonEventPublisher commonEventPublisher;
     private final RedisTemplate<String, String> redisTemplate;
+    private final UserCacheService userCacheService;
 
     @Transactional
     public void createChatMessage(Long senderId, Long lightningId, ChatMessageRequest request, LocalDateTime currentTime) {
         User sender = findUserBy(senderId);
-        Lightning lightning = findLightningBy(lightningId);
+        User userRef = userRepository.getReferenceById(senderId);
+        Lightning lightningRef = lightningRepository.getReferenceById(lightningId);
 
         ChatMessage chatMessage = ChatMessage.builder()
             .id(snowflake.nextId())
-            .user(sender)
-            .lightning(lightning)
+            .user(userRef)
+            .lightning(lightningRef)
             .content(request.content())
             .build();
         chatMessageRepository.save(chatMessage);
@@ -336,11 +339,6 @@ public class ChatService {
     private User findUserBy(Long userId) {
         return userRepository.findById(userId)
             .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
-    }
-
-    private Lightning findLightningBy(Long lightningId) {
-        return lightningRepository.findById(lightningId)
-            .orElseThrow(() -> new CustomException(LIGHTNING_NOT_FOUND));
     }
 
     private NavigableMap<Long, Long> getUnreadCountMap(Long lightningId, Long userId) {
