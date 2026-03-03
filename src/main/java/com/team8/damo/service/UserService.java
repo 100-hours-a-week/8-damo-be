@@ -76,14 +76,11 @@ public class UserService {
         user.updateOtherCharacteristics(request.otherCharacteristics());
         user.updateOnboardingStep(OnboardingStep.DONE);
 
-        commonEventPublisher.publish(
-            EventType.USER_PERSONA,
-            UserPersonaPayload.builder()
-                .user(user)
-                .allergies(request.allergies())
-                .likeFoods(request.likeFoods())
-                .likeIngredients(request.likeIngredients())
-                .build()
+        userPersonaEvent(
+            user,
+            request.allergies(),
+            request.likeFoods(),
+            request.likeIngredients()
         );
     }
 
@@ -218,14 +215,11 @@ public class UserService {
 
         user.updateOtherCharacteristics(request.otherCharacteristics());
 
-        commonEventPublisher.publish(
-            EventType.USER_PERSONA,
-            UserPersonaPayload.builder()
-                .user(user)
-                .allergies(request.allergies())
-                .likeFoods(request.likeFoods())
-                .likeIngredients(request.likeIngredients())
-                .build()
+        userPersonaEvent(
+            user,
+            request.allergies(),
+            request.likeFoods(),
+            request.likeIngredients()
         );
     }
 
