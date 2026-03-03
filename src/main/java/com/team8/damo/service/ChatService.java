@@ -1,5 +1,6 @@
 package com.team8.damo.service;
 
+import com.team8.damo.cache.dto.UserBasicCache;
 import com.team8.damo.cache.store.UserCacheService;
 import com.team8.damo.chat.producer.ChatMessageBroker;
 import com.team8.damo.controller.request.ChatMessageRequest;
@@ -53,9 +54,10 @@ public class ChatService {
 
     @Transactional
     public void createChatMessage(Long senderId, Long lightningId, ChatMessageRequest request, LocalDateTime currentTime) {
-        User sender = findUserBy(senderId);
         User userRef = userRepository.getReferenceById(senderId);
         Lightning lightningRef = lightningRepository.getReferenceById(lightningId);
+
+        UserBasicCache userBasicCache = userCacheService.getUserBasic(senderId);
 
         ChatMessage chatMessage = ChatMessage.builder()
             .id(snowflake.nextId())
@@ -77,7 +79,7 @@ public class ChatService {
                 .chatType(request.chatType())
                 .content(request.content())
                 .createdAt(currentTime)
-                .senderNickname(sender.getNickname())
+                .senderNickname(userBasicCache.nickname())
                 .unreadCount(totalParticipant - userCount)
                 .build()
         );
