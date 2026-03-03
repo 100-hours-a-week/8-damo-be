@@ -5,7 +5,7 @@ import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.*;
 import com.team8.damo.event.EventType;
 import com.team8.damo.event.handler.CommonEventPublisher;
-import com.team8.damo.event.payload.UserPersonaPayload;
+import com.team8.damo.event.payload.UserPersonaEventPayload;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.fixture.CategoryFixture;
 import com.team8.damo.fixture.UserFixture;
@@ -103,7 +103,7 @@ class UserServiceTest {
     private ArgumentCaptor<List<LikeIngredientCategory>> likeIngredientCategoryCaptor;
 
     @Captor
-    private ArgumentCaptor<UserPersonaPayload> userPersonaPayloadCaptor;
+    private ArgumentCaptor<UserPersonaEventPayload> userPersonaEventPayloadCaptor;
 
     // ===== Helper Methods for Category Assertion =====
 
@@ -261,9 +261,9 @@ class UserServiceTest {
         assertSavedLikeFoods(userLikeFoodCaptor.getValue(), FoodType.KOREAN, FoodType.CHINESE);
         assertSavedLikeIngredients(userLikeIngredientCaptor.getValue(), IngredientType.MEAT, IngredientType.SEAFOOD);
 
-        then(commonEventPublisher).should().publish(eq(EventType.USER_PERSONA), userPersonaPayloadCaptor.capture());
-        UserPersonaPayload capturedPayload = userPersonaPayloadCaptor.getValue();
-        assertThat(capturedPayload.user()).isEqualTo(user);
+        then(commonEventPublisher).should().publishKafka(eq(EventType.USER_PERSONA_UPDATE), userPersonaEventPayloadCaptor.capture());
+        UserPersonaEventPayload capturedPayload = userPersonaEventPayloadCaptor.getValue();
+        assertThat(capturedPayload.userId()).isEqualTo(user.getId());
         assertThat(capturedPayload.allergies()).isEqualTo(allergies);
         assertThat(capturedPayload.likeFoods()).isEqualTo(likeFoods);
         assertThat(capturedPayload.likeIngredients()).isEqualTo(likeIngredients);
@@ -294,9 +294,9 @@ class UserServiceTest {
         then(userLikeFoodRepository).should(never()).saveAll(anyList());
         then(userLikeIngredientRepository).should(never()).saveAll(anyList());
 
-        then(commonEventPublisher).should().publish(eq(EventType.USER_PERSONA), userPersonaPayloadCaptor.capture());
-        UserPersonaPayload capturedPayload = userPersonaPayloadCaptor.getValue();
-        assertThat(capturedPayload.user()).isEqualTo(user);
+        then(commonEventPublisher).should().publishKafka(eq(EventType.USER_PERSONA_UPDATE), userPersonaEventPayloadCaptor.capture());
+        UserPersonaEventPayload capturedPayload = userPersonaEventPayloadCaptor.getValue();
+        assertThat(capturedPayload.userId()).isEqualTo(user.getId());
         assertThat(capturedPayload.allergies()).isEmpty();
         assertThat(capturedPayload.likeFoods()).isEmpty();
         assertThat(capturedPayload.likeIngredients()).isEmpty();
@@ -639,9 +639,9 @@ class UserServiceTest {
         assertSavedLikeFoods(userLikeFoodCaptor.getValue(), FoodType.KOREAN, FoodType.CHINESE);
         assertSavedLikeIngredients(userLikeIngredientCaptor.getValue(), IngredientType.MEAT, IngredientType.SEAFOOD);
 
-        then(commonEventPublisher).should().publish(eq(EventType.USER_PERSONA), userPersonaPayloadCaptor.capture());
-        UserPersonaPayload capturedPayload = userPersonaPayloadCaptor.getValue();
-        assertThat(capturedPayload.user()).isEqualTo(user);
+        then(commonEventPublisher).should().publishKafka(eq(EventType.USER_PERSONA_UPDATE), userPersonaEventPayloadCaptor.capture());
+        UserPersonaEventPayload capturedPayload = userPersonaEventPayloadCaptor.getValue();
+        assertThat(capturedPayload.userId()).isEqualTo(user.getId());
         assertThat(capturedPayload.allergies()).isEqualTo(newAllergies);
         assertThat(capturedPayload.likeFoods()).isEqualTo(newLikeFoods);
         assertThat(capturedPayload.likeIngredients()).isEqualTo(newLikeIngredients);
@@ -694,9 +694,9 @@ class UserServiceTest {
         assertDeletedAllergies(allergyCategoryCaptor.getValue(), AllergyType.SHRIMP);
         assertDeletedLikeFoods(likeFoodCategoryCaptor.getValue(), FoodType.CHINESE);
 
-        then(commonEventPublisher).should().publish(eq(EventType.USER_PERSONA), userPersonaPayloadCaptor.capture());
-        UserPersonaPayload capturedPayload = userPersonaPayloadCaptor.getValue();
-        assertThat(capturedPayload.user()).isEqualTo(user);
+        then(commonEventPublisher).should().publishKafka(eq(EventType.USER_PERSONA_UPDATE), userPersonaEventPayloadCaptor.capture());
+        UserPersonaEventPayload capturedPayload = userPersonaEventPayloadCaptor.getValue();
+        assertThat(capturedPayload.userId()).isEqualTo(user.getId());
         assertThat(capturedPayload.allergies()).isEqualTo(newAllergies);
         assertThat(capturedPayload.likeFoods()).isEqualTo(newLikeFoods);
         assertThat(capturedPayload.likeIngredients()).isEqualTo(newLikeIngredients);
@@ -755,9 +755,9 @@ class UserServiceTest {
         assertDeletedLikeIngredients(likeIngredientCategoryCaptor.getValue(), IngredientType.MEAT);
         assertSavedLikeIngredients(userLikeIngredientCaptor.getValue(), IngredientType.SEAFOOD);
 
-        then(commonEventPublisher).should().publish(eq(EventType.USER_PERSONA), userPersonaPayloadCaptor.capture());
-        UserPersonaPayload capturedPayload = userPersonaPayloadCaptor.getValue();
-        assertThat(capturedPayload.user()).isEqualTo(user);
+        then(commonEventPublisher).should().publishKafka(eq(EventType.USER_PERSONA_UPDATE), userPersonaEventPayloadCaptor.capture());
+        UserPersonaEventPayload capturedPayload = userPersonaEventPayloadCaptor.getValue();
+        assertThat(capturedPayload.userId()).isEqualTo(user.getId());
         assertThat(capturedPayload.allergies()).isEqualTo(newAllergies);
         assertThat(capturedPayload.likeFoods()).isEqualTo(newLikeFoods);
         assertThat(capturedPayload.likeIngredients()).isEqualTo(newLikeIngredients);
@@ -800,9 +800,9 @@ class UserServiceTest {
 
         assertDeletedAllergies(allergyCategoryCaptor.getValue(), AllergyType.SHRIMP);
 
-        then(commonEventPublisher).should().publish(eq(EventType.USER_PERSONA), userPersonaPayloadCaptor.capture());
-        UserPersonaPayload capturedPayload = userPersonaPayloadCaptor.getValue();
-        assertThat(capturedPayload.user()).isEqualTo(user);
+        then(commonEventPublisher).should().publishKafka(eq(EventType.USER_PERSONA_UPDATE), userPersonaEventPayloadCaptor.capture());
+        UserPersonaEventPayload capturedPayload = userPersonaEventPayloadCaptor.getValue();
+        assertThat(capturedPayload.userId()).isEqualTo(user.getId());
         assertThat(capturedPayload.allergies()).isNull();
         assertThat(capturedPayload.likeFoods()).isEqualTo(newLikeFoods);
         assertThat(capturedPayload.likeIngredients()).isEqualTo(newLikeIngredients);
@@ -849,9 +849,9 @@ class UserServiceTest {
         then(userLikeIngredientRepository).should(never()).deleteAllByUserAndLikeIngredientCategoryIn(any(), anyList());
         then(userLikeIngredientRepository).should(never()).saveAll(anyList());
 
-        then(commonEventPublisher).should().publish(eq(EventType.USER_PERSONA), userPersonaPayloadCaptor.capture());
-        UserPersonaPayload capturedPayload = userPersonaPayloadCaptor.getValue();
-        assertThat(capturedPayload.user()).isEqualTo(user);
+        then(commonEventPublisher).should().publishKafka(eq(EventType.USER_PERSONA_UPDATE), userPersonaEventPayloadCaptor.capture());
+        UserPersonaEventPayload capturedPayload = userPersonaEventPayloadCaptor.getValue();
+        assertThat(capturedPayload.userId()).isEqualTo(user.getId());
         assertThat(capturedPayload.allergies()).isEqualTo(allergies);
         assertThat(capturedPayload.likeFoods()).isEqualTo(likeFoods);
         assertThat(capturedPayload.likeIngredients()).isEqualTo(likeIngredients);

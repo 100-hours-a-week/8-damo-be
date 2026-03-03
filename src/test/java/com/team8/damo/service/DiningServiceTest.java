@@ -9,6 +9,7 @@ import com.team8.damo.entity.enumeration.RestaurantVoteStatus;
 import com.team8.damo.event.EventType;
 import com.team8.damo.event.handler.CommonEventPublisher;
 import com.team8.damo.event.payload.RecommendationRefreshEventPayload;
+import com.team8.damo.event.payload.RestaurantConfirmedEventPayload;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.fixture.*;
 import com.team8.damo.repository.*;
@@ -2365,7 +2366,10 @@ class DiningServiceTest {
         given(recommendRestaurantRepository.existsByDiningIdAndRecommendationCountAndConfirmedStatusTrue(
             diningId, recommendationCount)).willReturn(false);
         given(restaurantRepository.findById(restaurantId)).willReturn(Optional.of(restaurant));
-        willDoNothing().given(aiService).sendConfirmRestaurant(any(Group.class), any(Dining.class), any(String.class), any(RecommendRestaurant.class));
+        given(recommendRestaurantRepository.findByDiningIdAndRecommendationCount(diningId, recommendationCount))
+            .willReturn(List.of(recommendRestaurant));
+        given(recommendRestaurantVoteRepository.findByRecommendRestaurantIdIn(any()))
+            .willReturn(List.of());
 
         // when
         DiningConfirmedResponse result = diningService.confirmDiningRestaurant(
@@ -2400,6 +2404,7 @@ class DiningServiceTest {
         then(recommendRestaurantRepository).should()
             .existsByDiningIdAndRecommendationCountAndConfirmedStatusTrue(diningId, recommendationCount);
         then(restaurantRepository).should().findById(restaurantId);
+        then(commonEventPublisher).should().publishKafka(eq(EventType.RESTAURANT_CONFIRMED), any(RestaurantConfirmedEventPayload.class));
     }
 
     @Test
