@@ -100,7 +100,7 @@ public class UserController implements UserControllerDocs {
         @RequestParam(defaultValue = "20") int size
     ) {
         return BaseResponse.ok(lightningService.getParticipantLightningList(
-            user.getUserId(), LocalDateTime.now(), 3, lastLightningId, size
+            user.getUserId(), LocalDateTime.now(), 10, lastLightningId, size
         ));
     }
 
