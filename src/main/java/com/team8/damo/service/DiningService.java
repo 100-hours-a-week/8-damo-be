@@ -472,7 +472,15 @@ public class DiningService {
             .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
 
         Group group = findGroupBy(groupId);
-        aiService.sendConfirmRestaurant(group, dining, restaurant.getId(), recommendRestaurant);
+
+        commonEventPublisher.publishKafka(
+            EventType.RESTAURANT_CONFIRMED,
+            RestaurantConfirmedEventPayload.builder()
+                .restaurantId(restaurant.getId())
+                .diningData(createDiningData(group, dining))
+                .voteResultList(createVoteResult(diningId, dining.getRecommendationCount()))
+                .build()
+        );
 
         return DiningConfirmedResponse.of(recommendRestaurant, restaurant);
     }
