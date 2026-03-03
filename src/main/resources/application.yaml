@@ -188,13 +188,12 @@ spring:
 
 logging:
   level:
-    org.springframework.security: DEBUG
     org.springframework.data.mongodb.core.MongoTemplate: DEBUG
 
 decorator:
   datasource:
     p6spy:
-      enable-logging: true
+      enable-logging: false
 
 springdoc:
   swagger-ui:
@@ -256,13 +255,12 @@ spring:
 
 logging:
   level:
-    org.springframework.security: DEBUG
     org.springframework.data.mongodb.core.MongoTemplate: DEBUG
 
 decorator:
   datasource:
     p6spy:
-      enable-logging: true
+      enable-logging: false
 
 springdoc:
   swagger-ui:
