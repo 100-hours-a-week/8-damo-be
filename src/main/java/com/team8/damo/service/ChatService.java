@@ -25,7 +25,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,8 +33,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.team8.damo.exception.errorcode.ErrorCode.*;
-import static com.team8.damo.redis.key.RedisKeyPrefix.LIGHTNING_SUBSCRIBE_USERS;
+import static com.team8.damo.exception.errorcode.ErrorCode.LIGHTNING_PARTICIPANT_NOT_FOUND;
+import static com.team8.damo.exception.errorcode.ErrorCode.USER_NOT_FOUND;
 
 @Slf4j
 @Service
@@ -49,7 +48,6 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final LightningParticipantRepository lightningParticipantRepository;
     private final CommonEventPublisher commonEventPublisher;
-    private final RedisTemplate<String, String> redisTemplate;
     private final UserCacheService userCacheService;
 
     @Transactional
@@ -67,9 +65,6 @@ public class ChatService {
             .build();
         chatMessageRepository.save(chatMessage);
 
-        long totalParticipant = lightningParticipantRepository.countByLightningId(lightningId);
-        long userCount = redisTemplate.opsForSet().size(LIGHTNING_SUBSCRIBE_USERS.key(lightningId));
-
         commonEventPublisher.publish(
             EventType.CREATE_CHAT_MESSAGE,
             CreateChatMessageEventPayload.builder()
@@ -80,7 +75,7 @@ public class ChatService {
                 .content(request.content())
                 .createdAt(currentTime)
                 .senderNickname(userBasicCache.nickname())
-                .unreadCount(totalParticipant - userCount)
+                .unreadCount(0L)
                 .build()
         );
     }
