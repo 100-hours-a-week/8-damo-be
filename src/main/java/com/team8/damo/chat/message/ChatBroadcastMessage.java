@@ -14,7 +14,7 @@ public record ChatBroadcastMessage(
     String senderNickname,
     Long unreadCount
 ) {
-    public static ChatBroadcastMessage from(CreateChatMessageEventPayload payload) {
+    public static ChatBroadcastMessage from(CreateChatMessageEventPayload payload, Long unreadCount) {
         return new ChatBroadcastMessage(
             payload.messageId(),
             payload.senderId(),
@@ -23,7 +23,7 @@ public record ChatBroadcastMessage(
             payload.content(),
             payload.createdAt(),
             payload.senderNickname(),
-            payload.unreadCount()
+            unreadCount
         );
     }
 }

@@ -1,6 +1,7 @@
 package com.team8.damo.service;
 
 import com.team8.damo.aop.CustomLock;
+import com.team8.damo.cache.CacheSpec;
 import com.team8.damo.entity.Lightning;
 import com.team8.damo.entity.LightningParticipant;
 import com.team8.damo.entity.Restaurant;
@@ -19,6 +20,8 @@ import com.team8.damo.service.response.LightningDetailResponse;
 import com.team8.damo.service.response.LightningResponse;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +48,10 @@ public class LightningService {
 
     @Transactional
     @CustomLock(key = "#lightningId")
+    @CacheEvict(
+        cacheNames = CacheSpec.lightningParticipantCount,
+        key = "#lightningId"
+    )
     public Long joinLightning(Long userId, Long lightningId) {
         Lightning lightning = findLightningBy(lightningId);
 
@@ -166,6 +173,10 @@ public class LightningService {
 
     @Transactional
     @CustomLock(key = "#lightningId")
+    @CacheEvict(
+        cacheNames = CacheSpec.lightningParticipantCount,
+        key = "#lightningId"
+    )
     public void leaveLightning(Long userId, Long lightningId) {
         LightningParticipant participant = lightningParticipantRepository.findByLightningIdAndUserId(lightningId, userId)
             .orElseThrow(() -> new CustomException(LIGHTNING_PARTICIPANT_NOT_FOUND));
