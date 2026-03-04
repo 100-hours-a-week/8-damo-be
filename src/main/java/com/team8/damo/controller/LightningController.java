@@ -1,6 +1,9 @@
 package com.team8.damo.controller;
 
+import com.team8.damo.client.AiService;
+import com.team8.damo.client.response.AiLightningResponse;
 import com.team8.damo.controller.docs.LightningControllerDocs;
+import com.team8.damo.controller.request.LightningAiRequest;
 import com.team8.damo.controller.request.LightningCreateRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.security.jwt.JwtUserDetails;
@@ -19,6 +22,7 @@ import java.time.LocalDateTime;
 public class LightningController implements LightningControllerDocs {
 
     private final LightningService lightningService;
+    private final AiService aiService;
 
     @Override
     @GetMapping("/lightning/{lightningId}")
@@ -68,6 +72,17 @@ public class LightningController implements LightningControllerDocs {
     ) {
         return BaseResponse.created(
             lightningService.createLightning(user.getUserId(), request.toServiceRequest(), LocalDateTime.now())
+        );
+    }
+
+    @Override
+    @GetMapping("/lightning/recommendation")
+    public BaseResponse<AiLightningResponse> getLightningRecommendation(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @RequestBody LightningAiRequest request
+    ) {
+        return BaseResponse.ok(
+            aiService.getLightningRecommendation(user.getUserId(), request.getX(), request.getY())
         );
     }
 }

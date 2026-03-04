@@ -1,9 +1,11 @@
 package com.team8.damo.client;
 
+import com.team8.damo.client.request.AiLightningRequest;
 import com.team8.damo.client.request.AiPersonaRequest;
 import com.team8.damo.client.request.AiRecommendationRefreshRequest;
 import com.team8.damo.client.request.AiRecommendationRequest;
 import com.team8.damo.client.request.AiRestaurantConfirmRequest;
+import com.team8.damo.client.response.AiLightningResponse;
 import com.team8.damo.client.response.AiPersonaResponse;
 import com.team8.damo.client.response.AiRecommendationResponse;
 import com.team8.damo.client.response.AiRestaurantConfirmResponse;
@@ -12,7 +14,7 @@ import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
-@HttpExchange("/ai/api")
+@HttpExchange("/ai")
 public interface AiClient {
 
     @GetExchange("/health")
@@ -29,4 +31,7 @@ public interface AiClient {
 
     @PostExchange(url = "/v1/restaurant_fix", contentType = "application/json")
     AiRestaurantConfirmResponse confirmRestaurant(@RequestBody AiRestaurantConfirmRequest request);
+
+    @PostExchange(url = "/lightning_request", contentType = "application/json")
+    AiLightningResponse lightningRequest(@RequestBody AiLightningRequest request);
 }
