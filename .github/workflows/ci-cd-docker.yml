@@ -2,9 +2,9 @@ name: Backend CI/CD (Docker)
 
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [develop]
   push:
-    branches: [main, develop]
+    branches: [develop]
 
 env:
   JAVA_VERSION: "21"
