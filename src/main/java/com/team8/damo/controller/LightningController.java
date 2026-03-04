@@ -3,7 +3,6 @@ package com.team8.damo.controller;
 import com.team8.damo.client.AiService;
 import com.team8.damo.client.response.AiLightningResponse;
 import com.team8.damo.controller.docs.LightningControllerDocs;
-import com.team8.damo.controller.request.LightningAiRequest;
 import com.team8.damo.controller.request.LightningCreateRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.security.jwt.JwtUserDetails;
@@ -79,10 +78,12 @@ public class LightningController implements LightningControllerDocs {
     @GetMapping("/lightning/recommendation")
     public BaseResponse<AiLightningResponse> getLightningRecommendation(
         @AuthenticationPrincipal JwtUserDetails user,
-        @RequestBody LightningAiRequest request
+        @RequestParam String x,
+        @RequestParam String y
     ) {
+        System.out.println("x: " +  x + " y: " + y);
         return BaseResponse.ok(
-            aiService.getLightningRecommendation(user.getUserId(), request.getX(), request.getY())
+            aiService.getLightningRecommendation(user.getUserId(), x, y)
         );
     }
 }

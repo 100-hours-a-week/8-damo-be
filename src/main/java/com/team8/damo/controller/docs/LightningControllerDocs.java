@@ -1,7 +1,6 @@
 package com.team8.damo.controller.docs;
 
 import com.team8.damo.client.response.AiLightningResponse;
-import com.team8.damo.controller.request.LightningAiRequest;
 import com.team8.damo.controller.request.LightningCreateRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.security.jwt.JwtUserDetails;
@@ -9,6 +8,7 @@ import com.team8.damo.service.response.LightningDetailResponse;
 import com.team8.damo.swagger.annotation.ApiErrorResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -105,6 +105,9 @@ public interface LightningControllerDocs {
     BaseResponse<AiLightningResponse> getLightningRecommendation(
         @Parameter(hidden = true)
         JwtUserDetails user,
-        LightningAiRequest request
+        @Parameter(name = "x", description = "경도", in = ParameterIn.QUERY, required = true)
+        String x,
+        @Parameter(name = "y", description = "위도", in = ParameterIn.QUERY, required = true)
+        String y
     );
 }
