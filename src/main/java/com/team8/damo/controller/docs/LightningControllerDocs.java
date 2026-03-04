@@ -1,5 +1,7 @@
 package com.team8.damo.controller.docs;
 
+import com.team8.damo.client.response.AiLightningResponse;
+import com.team8.damo.controller.request.LightningAiRequest;
 import com.team8.damo.controller.request.LightningCreateRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.security.jwt.JwtUserDetails;
@@ -7,6 +9,8 @@ import com.team8.damo.service.response.LightningDetailResponse;
 import com.team8.damo.swagger.annotation.ApiErrorResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -83,5 +87,24 @@ public interface LightningControllerDocs {
         @Parameter(hidden = true)
         JwtUserDetails user,
         LightningCreateRequest request
+    );
+
+    @Operation(
+        summary = "번개 식당 AI 추천",
+        description = """
+            ### 현재 위치 기반으로 AI가 번개 모임에 적합한 식당을 추천합니다.
+            - x: 경도 (필수)
+            - y: 위도 (필수)
+            """
+    )
+    @ApiResponse(
+        responseCode = "200", description = "성공",
+        content = @Content(schema = @Schema(implementation = AiLightningResponse.class))
+    )
+    @ApiErrorResponses({USER_NOT_FOUND})
+    BaseResponse<AiLightningResponse> getLightningRecommendation(
+        @Parameter(hidden = true)
+        JwtUserDetails user,
+        LightningAiRequest request
     );
 }
