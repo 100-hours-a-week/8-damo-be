@@ -30,7 +30,7 @@ public class ChatMessageController implements ChatMessageControllerDocs {
         ChatMessageRequest request
     ) {
         JwtUserDetails user = (JwtUserDetails) authentication.getPrincipal();
-        chatService.createChatMessage(user.getUserId(), lightningId, request, LocalDateTime.now());
+        chatService.createChatMessage(user.getUserId(), user.getNickname(), lightningId, request, LocalDateTime.now());
     }
 
     @Override

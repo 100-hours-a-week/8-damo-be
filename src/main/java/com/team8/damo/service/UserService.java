@@ -9,14 +9,17 @@ import com.team8.damo.event.EventType;
 import com.team8.damo.event.handler.CommonEventPublisher;
 import com.team8.damo.event.payload.UserPersonaEventPayload;
 import com.team8.damo.event.payload.UserPersonaPayload;
+import com.team8.damo.entity.RefreshToken;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.exception.errorcode.ErrorCode;
 import com.team8.damo.kakao.KakaoUtil;
 import com.team8.damo.repository.*;
+import com.team8.damo.security.jwt.JwtProvider;
 import com.team8.damo.service.request.UserBasicUpdateServiceRequest;
 import com.team8.damo.service.request.PushNotificationUpdateServiceRequest;
 import com.team8.damo.service.request.UserCharacteristicsCreateServiceRequest;
 import com.team8.damo.service.request.UserCharacteristicsUpdateServiceRequest;
+import com.team8.damo.service.response.JwtTokenResponse;
 import com.team8.damo.service.response.UserBasicResponse;
 import com.team8.damo.service.response.UserProfileResponse;
 import com.team8.damo.util.Snowflake;
@@ -48,9 +51,10 @@ public class UserService {
     private final CommonEventPublisher commonEventPublisher;
     private final KakaoUtil kakaoUtil;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final JwtProvider jwtProvider;
 
     @Transactional
-    public void updateUserBasic(Long userId, UserBasicUpdateServiceRequest request) {
+    public JwtTokenResponse updateUserBasic(Long userId, UserBasicUpdateServiceRequest request) {
         if (userRepository.existsByNicknameAndIdNot(request.nickname(), userId)) {
             throw new CustomException(DUPLICATE_NICKNAME);
         }
@@ -59,6 +63,12 @@ public class UserService {
 
         user.updateBasic(request.nickname(), request.gender(), request.ageGroup());
         user.changeImagePath(request.imagePath());
+
+        String accessToken = jwtProvider.createAccessToken(user.getId(), user.getEmail(), user.getNickname());
+        String refreshToken = jwtProvider.createRefreshToken(user.getId(), user.getEmail(), user.getNickname());
+        refreshTokenRepository.save(new RefreshToken(user.getEmail(), refreshToken));
+
+        return new JwtTokenResponse(accessToken, refreshToken);
     }
 
     @Transactional

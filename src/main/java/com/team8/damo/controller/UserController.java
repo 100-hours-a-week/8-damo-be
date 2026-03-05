@@ -14,8 +14,12 @@ import com.team8.damo.service.LightningService;
 import com.team8.damo.service.UserService;
 import com.team8.damo.service.response.AvailableLightningResponse;
 import com.team8.damo.service.response.CursorPageResponse;
+import com.team8.damo.service.response.JwtTokenResponse;
 import com.team8.damo.service.response.LightningResponse;
 import com.team8.damo.util.CookieUtil;
+
+import static com.team8.damo.entity.enumeration.TokenType.ACCESS;
+import static com.team8.damo.entity.enumeration.TokenType.REFRESH;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -44,9 +48,12 @@ public class UserController implements UserControllerDocs {
     @PatchMapping("/me/basic")
     public BaseResponse<Void> updateBasic(
         @AuthenticationPrincipal JwtUserDetails user,
-        @Valid @RequestBody UserBasicUpdateRequest request
+        @Valid @RequestBody UserBasicUpdateRequest request,
+        HttpServletResponse response
     ) {
-        userService.updateUserBasic(user.getUserId(), request.toServiceRequest());
+        JwtTokenResponse tokenResponse = userService.updateUserBasic(user.getUserId(), request.toServiceRequest());
+        CookieUtil.addCookie(response, ACCESS, tokenResponse.accessToken());
+        CookieUtil.addCookie(response, REFRESH, tokenResponse.refreshToken());
         return BaseResponse.noContent();
     }
 

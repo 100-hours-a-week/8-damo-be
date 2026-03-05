@@ -32,17 +32,19 @@ public class JwtProvider {
         this.refreshTokenExpTime = refreshTokenExpTime;
     }
 
-    public String createAccessToken(Long userId, String email) {
+    public String createAccessToken(Long userId, String email, String nickname) {
         Claims claims = Jwts.claims();
         claims.put("userId", userId);
         claims.put("email", email);
+        claims.put("nickname", nickname);
         return createToken(claims, accessTokenExpTime);
     }
 
-    public String createRefreshToken(Long userId,  String email) {
+    public String createRefreshToken(Long userId, String email, String nickname) {
         Claims claims = Jwts.claims();
         claims.put("userId", userId);
         claims.put("email", email);
+        claims.put("nickname", nickname);
         return createToken(claims, refreshTokenExpTime);
     }
 
@@ -69,7 +71,8 @@ public class JwtProvider {
         Claims claims = parseClaims(token);
         Long userId = claims.get("userId", Long.class);
         String email = claims.get("email", String.class);
-        UserDetails userDetails = new JwtUserDetails(userId, email);
+        String nickname = claims.get("nickname", String.class);
+        UserDetails userDetails = new JwtUserDetails(userId, email, nickname);
         return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }
 
@@ -81,6 +84,11 @@ public class JwtProvider {
     public String getEmail(String token) {
         Claims claims = parseClaims(token);
         return claims.get("email", String.class);
+    }
+
+    public String getNickname(String token) {
+        Claims claims = parseClaims(token);
+        return claims.get("nickname", String.class);
     }
 
     private String createToken(Claims claims, long expTime) {

@@ -1,6 +1,7 @@
 package com.team8.damo.service;
 
 import com.team8.damo.client.AiService;
+import com.team8.damo.entity.RefreshToken;
 import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.*;
 import com.team8.damo.event.EventType;
@@ -11,9 +12,11 @@ import com.team8.damo.fixture.CategoryFixture;
 import com.team8.damo.fixture.UserFixture;
 import com.team8.damo.kakao.KakaoUtil;
 import com.team8.damo.repository.*;
+import com.team8.damo.security.jwt.JwtProvider;
 import com.team8.damo.service.request.UserBasicUpdateServiceRequest;
 import com.team8.damo.service.request.UserCharacteristicsCreateServiceRequest;
 import com.team8.damo.service.request.UserCharacteristicsUpdateServiceRequest;
+import com.team8.damo.service.response.JwtTokenResponse;
 import com.team8.damo.service.response.UserBasicResponse;
 import com.team8.damo.service.response.UserProfileResponse;
 import com.team8.damo.util.Snowflake;
@@ -80,6 +83,9 @@ class UserServiceTest {
 
     @Mock
     private RefreshTokenRepository refreshTokenRepository;
+
+    @Mock
+    private JwtProvider jwtProvider;
 
     @InjectMocks
     private UserService userService;
@@ -160,17 +166,24 @@ class UserServiceTest {
 
         given(userRepository.existsByNicknameAndIdNot(nickname, userId)).willReturn(false);
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(jwtProvider.createAccessToken(eq(userId), any(), eq(nickname))).willReturn("new-access-token");
+        given(jwtProvider.createRefreshToken(eq(userId), any(), eq(nickname))).willReturn("new-refresh-token");
 
         // when
-        userService.updateUserBasic(userId, request);
+        JwtTokenResponse result = userService.updateUserBasic(userId, request);
 
         // then
         assertThat(user.getNickname()).isEqualTo(nickname);
         assertThat(user.getGender()).isEqualTo(gender);
         assertThat(user.getAgeGroup()).isEqualTo(ageGroup);
+        assertThat(result.accessToken()).isEqualTo("new-access-token");
+        assertThat(result.refreshToken()).isEqualTo("new-refresh-token");
 
         then(userRepository).should().existsByNicknameAndIdNot(nickname, userId);
         then(userRepository).should().findById(userId);
+        then(jwtProvider).should().createAccessToken(eq(userId), any(), eq(nickname));
+        then(jwtProvider).should().createRefreshToken(eq(userId), any(), eq(nickname));
+        then(refreshTokenRepository).should().save(any(RefreshToken.class));
     }
 
     @Test
@@ -193,6 +206,7 @@ class UserServiceTest {
 
         then(userRepository).should().existsByNicknameAndIdNot(duplicateNickname, userId);
         then(userRepository).should(never()).findById(userId);
+        then(jwtProvider).should(never()).createAccessToken(any(), any(), any());
     }
 
     @Test
@@ -216,6 +230,7 @@ class UserServiceTest {
 
         then(userRepository).should().existsByNicknameAndIdNot(nickname, userId);
         then(userRepository).should().findById(userId);
+        then(jwtProvider).should(never()).createAccessToken(any(), any(), any());
     }
 
     @Test

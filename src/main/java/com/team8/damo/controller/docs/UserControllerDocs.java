@@ -57,7 +57,9 @@ public interface UserControllerDocs {
     BaseResponse<Void> updateBasic(
         @Parameter(hidden = true)
         JwtUserDetails user,
-        UserBasicUpdateRequest request
+        UserBasicUpdateRequest request,
+        @Parameter(hidden = true)
+        HttpServletResponse response
     );
 
     @Operation(
