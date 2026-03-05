@@ -8,12 +8,13 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.domain.Persistable;
 
 @Entity
 @Table(name = "`groups`")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Group extends BaseTimeEntity {
+public class Group extends BaseTimeEntity implements Persistable<Long> {
 
     @Id
     @Column(name = "id", nullable = false)
@@ -60,5 +61,10 @@ public class Group extends BaseTimeEntity {
 
     public boolean isOverCapacity() {
         return totalMembers >= MAX_CAPACITY;
+    }
+
+    @Override
+    public boolean isNew() {
+        return getCreatedAt() == null;
     }
 }

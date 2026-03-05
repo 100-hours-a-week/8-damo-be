@@ -1,6 +1,5 @@
 package com.team8.damo.security.jwt;
 
-import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -8,14 +7,15 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
-@RequiredArgsConstructor
 public class JwtUserDetails implements UserDetails {
     private Long userId;
     private String email;
+    private String nickname;
 
-    public JwtUserDetails(Long userId, String email) {
+    public JwtUserDetails(Long userId, String email, String nickname) {
         this.userId = userId;
         this.email = email;
+        this.nickname = nickname;
     }
 
     @Override
@@ -25,6 +25,10 @@ public class JwtUserDetails implements UserDetails {
 
     public Long getUserId() {
         return userId;
+    }
+
+    public String getNickname() {
+        return nickname;
     }
 
     @Override

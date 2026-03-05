@@ -6,6 +6,9 @@ spring:
   profiles:
     active: ${ACTIVE_PROFILE}
 
+  jackson:
+    time-zone: Asia/Seoul
+
   security:
     oauth2:
       client:
@@ -72,17 +75,17 @@ spring:
 
   data:
     redis:
-      host: 127.0.0.1
-      port: 6379
+      host: ${PROD_REDIS_HOST}
+      port: ${PROD_REDIS_PORT}
 
   mongodb:
-    uri: ${MONGODB_URI}
+    uri: ${PROD_MONGODB_URI}
     auto-index-creation: true
 
   datasource:
-    url: jdbc:mysql://localhost:3306/damo?serverTimezone=UTC
-    username: ${MYSQL_USERNAME}
-    password: ${MYSQL_PASSWORD}
+    url: ${PROD_MYSQL_URL}
+    username: ${PROD_MYSQL_USERNAME}
+    password: ${PROD_MYSQL_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -92,6 +95,9 @@ spring:
       hibernate:
         format_sql: true
         show_sql: false
+        jdbc:
+          batch_size: 100
+          time_zone: Asia/Seoul
     defer-datasource-initialization: true
 
   sql:
@@ -101,6 +107,16 @@ spring:
   output:
     ansi:
       enabled: ALWAYS
+
+  kafka:
+    bootstrap-servers: ${PROD_KAFKA_BOOTSTRAP_SERVERS}
+    consumer:
+      group-id: ${PROD_KAFKA_GROUP_ID}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      enable-auto-commit: false
+    listener:
+      ack-mode: manual
 
 logging:
   level:
@@ -123,30 +139,33 @@ springdoc:
 spring:
   config:
     activate:
-      on-profile: local
+      on-profile: dev
 
   data:
     redis:
-      host: 127.0.0.1
-      port: 6379
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
 
   mongodb:
     uri: ${MONGODB_URI}
     auto-index-creation: true
 
   datasource:
-    url: jdbc:mysql://localhost:3306/damo?serverTimezone=UTC
+    url: ${MYSQL_URL}
     username: ${MYSQL_USERNAME}
     password: ${MYSQL_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
       hibernate:
         format_sql: true
         show_sql: false
+        jdbc:
+          batch_size: 100
+          time_zone: Asia/Seoul
     defer-datasource-initialization: true
 
   sql:
@@ -157,15 +176,91 @@ spring:
     ansi:
       enabled: ALWAYS
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    consumer:
+      group-id: ${KAFKA_GROUP_ID}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      enable-auto-commit: false
+    listener:
+      ack-mode: manual
+
 logging:
   level:
-    org.springframework.security: DEBUG
     org.springframework.data.mongodb.core.MongoTemplate: DEBUG
 
 decorator:
   datasource:
     p6spy:
-      enable-logging: true
+      enable-logging: false
+
+springdoc:
+  swagger-ui:
+    path: /api-test
+    csrf:
+      enabled: true
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: local
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+
+  mongodb:
+    uri: ${MONGODB_URI}
+    auto-index-creation: true
+
+  datasource:
+    url: ${MYSQL_URL}
+    username: ${MYSQL_USERNAME}
+    password: ${MYSQL_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: false
+        jdbc:
+          batch_size: 100
+          time_zone: Asia/Seoul
+    defer-datasource-initialization: true
+
+  sql:
+    init:
+      mode: always
+
+  output:
+    ansi:
+      enabled: ALWAYS
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    consumer:
+      group-id: ${KAFKA_GROUP_ID}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      enable-auto-commit: false
+    listener:
+      ack-mode: manual
+
+logging:
+  level:
+    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
+
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: false
 
 springdoc:
   swagger-ui:
@@ -201,6 +296,8 @@ spring:
       hibernate:
         format_sql: false
         show_sql: false
+        jdbc:
+          batch_size: 100
     defer-datasource-initialization: true
 
   sql:

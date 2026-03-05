@@ -8,10 +8,11 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.domain.Persistable;
 
 import java.time.LocalDateTime;
 
-import static jakarta.persistence.EnumType.*;
+import static jakarta.persistence.EnumType.STRING;
 
 @Entity
 @Table(
@@ -23,7 +24,7 @@ import static jakarta.persistence.EnumType.*;
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class User extends BaseTimeEntity {
+public class User extends BaseTimeEntity implements Persistable<Long> {
 
     @Id
     @Column(name = "id", nullable = false)
@@ -73,7 +74,7 @@ public class User extends BaseTimeEntity {
 
     @Enumerated(STRING)
     @Column(name = "role_type", length = 20)
-    private RoleType roleType =  RoleType.ROLE_USER;
+    private RoleType roleType = RoleType.ROLE_USER;
 
     public User(Long id, String email, Long providerId) {
         this.id = id;
@@ -107,6 +108,11 @@ public class User extends BaseTimeEntity {
         this.fcmToken = null;
     }
 
+    @Override
+    public boolean isNew() {
+        return getCreatedAt() == null;
+    }
+
     public void withdraw() {
         this.isWithdraw = true;
         this.withdrawAt = LocalDateTime.now();
@@ -116,6 +122,8 @@ public class User extends BaseTimeEntity {
         this.nickname = nickname;
         this.gender = gender;
         this.ageGroup = ageGroup;
-        this.onboardingStep = OnboardingStep.CHARACTERISTIC;
+        if (this.onboardingStep != OnboardingStep.DONE) {
+            this.onboardingStep = OnboardingStep.CHARACTERISTIC;
+        }
     }
 }

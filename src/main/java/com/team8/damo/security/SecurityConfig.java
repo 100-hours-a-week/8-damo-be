@@ -4,6 +4,7 @@ import com.team8.damo.security.handler.CustomLogoutHandler;
 import com.team8.damo.security.jwt.JwtAuthenticationFilter;
 import com.team8.damo.security.jwt.JwtExceptionFilter;
 import com.team8.damo.security.jwt.JwtProvider;
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -31,13 +32,14 @@ public class SecurityConfig {
         "/api/v1/auth/oauth",
         "/api/v1/auth/reissue",
         "/api/v1/auth/test",
+        "/api/v1/auth/test/**",
         "/api/v1/s3",
         "/login",
         "/api/healthy",
         "/swagger-ui/**",
         "/v3/api-docs/**",
         "/api-test",
-        "/ws-stomp",
+        "/api/ws-stomp",
         "/sub/**",
         "/pub/**",
         "/actuator/health",
@@ -70,6 +72,7 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(AUTH_WHITELIST).permitAll()
+                .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterAt(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class)

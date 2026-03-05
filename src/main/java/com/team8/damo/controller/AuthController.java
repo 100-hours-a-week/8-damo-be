@@ -36,6 +36,7 @@ public class AuthController implements AuthControllerDocs {
         return BaseResponse.ok(oAuthLoginResponse);
     }
 
+    @Override
     @PostMapping("/reissue")
     public BaseResponse<Void> reissue(
         HttpServletRequest request,
@@ -48,9 +49,9 @@ public class AuthController implements AuthControllerDocs {
         return BaseResponse.noContent();
     }
 
+    @Override
     @PostMapping("/test")
     public BaseResponse<Void> test(
-        HttpServletRequest request,
         HttpServletResponse response
     ) {
         JwtTokenResponse jwtTokenResponse = authService.test();
@@ -59,12 +60,15 @@ public class AuthController implements AuthControllerDocs {
         return BaseResponse.noContent();
     }
 
+    @Override
     @PostMapping("/test/{userId}")
     public BaseResponse<JwtTokenResponse> test(
         @PathVariable Long userId,
-        HttpServletRequest request,
         HttpServletResponse response
     ) {
-        return BaseResponse.ok(authService.test(userId));
+        JwtTokenResponse jwtTokenResponse = authService.test(userId);
+        CookieUtil.addCookie(response, ACCESS, jwtTokenResponse.accessToken());
+        CookieUtil.addCookie(response, REFRESH, jwtTokenResponse.refreshToken());
+        return BaseResponse.ok(jwtTokenResponse);
     }
 }

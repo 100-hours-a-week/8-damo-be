@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import org.springframework.data.domain.Persistable;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -17,7 +19,7 @@ import static jakarta.persistence.FetchType.LAZY;
 @Table(name = "dining")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Dining extends BaseTimeEntity {
+public class Dining extends BaseTimeEntity implements Persistable<Long> {
 
     @Id
     @Column(name = "id", nullable = false)
@@ -78,6 +80,11 @@ public class Dining extends BaseTimeEntity {
 
     public void confirmed() {
         this.diningStatus = DiningStatus.CONFIRMED;
+    }
+
+    @Override
+    public boolean isNew() {
+        return getCreatedAt() == null;
     }
 
     @Override

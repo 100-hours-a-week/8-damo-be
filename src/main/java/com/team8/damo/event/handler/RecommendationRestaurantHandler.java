@@ -47,6 +47,6 @@ public class RecommendationRestaurantHandler implements EventHandler<Recommendat
 
     @Override
     public boolean supports(Event<RecommendationEventPayload> event) {
-        return EventType.RESTAURANT_RECOMMENDATION == event.getEventType();
+        return EventType.RECOMMENDATION_REQUEST == event.getEventType();
     }
 }

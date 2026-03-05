@@ -1,10 +1,7 @@
 package com.team8.damo.client;
 
 import com.team8.damo.client.request.*;
-import com.team8.damo.client.response.AiPersonaResponse;
-import com.team8.damo.client.response.AiRecommendRestaurantsResponse;
-import com.team8.damo.client.response.AiRecommendationResponse;
-import com.team8.damo.client.response.AiRestaurantConfirmResponse;
+import com.team8.damo.client.response.*;
 import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.AllergyType;
 import com.team8.damo.entity.enumeration.FoodType;
@@ -94,6 +91,12 @@ public class AiService {
             log.warn("AI 식당 확정 전송 실패: restaurantId={}", restaurantId);
         }
     }
+
+    public AiLightningResponse getLightningRecommendation(Long userId, String x, String y) {
+        AiLightningRequest request = new AiLightningRequest(userId, x, y);
+        return aiClient.lightningRequest(request);
+    }
+
 
     private DiningData createDiningData(Group group, Dining dining) {
         return new DiningData(

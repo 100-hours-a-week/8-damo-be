@@ -1,0 +1,89 @@
+package com.team8.damo.controller;
+
+import com.team8.damo.client.AiService;
+import com.team8.damo.client.response.AiLightningResponse;
+import com.team8.damo.controller.docs.LightningControllerDocs;
+import com.team8.damo.controller.request.LightningCreateRequest;
+import com.team8.damo.controller.response.BaseResponse;
+import com.team8.damo.security.jwt.JwtUserDetails;
+import com.team8.damo.service.LightningService;
+import com.team8.damo.service.response.LightningDetailResponse;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api/v1")
+public class LightningController implements LightningControllerDocs {
+
+    private final LightningService lightningService;
+    private final AiService aiService;
+
+    @Override
+    @GetMapping("/lightning/{lightningId}")
+    public BaseResponse<LightningDetailResponse> getLightningDetail(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @PathVariable Long lightningId
+    ) {
+        return BaseResponse.ok(lightningService.getLightningDetail(lightningId));
+    }
+
+    @Override
+    @PostMapping("/lightning/{lightningId}/users/me")
+    public BaseResponse<Long> joinLightning(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @PathVariable Long lightningId
+    ) {
+        return BaseResponse.created(
+            lightningService.joinLightning(user.getUserId(), lightningId)
+        );
+    }
+
+    @Override
+    @PatchMapping("/lightning/{lightningId}/close")
+    public BaseResponse<Void> closeLightning(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @PathVariable Long lightningId
+    ) {
+        lightningService.closeLightning(user.getUserId(), lightningId);
+        return BaseResponse.noContent();
+    }
+
+    @Override
+    @DeleteMapping("/lightning/{lightningId}/users/me")
+    public BaseResponse<Void> leaveLightning(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @PathVariable Long lightningId
+    ) {
+        lightningService.leaveLightning(user.getUserId(), lightningId);
+        return BaseResponse.noContent();
+    }
+
+    @Override
+    @PostMapping("/lightning")
+    public BaseResponse<Long> createLightning(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @Valid @RequestBody LightningCreateRequest request
+    ) {
+        return BaseResponse.created(
+            lightningService.createLightning(user.getUserId(), request.toServiceRequest(), LocalDateTime.now())
+        );
+    }
+
+    @Override
+    @GetMapping("/lightning/recommendation")
+    public BaseResponse<AiLightningResponse> getLightningRecommendation(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @RequestParam String x,
+        @RequestParam String y
+    ) {
+        System.out.println("x: " +  x + " y: " + y);
+        return BaseResponse.ok(
+            aiService.getLightningRecommendation(user.getUserId(), x, y)
+        );
+    }
+}

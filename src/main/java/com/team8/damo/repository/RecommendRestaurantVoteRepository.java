@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface RecommendRestaurantVoteRepository extends JpaRepository<RecommendRestaurantVote, Long> {
 
@@ -13,4 +14,7 @@ public interface RecommendRestaurantVoteRepository extends JpaRepository<Recomme
 
     @EntityGraph(attributePaths = {"user"})
     List<RecommendRestaurantVote> findByRecommendRestaurantId(Long recommendRestaurantId);
+
+    @EntityGraph(attributePaths = {"user", "recommendRestaurant"})
+    List<RecommendRestaurantVote> findByRecommendRestaurantIdIn(Set<Long> recommendRestaurantIds);
 }

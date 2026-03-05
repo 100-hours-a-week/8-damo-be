@@ -1,18 +1,22 @@
 package com.team8.damo.service;
 
 import com.team8.damo.client.AiService;
+import com.team8.damo.entity.RefreshToken;
 import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.*;
 import com.team8.damo.event.EventType;
 import com.team8.damo.event.handler.CommonEventPublisher;
-import com.team8.damo.event.payload.UserPersonaPayload;
+import com.team8.damo.event.payload.UserPersonaEventPayload;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.fixture.CategoryFixture;
 import com.team8.damo.fixture.UserFixture;
+import com.team8.damo.kakao.KakaoUtil;
 import com.team8.damo.repository.*;
+import com.team8.damo.security.jwt.JwtProvider;
 import com.team8.damo.service.request.UserBasicUpdateServiceRequest;
 import com.team8.damo.service.request.UserCharacteristicsCreateServiceRequest;
 import com.team8.damo.service.request.UserCharacteristicsUpdateServiceRequest;
+import com.team8.damo.service.response.JwtTokenResponse;
 import com.team8.damo.service.response.UserBasicResponse;
 import com.team8.damo.service.response.UserProfileResponse;
 import com.team8.damo.util.Snowflake;
@@ -74,6 +78,15 @@ class UserServiceTest {
     @Mock
     private CommonEventPublisher commonEventPublisher;
 
+    @Mock
+    private KakaoUtil kakaoUtil;
+
+    @Mock
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Mock
+    private JwtProvider jwtProvider;
+
     @InjectMocks
     private UserService userService;
 
@@ -96,7 +109,7 @@ class UserServiceTest {
     private ArgumentCaptor<List<LikeIngredientCategory>> likeIngredientCategoryCaptor;
 
     @Captor
-    private ArgumentCaptor<UserPersonaPayload> userPersonaPayloadCaptor;
+    private ArgumentCaptor<UserPersonaEventPayload> userPersonaEventPayloadCaptor;
 
     // ===== Helper Methods for Category Assertion =====
 
@@ -153,17 +166,24 @@ class UserServiceTest {
 
         given(userRepository.existsByNicknameAndIdNot(nickname, userId)).willReturn(false);
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(jwtProvider.createAccessToken(eq(userId), any(), eq(nickname))).willReturn("new-access-token");
+        given(jwtProvider.createRefreshToken(eq(userId), any(), eq(nickname))).willReturn("new-refresh-token");
 
         // when
-        userService.updateUserBasic(userId, request);
+        JwtTokenResponse result = userService.updateUserBasic(userId, request);
 
         // then
         assertThat(user.getNickname()).isEqualTo(nickname);
         assertThat(user.getGender()).isEqualTo(gender);
         assertThat(user.getAgeGroup()).isEqualTo(ageGroup);
+        assertThat(result.accessToken()).isEqualTo("new-access-token");
+        assertThat(result.refreshToken()).isEqualTo("new-refresh-token");
 
         then(userRepository).should().existsByNicknameAndIdNot(nickname, userId);
         then(userRepository).should().findById(userId);
+        then(jwtProvider).should().createAccessToken(eq(userId), any(), eq(nickname));
+        then(jwtProvider).should().createRefreshToken(eq(userId), any(), eq(nickname));
+        then(refreshTokenRepository).should().save(any(RefreshToken.class));
     }
 
     @Test
@@ -186,6 +206,7 @@ class UserServiceTest {
 
         then(userRepository).should().existsByNicknameAndIdNot(duplicateNickname, userId);
         then(userRepository).should(never()).findById(userId);
+        then(jwtProvider).should(never()).createAccessToken(any(), any(), any());
     }
 
     @Test
@@ -209,6 +230,7 @@ class UserServiceTest {
 
         then(userRepository).should().existsByNicknameAndIdNot(nickname, userId);
         then(userRepository).should().findById(userId);
+        then(jwtProvider).should(never()).createAccessToken(any(), any(), any());
     }
 
     @Test
@@ -254,9 +276,9 @@ class UserServiceTest {
         assertSavedLikeFoods(userLikeFoodCaptor.getValue(), FoodType.KOREAN, FoodType.CHINESE);
         assertSavedLikeIngredients(userLikeIngredientCaptor.getValue(), IngredientType.MEAT, IngredientType.SEAFOOD);
 
-        then(commonEventPublisher).should().publish(eq(EventType.USER_PERSONA), userPersonaPayloadCaptor.capture());
-        UserPersonaPayload capturedPayload = userPersonaPayloadCaptor.getValue();
-        assertThat(capturedPayload.user()).isEqualTo(user);
+        then(commonEventPublisher).should().publishKafka(eq(EventType.USER_PERSONA_UPDATE), userPersonaEventPayloadCaptor.capture());
+        UserPersonaEventPayload capturedPayload = userPersonaEventPayloadCaptor.getValue();
+        assertThat(capturedPayload.userId()).isEqualTo(user.getId());
         assertThat(capturedPayload.allergies()).isEqualTo(allergies);
         assertThat(capturedPayload.likeFoods()).isEqualTo(likeFoods);
         assertThat(capturedPayload.likeIngredients()).isEqualTo(likeIngredients);
@@ -287,9 +309,9 @@ class UserServiceTest {
         then(userLikeFoodRepository).should(never()).saveAll(anyList());
         then(userLikeIngredientRepository).should(never()).saveAll(anyList());
 
-        then(commonEventPublisher).should().publish(eq(EventType.USER_PERSONA), userPersonaPayloadCaptor.capture());
-        UserPersonaPayload capturedPayload = userPersonaPayloadCaptor.getValue();
-        assertThat(capturedPayload.user()).isEqualTo(user);
+        then(commonEventPublisher).should().publishKafka(eq(EventType.USER_PERSONA_UPDATE), userPersonaEventPayloadCaptor.capture());
+        UserPersonaEventPayload capturedPayload = userPersonaEventPayloadCaptor.getValue();
+        assertThat(capturedPayload.userId()).isEqualTo(user.getId());
         assertThat(capturedPayload.allergies()).isEmpty();
         assertThat(capturedPayload.likeFoods()).isEmpty();
         assertThat(capturedPayload.likeIngredients()).isEmpty();
@@ -632,9 +654,9 @@ class UserServiceTest {
         assertSavedLikeFoods(userLikeFoodCaptor.getValue(), FoodType.KOREAN, FoodType.CHINESE);
         assertSavedLikeIngredients(userLikeIngredientCaptor.getValue(), IngredientType.MEAT, IngredientType.SEAFOOD);
 
-        then(commonEventPublisher).should().publish(eq(EventType.USER_PERSONA), userPersonaPayloadCaptor.capture());
-        UserPersonaPayload capturedPayload = userPersonaPayloadCaptor.getValue();
-        assertThat(capturedPayload.user()).isEqualTo(user);
+        then(commonEventPublisher).should().publishKafka(eq(EventType.USER_PERSONA_UPDATE), userPersonaEventPayloadCaptor.capture());
+        UserPersonaEventPayload capturedPayload = userPersonaEventPayloadCaptor.getValue();
+        assertThat(capturedPayload.userId()).isEqualTo(user.getId());
         assertThat(capturedPayload.allergies()).isEqualTo(newAllergies);
         assertThat(capturedPayload.likeFoods()).isEqualTo(newLikeFoods);
         assertThat(capturedPayload.likeIngredients()).isEqualTo(newLikeIngredients);
@@ -687,9 +709,9 @@ class UserServiceTest {
         assertDeletedAllergies(allergyCategoryCaptor.getValue(), AllergyType.SHRIMP);
         assertDeletedLikeFoods(likeFoodCategoryCaptor.getValue(), FoodType.CHINESE);
 
-        then(commonEventPublisher).should().publish(eq(EventType.USER_PERSONA), userPersonaPayloadCaptor.capture());
-        UserPersonaPayload capturedPayload = userPersonaPayloadCaptor.getValue();
-        assertThat(capturedPayload.user()).isEqualTo(user);
+        then(commonEventPublisher).should().publishKafka(eq(EventType.USER_PERSONA_UPDATE), userPersonaEventPayloadCaptor.capture());
+        UserPersonaEventPayload capturedPayload = userPersonaEventPayloadCaptor.getValue();
+        assertThat(capturedPayload.userId()).isEqualTo(user.getId());
         assertThat(capturedPayload.allergies()).isEqualTo(newAllergies);
         assertThat(capturedPayload.likeFoods()).isEqualTo(newLikeFoods);
         assertThat(capturedPayload.likeIngredients()).isEqualTo(newLikeIngredients);
@@ -748,9 +770,9 @@ class UserServiceTest {
         assertDeletedLikeIngredients(likeIngredientCategoryCaptor.getValue(), IngredientType.MEAT);
         assertSavedLikeIngredients(userLikeIngredientCaptor.getValue(), IngredientType.SEAFOOD);
 
-        then(commonEventPublisher).should().publish(eq(EventType.USER_PERSONA), userPersonaPayloadCaptor.capture());
-        UserPersonaPayload capturedPayload = userPersonaPayloadCaptor.getValue();
-        assertThat(capturedPayload.user()).isEqualTo(user);
+        then(commonEventPublisher).should().publishKafka(eq(EventType.USER_PERSONA_UPDATE), userPersonaEventPayloadCaptor.capture());
+        UserPersonaEventPayload capturedPayload = userPersonaEventPayloadCaptor.getValue();
+        assertThat(capturedPayload.userId()).isEqualTo(user.getId());
         assertThat(capturedPayload.allergies()).isEqualTo(newAllergies);
         assertThat(capturedPayload.likeFoods()).isEqualTo(newLikeFoods);
         assertThat(capturedPayload.likeIngredients()).isEqualTo(newLikeIngredients);
@@ -793,9 +815,9 @@ class UserServiceTest {
 
         assertDeletedAllergies(allergyCategoryCaptor.getValue(), AllergyType.SHRIMP);
 
-        then(commonEventPublisher).should().publish(eq(EventType.USER_PERSONA), userPersonaPayloadCaptor.capture());
-        UserPersonaPayload capturedPayload = userPersonaPayloadCaptor.getValue();
-        assertThat(capturedPayload.user()).isEqualTo(user);
+        then(commonEventPublisher).should().publishKafka(eq(EventType.USER_PERSONA_UPDATE), userPersonaEventPayloadCaptor.capture());
+        UserPersonaEventPayload capturedPayload = userPersonaEventPayloadCaptor.getValue();
+        assertThat(capturedPayload.userId()).isEqualTo(user.getId());
         assertThat(capturedPayload.allergies()).isNull();
         assertThat(capturedPayload.likeFoods()).isEqualTo(newLikeFoods);
         assertThat(capturedPayload.likeIngredients()).isEqualTo(newLikeIngredients);
@@ -842,9 +864,9 @@ class UserServiceTest {
         then(userLikeIngredientRepository).should(never()).deleteAllByUserAndLikeIngredientCategoryIn(any(), anyList());
         then(userLikeIngredientRepository).should(never()).saveAll(anyList());
 
-        then(commonEventPublisher).should().publish(eq(EventType.USER_PERSONA), userPersonaPayloadCaptor.capture());
-        UserPersonaPayload capturedPayload = userPersonaPayloadCaptor.getValue();
-        assertThat(capturedPayload.user()).isEqualTo(user);
+        then(commonEventPublisher).should().publishKafka(eq(EventType.USER_PERSONA_UPDATE), userPersonaEventPayloadCaptor.capture());
+        UserPersonaEventPayload capturedPayload = userPersonaEventPayloadCaptor.getValue();
+        assertThat(capturedPayload.userId()).isEqualTo(user.getId());
         assertThat(capturedPayload.allergies()).isEqualTo(allergies);
         assertThat(capturedPayload.likeFoods()).isEqualTo(likeFoods);
         assertThat(capturedPayload.likeIngredients()).isEqualTo(likeIngredients);
@@ -952,5 +974,85 @@ class UserServiceTest {
         assertThatThrownBy(() -> userService.updateUserCharacteristics(userId, request))
             .isInstanceOf(CustomException.class)
             .hasFieldOrPropertyWithValue("errorCode", INVALID_CATEGORY);
+    }
+
+    // ===== Withdraw Tests =====
+
+    @Test
+    @DisplayName("회원 탈퇴를 성공적으로 처리한다.")
+    void withdraw_success() {
+        // given
+        Long userId = 1L;
+        User user = UserFixture.create(userId);
+        RefreshToken refreshToken = new RefreshToken(user.getEmail(), "some-token");
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        willDoNothing().given(kakaoUtil).kakaoUnlink(user.getProviderId());
+        given(refreshTokenRepository.findById(user.getEmail())).willReturn(Optional.of(refreshToken));
+
+        // when
+        userService.withdraw(userId);
+
+        // then
+        assertThat(user.isWithdraw()).isTrue();
+        assertThat(user.getWithdrawAt()).isNotNull();
+
+        then(kakaoUtil).should().kakaoUnlink(user.getProviderId());
+        then(refreshTokenRepository).should().findById(user.getEmail());
+        then(refreshTokenRepository).should().delete(refreshToken);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 사용자는 탈퇴할 수 없다.")
+    void withdraw_userNotFound() {
+        // given
+        Long userId = 999L;
+
+        given(userRepository.findById(userId)).willReturn(Optional.empty());
+
+        // when // then
+        assertThatThrownBy(() -> userService.withdraw(userId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", USER_NOT_FOUND);
+
+        then(kakaoUtil).should(never()).kakaoUnlink(any());
+    }
+
+    @Test
+    @DisplayName("이미 탈퇴한 사용자는 다시 탈퇴할 수 없다.")
+    void withdraw_alreadyWithdrawn() {
+        // given
+        Long userId = 1L;
+        User user = UserFixture.create(userId);
+        user.withdraw();
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+
+        // when // then
+        assertThatThrownBy(() -> userService.withdraw(userId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", ALREADY_WITHDRAWN);
+
+        then(kakaoUtil).should(never()).kakaoUnlink(any());
+    }
+
+    @Test
+    @DisplayName("카카오 연동 해제 실패 시 탈퇴가 롤백된다.")
+    void withdraw_kakaoUnlinkFailed() {
+        // given
+        Long userId = 1L;
+        User user = UserFixture.create(userId);
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        willThrow(new CustomException(KAKAO_UNLINK_FAILED)).given(kakaoUtil).kakaoUnlink(user.getProviderId());
+
+        // when // then
+        assertThatThrownBy(() -> userService.withdraw(userId))
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", KAKAO_UNLINK_FAILED);
+
+        assertThat(user.isWithdraw()).isFalse();
+
+        then(refreshTokenRepository).should(never()).findById(any());
     }
 }

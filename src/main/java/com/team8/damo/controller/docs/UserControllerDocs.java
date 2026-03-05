@@ -3,8 +3,12 @@ package com.team8.damo.controller.docs;
 import com.team8.damo.controller.request.UserBasicUpdateRequest;
 import com.team8.damo.controller.request.UserCharacteristicsCreateRequest;
 import com.team8.damo.controller.request.ImagePathUpdateRequest;
+import com.team8.damo.controller.request.PushNotificationUpdateRequest;
 import com.team8.damo.controller.request.UserCharacteristicsUpdateRequest;
 import com.team8.damo.controller.response.BaseResponse;
+import com.team8.damo.service.response.AvailableLightningResponse;
+import com.team8.damo.service.response.CursorPageResponse;
+import com.team8.damo.service.response.LightningResponse;
 import com.team8.damo.service.response.UserBasicResponse;
 import com.team8.damo.service.response.UserProfileResponse;
 import com.team8.damo.security.jwt.JwtUserDetails;
@@ -13,6 +17,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import static com.team8.damo.exception.errorcode.ErrorCode.*;
 
@@ -51,7 +57,9 @@ public interface UserControllerDocs {
     BaseResponse<Void> updateBasic(
         @Parameter(hidden = true)
         JwtUserDetails user,
-        UserBasicUpdateRequest request
+        UserBasicUpdateRequest request,
+        @Parameter(hidden = true)
+        HttpServletResponse response
     );
 
     @Operation(
@@ -123,5 +131,87 @@ public interface UserControllerDocs {
         @Parameter(hidden = true)
         JwtUserDetails user,
         UserCharacteristicsUpdateRequest request
+    );
+
+    @Operation(
+        summary = "푸시 알림 설정 변경",
+        description = """
+            ### 푸시 알림 설정을 변경합니다.
+            - isPushNotificationAllowed: 알림 허용 여부 (필수)
+            - fcmToken: FCM 토큰 (알림 허용 시 필수)
+            """
+    )
+    @ApiResponse(responseCode = "204", description = "성공")
+    @ApiErrorResponses({USER_NOT_FOUND, FCM_TOKEN_REQUIRED})
+    BaseResponse<Void> updatePushNotification(
+        @Parameter(hidden = true) JwtUserDetails user,
+        PushNotificationUpdateRequest request
+    );
+
+    @Operation(
+        summary = "참가중인 번개 모임 목록 조회",
+        description = """
+            ### 사용자가 참가중인 번개 모임 목록을 조회합니다.
+            - lightningDate 기준 최근 3일 이내의 번개 모임만 반환
+            - 커서 기반 페이지네이션 (최신순, id DESC)
+            - lightningId: 번개 모임 ID
+            - restaurantName: 식당 이름
+            - description: 설명
+            - maxParticipants: 최대 참여 인원
+            - participantsCount: 현재 참여 인원
+            - lightningStatus: 상태 (OPEN, CLOSED)
+            - myRole: 나의 역할 (LEADER, PARTICIPANT)
+            """
+    )
+    @ApiResponse(responseCode = "200", description = "성공")
+    @ApiErrorResponses({USER_NOT_FOUND})
+    BaseResponse<CursorPageResponse<LightningResponse>> getParticipantLightningList(
+        @Parameter(hidden = true)
+        JwtUserDetails user,
+        @Parameter(description = "마지막 번개 모임 ID (다음 페이지 조회 시 사용)")
+        @RequestParam(required = false) Long lastLightningId,
+        @Parameter(description = "페이지 크기 (기본값: 10)")
+        @RequestParam(defaultValue = "10") int size
+    );
+
+    @Operation(
+        summary = "참가하지 않은 전체 번개 목록 조회",
+        description = """
+            ### 사용자가 참가하지 않은 OPEN 상태의 번개 모임 목록을 조회합니다.
+            - 커서 기반 페이지네이션 (최신순, id DESC)
+            - lightningId: 번개 모임 ID
+            - restaurantName: 식당 이름
+            - description: 설명
+            - maxParticipants: 최대 참여 인원
+            - participantsCount: 현재 참여 인원
+            - lightningStatus: 상태 (OPEN)
+            """
+    )
+    @ApiResponse(responseCode = "200", description = "성공")
+    @ApiErrorResponses({USER_NOT_FOUND})
+    BaseResponse<CursorPageResponse<AvailableLightningResponse>> getAvailableLightningList(
+        @Parameter(hidden = true)
+        JwtUserDetails user,
+        @Parameter(description = "마지막 번개 모임 ID (다음 페이지 조회 시 사용)")
+        @RequestParam(required = false) Long lastLightningId,
+        @Parameter(description = "페이지 크기 (기본값: 10)")
+        @RequestParam(defaultValue = "10") int size
+    );
+
+    @Operation(
+        summary = "회원 탈퇴",
+        description = """
+            ### 회원 탈퇴를 처리합니다.
+            - 카카오 연동 해제
+            - 사용자 소프트 삭제 (is_withdraw = true, withdraw_at 설정)
+            - Redis 리프레시 토큰 삭제
+            - access_token, refresh_token 쿠키 삭제
+            """
+    )
+    @ApiResponse(responseCode = "204", description = "성공")
+    @ApiErrorResponses({USER_NOT_FOUND, ALREADY_WITHDRAWN, KAKAO_UNLINK_FAILED})
+    BaseResponse<Void> withdraw(
+        @Parameter(hidden = true) JwtUserDetails user,
+        @Parameter(hidden = true) HttpServletResponse response
     );
 }

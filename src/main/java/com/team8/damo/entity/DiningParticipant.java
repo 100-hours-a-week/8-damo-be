@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import org.springframework.data.domain.Persistable;
+
 import java.util.Objects;
 
 import static jakarta.persistence.EnumType.STRING;
@@ -22,7 +24,7 @@ import static jakarta.persistence.FetchType.LAZY;
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class DiningParticipant {
+public class DiningParticipant extends BaseTimeEntity implements Persistable<Long> {
 
     @Id
     @Column(name = "id", nullable = false)
@@ -63,6 +65,11 @@ public class DiningParticipant {
 
     public boolean isFirstAttendanceVote() {
         return this.attendanceVoteStatus == AttendanceVoteStatus.PENDING;
+    }
+
+    @Override
+    public boolean isNew() {
+        return getCreatedAt() == null;
     }
 
     @Override

@@ -1,0 +1,84 @@
+package com.team8.damo.repository;
+
+import com.team8.damo.entity.LightningParticipant;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+public interface LightningParticipantRepository extends JpaRepository<LightningParticipant, Long> {
+
+    @Query("select lp from LightningParticipant lp " +
+        "join fetch lp.user " +
+        "where lp.lightning.id = :lightningId")
+    List<LightningParticipant> findAllByLightningIdWithUser(Long lightningId);
+
+    @EntityGraph(attributePaths = {"lightning"})
+    Optional<LightningParticipant> findByLightningIdAndUserId(Long lightningId, Long userId);
+
+    boolean existsByLightningIdAndUserId(Long lightningId, Long userId);
+
+    long countByLightningId(Long lightningId);
+
+    @Query(
+        "select lp from LightningParticipant lp " +
+        "join fetch lp.lightning " +
+            "where lp.user.id = :userId and lp.lightning.lightningDate >= :cutoffDate "
+    )
+    List<LightningParticipant> findLightningByUserIdAndCutoffDate(
+        @Param("userId") Long userId,
+        @Param("cutoffDate") LocalDateTime cutoffDate
+    );
+
+    @Query(
+        "select lp from LightningParticipant lp " +
+        "join fetch lp.lightning " +
+        "where lp.user.id = :userId and lp.lightning.lightningDate >= :cutoffDate " +
+        "order by lp.lightning.id desc"
+    )
+    List<LightningParticipant> findLightningByUserIdAndCutoffDateWithCursor(
+        @Param("userId") Long userId,
+        @Param("cutoffDate") LocalDateTime cutoffDate,
+        Pageable pageable
+    );
+
+    @Query(
+        "select lp from LightningParticipant lp " +
+        "join fetch lp.lightning " +
+        "where lp.user.id = :userId and lp.lightning.lightningDate >= :cutoffDate " +
+        "and lp.lightning.id < :lastLightningId " +
+        "order by lp.lightning.id desc"
+    )
+    List<LightningParticipant> findLightningByUserIdAndCutoffDateWithCursorAfter(
+        @Param("userId") Long userId,
+        @Param("cutoffDate") LocalDateTime cutoffDate,
+        @Param("lastLightningId") Long lastLightningId,
+        Pageable pageable
+    );
+
+    List<LightningParticipant> findAllByLightningIdIn(List<Long> lightningIds);
+
+    @Query("select lp.lastReadChatMessageId from LightningParticipant lp " +
+        "where lp.lightning.id = :lightningId " +
+        "and lp.lastReadChatMessageId is not null " +
+        "and lp.user.id <> :userId")
+    List<Long> findParticipantsLastChatMessageIds(
+        @Param("lightningId") Long lightningId,
+        @Param("userId") Long userId
+    );
+
+    @Modifying
+    @Query("update LightningParticipant lp set lp.lastReadChatMessageId = :lastReadChatMessageId " +
+        "where lp.lightning.id = :lightningId and lp.user.id = :userId")
+    void updateLastReadChatMessageId(
+        @Param("userId") Long userId,
+        @Param("lightningId") Long lightningId,
+        @Param("lastReadChatMessageId") Long lastReadChatMessageId
+    );
+}

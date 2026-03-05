@@ -4,16 +4,29 @@ import com.team8.damo.controller.docs.UserControllerDocs;
 import com.team8.damo.controller.request.UserBasicUpdateRequest;
 import com.team8.damo.controller.request.UserCharacteristicsCreateRequest;
 import com.team8.damo.controller.request.ImagePathUpdateRequest;
+import com.team8.damo.controller.request.PushNotificationUpdateRequest;
 import com.team8.damo.controller.request.UserCharacteristicsUpdateRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.service.response.UserBasicResponse;
 import com.team8.damo.service.response.UserProfileResponse;
 import com.team8.damo.security.jwt.JwtUserDetails;
+import com.team8.damo.service.LightningService;
 import com.team8.damo.service.UserService;
+import com.team8.damo.service.response.AvailableLightningResponse;
+import com.team8.damo.service.response.CursorPageResponse;
+import com.team8.damo.service.response.JwtTokenResponse;
+import com.team8.damo.service.response.LightningResponse;
+import com.team8.damo.util.CookieUtil;
+
+import static com.team8.damo.entity.enumeration.TokenType.ACCESS;
+import static com.team8.damo.entity.enumeration.TokenType.REFRESH;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 
 
@@ -23,6 +36,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController implements UserControllerDocs {
 
     private final UserService userService;
+    private final LightningService lightningService;
 
     @GetMapping("/me/basic")
     public BaseResponse<UserBasicResponse> getBasic(
@@ -34,9 +48,12 @@ public class UserController implements UserControllerDocs {
     @PatchMapping("/me/basic")
     public BaseResponse<Void> updateBasic(
         @AuthenticationPrincipal JwtUserDetails user,
-        @Valid @RequestBody UserBasicUpdateRequest request
+        @Valid @RequestBody UserBasicUpdateRequest request,
+        HttpServletResponse response
     ) {
-        userService.updateUserBasic(user.getUserId(), request.toServiceRequest());
+        JwtTokenResponse tokenResponse = userService.updateUserBasic(user.getUserId(), request.toServiceRequest());
+        CookieUtil.addCookie(response, ACCESS, tokenResponse.accessToken());
+        CookieUtil.addCookie(response, REFRESH, tokenResponse.refreshToken());
         return BaseResponse.noContent();
     }
 
@@ -71,6 +88,48 @@ public class UserController implements UserControllerDocs {
         @Valid @RequestBody UserCharacteristicsUpdateRequest request
     ) {
         userService.updateUserCharacteristics(user.getUserId(), request.toServiceRequest());
+        return BaseResponse.noContent();
+    }
+
+    @PatchMapping("/me/push-notification")
+    public BaseResponse<Void> updatePushNotification(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @Valid @RequestBody PushNotificationUpdateRequest request
+    ) {
+        userService.updatePushNotification(user.getUserId(), request.toServiceRequest());
+        return BaseResponse.noContent();
+    }
+
+    @GetMapping("/me/lightning")
+    public BaseResponse<CursorPageResponse<LightningResponse>> getParticipantLightningList(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @RequestParam(required = false) Long lastLightningId,
+        @RequestParam(defaultValue = "20") int size
+    ) {
+        return BaseResponse.ok(lightningService.getParticipantLightningList(
+            user.getUserId(), LocalDateTime.now(), 10, lastLightningId, size
+        ));
+    }
+
+    @GetMapping("/me/lightning/available")
+    public BaseResponse<CursorPageResponse<AvailableLightningResponse>> getAvailableLightningList(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @RequestParam(required = false) Long lastLightningId,
+        @RequestParam(defaultValue = "20") int size
+    ) {
+        return BaseResponse.ok(lightningService.getAvailableLightningList(
+            user.getUserId(), lastLightningId, size
+        ));
+    }
+
+    @DeleteMapping("/me")
+    public BaseResponse<Void> withdraw(
+        @AuthenticationPrincipal JwtUserDetails user,
+        HttpServletResponse response
+    ) {
+        userService.withdraw(user.getUserId());
+        CookieUtil.deleteCookie(response, "access_token");
+        CookieUtil.deleteCookie(response, "refresh_token");
         return BaseResponse.noContent();
     }
 }

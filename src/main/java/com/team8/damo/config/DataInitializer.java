@@ -39,6 +39,10 @@ public class DataInitializer implements ApplicationRunner {
     private final DiningParticipantRepository diningParticipantRepository;
     private final RecommendRestaurantRepository recommendRestaurantRepository;
     private final RecommendRestaurantVoteRepository recommendRestaurantVoteRepository;
+    private final LightningRepository lightningRepository;
+    private final LightningParticipantRepository lightningParticipantRepository;
+    private final ChatMessageRepository chatMessageRepository;
+    private final SatisfactionCategoryRepository satisfactionCategoryRepository;
     private final Snowflake snowflake;
 
     @Override
@@ -47,6 +51,7 @@ public class DataInitializer implements ApplicationRunner {
         initAllergyCategoriesIfEmpty();
         initLikeFoodCategoriesIfEmpty();
         initLikeIngredientCategoriesIfEmpty();
+        initSatisfactionCategoriesIfEmpty();
         initTestDataIfEmpty();
     }
 
@@ -80,15 +85,22 @@ public class DataInitializer implements ApplicationRunner {
         likeIngredientCategoryRepository.saveAll(categories);
     }
 
-    private void initTestDataIfEmpty() {
-        if (userRepository.count() > 0) {
+    private void initSatisfactionCategoriesIfEmpty() {
+        if (satisfactionCategoryRepository.count() > 0) {
             return;
         }
+        List<SatisfactionCategory> categories = Arrays.stream(SatisfactionType.values())
+            .map(SatisfactionCategory::new)
+            .toList();
+        satisfactionCategoryRepository.saveAll(categories);
+    }
 
+    private void initTestDataIfEmpty() {
         List<User> users = createUsers();
         List<Group> groups = createGroups();
         createUserGroups(users, groups);
         createDinings(users, groups);
+        createLightnings(users);
 
         log.info("Test data initialized: {} users, {} groups", users.size(), groups.size());
     }
@@ -358,6 +370,7 @@ public class DataInitializer implements ApplicationRunner {
             .budget(50000)
             .diningStatus(DiningStatus.CONFIRMED)
             .build();
+        dining.changeRecommendationCount(1);
         diningRepository.save(dining);
 
         // All members voted ATTEND
@@ -376,21 +389,129 @@ public class DataInitializer implements ApplicationRunner {
         // Update attendanceVoteDoneCount
         diningRepository.setAttendanceVoteDoneCount(dining.getId(), MEMBERS_PER_GROUP);
 
+        List<String> restaurantIds = List.of(
+            "6976b54010e1fa815903d4ce",
+            "6976b57f10e1fa815903d4cf",
+            "6976b58610e1fa815903d4d0"
+        );
+
         // Create 5 recommended restaurants, first one is confirmed
         List<RecommendRestaurant> restaurants = new ArrayList<>();
         for (int i = 1; i <= RESTAURANTS_PER_DINING; i++) {
             RecommendRestaurant restaurant = RecommendRestaurant.builder()
                 .id(snowflake.nextId())
                 .dining(dining)
-                .restaurantId("restaurant_" + dining.getId() + "_" + i)
+                .restaurantId(restaurantIds.get(i % 3))
                 .confirmedStatus(i == 1) // First restaurant is confirmed
                 .likeCount(i == 1 ? 8 : 2) // Confirmed has most likes
                 .dislikeCount(i == 1 ? 1 : 5)
                 .point(100 - (i * 10))
                 .reasoningDescription("추천 이유 " + i + ": 맛있고 분위기 좋은 식당입니다.")
+                .recommendationCount(1)
                 .build();
             restaurants.add(restaurant);
         }
         recommendRestaurantRepository.saveAll(restaurants);
+    }
+
+    private void createLightnings(List<User> users) {
+        User user1 = users.get(0);
+        LocalDateTime baseDate = LocalDateTime.now().plusDays(7);
+
+        List<String> restaurantIds = List.of(
+            "6976b54010e1fa815903d4ce",
+            "6976b57f10e1fa815903d4cf",
+            "6976b58610e1fa815903d4d0"
+        );
+
+        String[] descriptions = {"강남역 점심 번개", "판교 저녁 번개", "홍대 카페 모각코"};
+        int[] maxParticipants = {4, 6, 8};
+
+        List<Lightning> lightnings = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            Lightning lightning = Lightning.builder()
+                .id((long) (i + 1))
+                .restaurantId(restaurantIds.get(i))
+                .maxParticipants(maxParticipants[i])
+                .description(descriptions[i])
+                .lightningDate(baseDate.plusDays(i))
+                .build();
+            lightnings.add(lightning);
+        }
+        lightningRepository.saveAll(lightnings);
+
+        // 사용자1을 모든 번개의 리더로, 사용자2·3을 참가자로 추가
+        List<LightningParticipant> participants = new ArrayList<>();
+        for (Lightning lightning : lightnings) {
+            participants.add(LightningParticipant.createLeader(snowflake.nextId(), lightning, user1));
+            participants.add(LightningParticipant.createParticipant(snowflake.nextId(), lightning, users.get(1)));
+            participants.add(LightningParticipant.createParticipant(snowflake.nextId(), lightning, users.get(2)));
+        }
+        lightningParticipantRepository.saveAll(participants);
+
+        // 사용자1이 참가하지 않은 번개 5개 (ID 4~8)
+        List<String> otherRestaurantIds = List.of(
+            "6976b8b9fb8d6fe1764695b6",
+            "6976b8bafb8d6fe1764695b7",
+            "6976b54010e1fa815903d4ce",
+            "6976b57f10e1fa815903d4cf",
+            "6976b58610e1fa815903d4d0"
+        );
+        String[] otherDescriptions = {"역삼 브런치 번개", "선릉 러닝 크루", "잠실 보드게임", "성수 카페 투어", "합정 맛집 탐방"};
+        int[] otherMaxParticipants = {4, 6, 5, 8, 4};
+
+        List<Lightning> otherLightnings = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            Lightning lightning = Lightning.builder()
+                .id((long) (i + 4))
+                .restaurantId(otherRestaurantIds.get(i))
+                .maxParticipants(otherMaxParticipants[i])
+                .description(otherDescriptions[i])
+                .lightningDate(baseDate.plusDays(i + 3))
+                .build();
+            otherLightnings.add(lightning);
+        }
+        lightningRepository.saveAll(otherLightnings);
+
+        List<LightningParticipant> otherParticipants = new ArrayList<>();
+        for (Lightning lightning : otherLightnings) {
+            otherParticipants.add(LightningParticipant.createLeader(snowflake.nextId(), lightning, users.get(3)));
+            otherParticipants.add(LightningParticipant.createParticipant(snowflake.nextId(), lightning, users.get(4)));
+            otherParticipants.add(LightningParticipant.createParticipant(snowflake.nextId(), lightning, users.get(5)));
+        }
+        lightningParticipantRepository.saveAll(otherParticipants);
+
+        log.info("Lightning data initialized: {} lightnings (user1: 3, others: 5)", lightnings.size() + otherLightnings.size());
+
+        // Lightning 1, 2, 3에 채팅 메시지 생성 (각 20개, 총 60개)
+        createChatMessages(lightnings, List.of(user1, users.get(1), users.get(2)));
+    }
+
+    private void createChatMessages(List<Lightning> lightnings, List<User> chatUsers) {
+        String[] sampleMessages = {
+            "안녕하세요!", "오늘 몇 시에 만나요?", "저 조금 늦을 것 같아요",
+            "메뉴 뭐 먹을까요?", "좋아요!", "네 알겠습니다~",
+            "거기 맛있대요", "추천 메뉴 있나요?", "저도 참여할게요!",
+            "위치 공유해주세요", "거의 다 왔어요", "먼저 자리 잡고 있을게요",
+            "사진 찍어요!", "다음에 또 만나요", "오늘 즐거웠어요",
+            "다들 조심히 들어가세요~", "후기 남겨야겠다", "다음 번개는 언제?",
+            "여기 분위기 좋네요", "디저트도 시킬까요?"
+        };
+
+        List<ChatMessage> allMessages = new ArrayList<>();
+        for (Lightning lightning : lightnings) {
+            for (int i = 0; i < 20; i++) {
+                User sender = chatUsers.get(i % chatUsers.size());
+                ChatMessage message = ChatMessage.builder()
+                    .id(snowflake.nextId())
+                    .lightning(lightning)
+                    .user(sender)
+                    .content(sampleMessages[i])
+                    .build();
+                allMessages.add(message);
+            }
+        }
+        chatMessageRepository.saveAll(allMessages);
+        log.info("Chat messages initialized: {} messages for {} lightnings", allMessages.size(), lightnings.size());
     }
 }

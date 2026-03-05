@@ -1,7 +1,9 @@
 package com.team8.damo.service;
 
 import com.team8.damo.entity.RefreshToken;
+import com.team8.damo.entity.User;
 import com.team8.damo.exception.CustomException;
+import com.team8.damo.fixture.UserFixture;
 import com.team8.damo.kakao.KakaoUtil;
 import com.team8.damo.repository.RefreshTokenRepository;
 import com.team8.damo.repository.UserRepository;
@@ -65,13 +67,17 @@ class AuthServiceTest {
             String newAccessToken = "new-access-token";
             String newRefreshToken = "new-refresh-token";
 
+            User user = UserFixture.create(userId);
+            user.updateBasic("테스트닉네임", null, null);
+
             given(jwtProvider.validateToken(refreshToken)).willReturn(true);
             given(jwtProvider.getUserId(refreshToken)).willReturn(userId);
             given(jwtProvider.getEmail(refreshToken)).willReturn(email);
             given(refreshTokenRepository.findById(email))
                 .willReturn(Optional.of(new RefreshToken(email, refreshToken)));
-            given(jwtProvider.createAccessToken(userId, email)).willReturn(newAccessToken);
-            given(jwtProvider.createRefreshToken(userId, email)).willReturn(newRefreshToken);
+            given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(jwtProvider.createAccessToken(userId, email, user.getNickname())).willReturn(newAccessToken);
+            given(jwtProvider.createRefreshToken(userId, email, user.getNickname())).willReturn(newRefreshToken);
 
             // when
             JwtTokenResponse result = authService.reissue(refreshToken);
@@ -84,8 +90,9 @@ class AuthServiceTest {
             then(jwtProvider).should().getUserId(refreshToken);
             then(jwtProvider).should().getEmail(refreshToken);
             then(refreshTokenRepository).should().findById(email);
-            then(jwtProvider).should().createAccessToken(userId, email);
-            then(jwtProvider).should().createRefreshToken(userId, email);
+            then(userRepository).should().findById(userId);
+            then(jwtProvider).should().createAccessToken(userId, email, user.getNickname());
+            then(jwtProvider).should().createRefreshToken(userId, email, user.getNickname());
             then(refreshTokenRepository).should().save(any(RefreshToken.class));
         }
 
@@ -131,7 +138,7 @@ class AuthServiceTest {
             then(jwtProvider).should().getUserId(refreshToken);
             then(jwtProvider).should().getEmail(refreshToken);
             then(refreshTokenRepository).should().findById(email);
-            then(jwtProvider).should(never()).createAccessToken(userId, email);
+            then(jwtProvider).should(never()).createAccessToken(any(), any(), any());
         }
 
         @Test
@@ -158,7 +165,7 @@ class AuthServiceTest {
             then(jwtProvider).should().getUserId(refreshToken);
             then(jwtProvider).should().getEmail(refreshToken);
             then(refreshTokenRepository).should().findById(email);
-            then(jwtProvider).should(never()).createAccessToken(userId, email);
+            then(jwtProvider).should(never()).createAccessToken(any(), any(), any());
         }
     }
 }

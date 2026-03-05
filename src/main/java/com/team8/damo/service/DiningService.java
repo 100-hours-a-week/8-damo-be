@@ -1,44 +1,35 @@
 package com.team8.damo.service;
 
 import com.team8.damo.client.AiService;
-import com.team8.damo.entity.Dining;
-import com.team8.damo.entity.DiningParticipant;
-import com.team8.damo.entity.Group;
-import com.team8.damo.entity.RecommendRestaurant;
-import com.team8.damo.entity.RecommendRestaurantVote;
-import com.team8.damo.entity.Restaurant;
-import com.team8.damo.entity.User;
-import com.team8.damo.entity.UserGroup;
+import com.team8.damo.client.request.DiningData;
+import com.team8.damo.client.request.RestaurantVoteResult;
+import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
 import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.entity.enumeration.GroupRole;
 import com.team8.damo.entity.enumeration.RestaurantVoteStatus;
 import com.team8.damo.event.EventType;
 import com.team8.damo.event.handler.CommonEventPublisher;
-import com.team8.damo.event.payload.RecommendationEventPayload;
-import com.team8.damo.event.payload.RecommendationRefreshEventPayload;
+import com.team8.damo.event.payload.*;
 import com.team8.damo.exception.CustomException;
+import com.team8.damo.redis.key.RedisKeyPrefix;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.DiningCreateServiceRequest;
 import com.team8.damo.service.request.RestaurantVoteServiceRequest;
-import com.team8.damo.service.response.AttendanceVoteDetailResponse;
-import com.team8.damo.service.response.DiningDetailResponse;
-import com.team8.damo.service.response.DiningParticipantResponse;
-import com.team8.damo.service.response.DiningResponse;
-import com.team8.damo.service.response.RestaurantVoteDetailResponse;
-import com.team8.damo.service.response.DiningConfirmedResponse;
-import com.team8.damo.service.response.RestaurantVoteResponse;
-import com.team8.damo.event.RestaurantRecommendationEvent;
+import com.team8.damo.service.response.*;
+import com.team8.damo.util.DataSerializer;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.team8.damo.exception.errorcode.ErrorCode.*;
@@ -64,6 +55,7 @@ public class DiningService {
     private final ApplicationEventPublisher eventPublisher;
     private final AiService aiService;
     private final CommonEventPublisher commonEventPublisher;
+    private final StringRedisTemplate redisTemplate;
 
     @Transactional
     public Long createDining(Long userId, Long groupId, DiningCreateServiceRequest request, LocalDateTime currentDataTime) {
@@ -192,7 +184,7 @@ public class DiningService {
 
         if (isFirstVote) {
             diningRepository.increaseAttendanceVoteDoneCount(diningId);
-            triggerRestaurantRecommendation(groupId, dining);
+            triggerRestaurantRecommendationV2(groupId, dining);
         }
 
         return participant.getAttendanceVoteStatus();
@@ -210,10 +202,33 @@ public class DiningService {
         List<Long> userIds = createAttendParticipantIds(dining);
 
         commonEventPublisher.publish(
-            EventType.RESTAURANT_RECOMMENDATION,
+            EventType.RECOMMENDATION_REQUEST,
             RecommendationEventPayload.builder()
                 .group(group)
                 .dining(dining)
+                .userIds(userIds)
+                .build()
+        );
+
+        refreshDining.startRecommendationPending();
+    }
+
+    // kafka 도입 후 해당 메서드를 수행
+    private void triggerRestaurantRecommendationV2(Long groupId, Dining dining) {
+        int voteDoneCount = diningRepository.getAttendanceVoteDoneCount(dining.getId());
+        int totalParticipants = diningParticipantRepository.countByDiningId(dining.getId());
+
+        if (voteDoneCount < totalParticipants) return;
+
+        // 모두 참석 투표를 완료하면 AI 장소 추천 요청
+        Group group = findGroupBy(groupId);
+        Dining refreshDining = findDiningBy(dining.getId());
+        List<Long> userIds = createAttendParticipantIds(dining);
+
+        commonEventPublisher.publishKafka(
+            EventType.RECOMMENDATION_REQUEST,
+            RecommendationV2EventPayload.builder()
+                .diningData(createDiningData(group, dining))
                 .userIds(userIds)
                 .build()
         );
@@ -238,11 +253,42 @@ public class DiningService {
 
         List<Long> userIds = createAttendParticipantIds(dining);
         commonEventPublisher.publish(
-            EventType.RESTAURANT_RECOMMENDATION_REFRESH,
+            EventType.RECOMMENDATION_REFRESH_REQUEST,
             RecommendationRefreshEventPayload.builder()
                 .group(group)
                 .dining(dining)
                 .userIds(userIds)
+                .build()
+        );
+
+        dining.startRecommendationPending();
+    }
+
+    @Transactional
+    public void refreshRecommendRestaurantsV2(
+        Long userId, Long groupId, Long diningId
+    ) {
+        if (isNotGroupLeader(userId, groupId)) {
+            throw new CustomException(ONLY_GROUP_LEADER_CAN_REFRESH);
+        }
+
+        Dining dining = findDiningBy(diningId);
+        if (dining.isNotRestaurantVoting()) {
+            throw new CustomException(RECOMMEND_REFRESH_ONLY_IN_RESTAURANT_VOTING);
+        }
+
+        Group group = findGroupBy(groupId);
+
+        DiningData diningData = createDiningData(group, dining);
+        List<Long> userIds = createAttendParticipantIds(dining);
+        List<RestaurantVoteResult> voteResultList = createVoteResult(diningId, dining.getRecommendationCount());
+
+        commonEventPublisher.publishKafka(
+            EventType.RECOMMENDATION_REFRESH_REQUEST,
+            RecommendationRefreshV2EventPayload.builder()
+                .userIds(userIds)
+                .diningData(diningData)
+                .voteResultList(voteResultList)
                 .build()
         );
 
@@ -426,13 +472,142 @@ public class DiningService {
             .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
 
         Group group = findGroupBy(groupId);
-        aiService.sendConfirmRestaurant(group, dining, restaurant.getId(), recommendRestaurant);
+
+        commonEventPublisher.publishKafka(
+            EventType.RESTAURANT_CONFIRMED,
+            RestaurantConfirmedEventPayload.builder()
+                .restaurantId(restaurant.getId())
+                .diningData(createDiningData(group, dining))
+                .voteResultList(createVoteResult(diningId, dining.getRecommendationCount()))
+                .build()
+        );
 
         return DiningConfirmedResponse.of(recommendRestaurant, restaurant);
+    }
+
+    @Transactional
+    public DiningConfirmedResponse confirmDiningRestaurantV2(
+        Long userId, Long groupId, Long diningId, Long recommendRestaurantId
+    ) {
+        if (isNotGroupLeader(userId, groupId)) {
+            throw new CustomException(ONLY_GROUP_LEADER_CAN_CONFIRM);
+        }
+
+        Dining dining = findDiningBy(diningId);
+        RecommendRestaurant recommendRestaurant = findRecommendRestaurantBy(recommendRestaurantId);
+
+        if (recommendRestaurant.isConfirmed()) {
+            throw new CustomException(RECOMMEND_RESTAURANT_ALREADY_CONFIRMED);
+        }
+
+        if (recommendRestaurantRepository.existsByDiningIdAndRecommendationCountAndConfirmedStatusTrue(diningId, dining.getRecommendationCount())) {
+            throw new CustomException(ANOTHER_RESTAURANT_ALREADY_CONFIRMED);
+        }
+
+        recommendRestaurant.confirmed();
+        dining.confirmed();
+
+        Restaurant restaurant = restaurantRepository.findById(recommendRestaurant.getRestaurantId())
+            .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+
+        Group group = findGroupBy(groupId);
+
+        commonEventPublisher.publishKafka(
+            EventType.RESTAURANT_CONFIRMED,
+            RestaurantConfirmedEventPayload.builder()
+                .diningData(createDiningData(group, dining))
+                .restaurantId(recommendRestaurant.getRestaurantId())
+                .voteResultList(createVoteResult(diningId, dining.getRecommendationCount()))
+                .build()
+        );
+
+        return DiningConfirmedResponse.of(recommendRestaurant, restaurant);
+    }
+
+//    public CursorPageResponse<RecommendationStreamingResponse> getRecommendationStreaming(Long diningId, Long cursor, int limit) {
+//        String key = RedisKeyPrefix.DINING_RECOMMENDATION_STREAMING.key(diningId);
+//
+//        long start = ((cursor == null ? 0 : cursor - 1) + limit) * -1;
+//        long end = cursor == null ? -1 : -1 * cursor;
+//
+//        List<String> values = redisTemplate.opsForList().range(key, start, end);
+//        if (values == null || values.isEmpty()) {
+//            return new CursorPageResponse<>(List.of(), null, false);
+//        }
+//
+//        List<RecommendationStreamingResponse> items = values.stream()
+//            .map(value -> DataSerializer.deserialize(value, RecommendationStreamingResponse.class))
+//            .toList();
+//
+//        boolean hasNext = items.size() >= limit;
+//        Long nextCursor = (start - 1) * -1;
+//
+//        return new CursorPageResponse<>(items, nextCursor, hasNext);
+//    }
+
+    public List<RecommendationStreamingResponse> getRecommendationStreaming(Long diningId) {
+        String key = RedisKeyPrefix.DINING_RECOMMENDATION_STREAMING.key(diningId);
+        return redisTemplate.opsForList().range(key, 0, -1).stream()
+            .map(value -> DataSerializer.deserialize(value, RecommendationStreamingResponse.class))
+            .toList();
     }
 
     private boolean isNotGroupLeader(Long userId, Long groupId) {
         return !userGroupRepository.existsByUserIdAndGroupIdAndRole(userId, groupId, GroupRole.LEADER);
     }
 
+    private DiningData createDiningData(Group group, Dining dining) {
+        return new DiningData(
+            dining.getId(),
+            group.getId(),
+            dining.getDiningDate(),
+            dining.getBudget(),
+            String.valueOf(group.getLongitude()),
+            String.valueOf(group.getLatitude())
+        );
+    }
+
+    private List<RestaurantVoteResult> createVoteResult(Long diningId, int recommendationCount) {
+        Map<Long, RecommendRestaurant> recommendRestaurantMap = recommendRestaurantRepository
+            .findByDiningIdAndRecommendationCount(diningId, recommendationCount)
+            .stream().collect(Collectors.toMap(
+                RecommendRestaurant::getId,
+                recommendRestaurant -> recommendRestaurant
+            ));
+
+        List<RecommendRestaurantVote> votes = recommendRestaurantVoteRepository.findByRecommendRestaurantIdIn(recommendRestaurantMap.keySet());
+
+        Map<Long, List<Long>> likeUserMap = votes.stream()
+            .filter(vote -> vote.getStatus() == RestaurantVoteStatus.LIKE)
+            .collect(Collectors.groupingBy(
+                    vote  -> vote.getRecommendRestaurant().getId(),
+                    Collectors.mapping(vote -> vote.getUser().getId(), Collectors.toList())
+            ));
+
+        Map<Long, List<Long>> dislikeUserMap = votes.stream()
+            .filter(vote -> vote.getStatus() == RestaurantVoteStatus.DISLIKE)
+            .collect(Collectors.groupingBy(
+                vote  -> vote.getRecommendRestaurant().getId(),
+                Collectors.mapping(vote -> vote.getUser().getId(), Collectors.toList())
+            ));
+
+        Map<Long, String> restaurantIdMap = recommendRestaurantMap.values().stream()
+            .collect(Collectors.toMap(RecommendRestaurant::getId, RecommendRestaurant::getRestaurantId));
+        log.info(
+            "[DiningService.createVoteResult] \n diningId={}, recommendationCount={} \n restaurantIdMap={} \n likeUserMap={} \n dislikeUserMap={}",
+            diningId, recommendationCount, restaurantIdMap, likeUserMap, dislikeUserMap
+        );
+
+        return recommendRestaurantMap.values().stream()
+            .map(recommendRestaurant ->
+                RestaurantVoteResult.builder()
+                    .restaurantId(recommendRestaurant.getRestaurantId())
+                    .likeCount(recommendRestaurant.getLikeCount())
+                    .dislikeCount(recommendRestaurant.getDislikeCount())
+                    .likedUserIds(likeUserMap.getOrDefault(recommendRestaurant.getId(), List.of()))
+                    .dislikedUserIds(dislikeUserMap.getOrDefault(recommendRestaurant.getId(), List.of()))
+                    .build()
+            )
+            .toList();
+    }
 }

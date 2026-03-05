@@ -1,6 +1,5 @@
 package com.team8.damo.service;
 
-import com.team8.damo.client.AiService;
 import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.AllergyType;
 import com.team8.damo.entity.enumeration.FoodType;
@@ -8,18 +7,23 @@ import com.team8.damo.entity.enumeration.IngredientType;
 import com.team8.damo.entity.enumeration.OnboardingStep;
 import com.team8.damo.event.EventType;
 import com.team8.damo.event.handler.CommonEventPublisher;
+import com.team8.damo.event.payload.UserPersonaEventPayload;
 import com.team8.damo.event.payload.UserPersonaPayload;
+import com.team8.damo.entity.RefreshToken;
 import com.team8.damo.exception.CustomException;
 import com.team8.damo.exception.errorcode.ErrorCode;
+import com.team8.damo.kakao.KakaoUtil;
 import com.team8.damo.repository.*;
+import com.team8.damo.security.jwt.JwtProvider;
 import com.team8.damo.service.request.UserBasicUpdateServiceRequest;
+import com.team8.damo.service.request.PushNotificationUpdateServiceRequest;
 import com.team8.damo.service.request.UserCharacteristicsCreateServiceRequest;
 import com.team8.damo.service.request.UserCharacteristicsUpdateServiceRequest;
+import com.team8.damo.service.response.JwtTokenResponse;
 import com.team8.damo.service.response.UserBasicResponse;
 import com.team8.damo.service.response.UserProfileResponse;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,12 +48,13 @@ public class UserService {
     private final UserLikeFoodRepository userLikeFoodRepository;
     private final UserLikeIngredientRepository userLikeIngredientRepository;
     private final Snowflake snowflake;
-    private final AiService aiService;
-    private final ApplicationEventPublisher eventPublisher;
     private final CommonEventPublisher commonEventPublisher;
+    private final KakaoUtil kakaoUtil;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final JwtProvider jwtProvider;
 
     @Transactional
-    public void updateUserBasic(Long userId, UserBasicUpdateServiceRequest request) {
+    public JwtTokenResponse updateUserBasic(Long userId, UserBasicUpdateServiceRequest request) {
         if (userRepository.existsByNicknameAndIdNot(request.nickname(), userId)) {
             throw new CustomException(DUPLICATE_NICKNAME);
         }
@@ -58,6 +63,12 @@ public class UserService {
 
         user.updateBasic(request.nickname(), request.gender(), request.ageGroup());
         user.changeImagePath(request.imagePath());
+
+        String accessToken = jwtProvider.createAccessToken(user.getId(), user.getEmail(), user.getNickname());
+        String refreshToken = jwtProvider.createRefreshToken(user.getId(), user.getEmail(), user.getNickname());
+        refreshTokenRepository.save(new RefreshToken(user.getEmail(), refreshToken));
+
+        return new JwtTokenResponse(accessToken, refreshToken);
     }
 
     @Transactional
@@ -75,14 +86,11 @@ public class UserService {
         user.updateOtherCharacteristics(request.otherCharacteristics());
         user.updateOnboardingStep(OnboardingStep.DONE);
 
-        commonEventPublisher.publish(
-            EventType.USER_PERSONA,
-            UserPersonaPayload.builder()
-                .user(user)
-                .allergies(request.allergies())
-                .likeFoods(request.likeFoods())
-                .likeIngredients(request.likeIngredients())
-                .build()
+        userPersonaEvent(
+            user,
+            request.allergies(),
+            request.likeFoods(),
+            request.likeIngredients()
         );
     }
 
@@ -164,6 +172,35 @@ public class UserService {
         return UserProfileResponse.of(user, allergies, likeFoods, likeIngredients);
     }
 
+    @Transactional
+    public void withdraw(Long userId) {
+        User user = findUserBy(userId);
+
+        if (user.isWithdraw()) {
+            throw new CustomException(ALREADY_WITHDRAWN);
+        }
+
+        kakaoUtil.kakaoUnlink(user.getProviderId());
+        user.withdraw();
+
+        refreshTokenRepository.findById(user.getEmail())
+            .ifPresent(refreshTokenRepository::delete);
+    }
+
+    @Transactional
+    public void updatePushNotification(Long userId, PushNotificationUpdateServiceRequest request) {
+        User user = findUserBy(userId);
+
+        if (request.isPushNotificationAllowed()) {
+            if (request.fcmToken() == null || request.fcmToken().isBlank()) {
+                throw new CustomException(FCM_TOKEN_REQUIRED);
+            }
+            user.enablePushNotification(request.fcmToken());
+        } else {
+            user.disablePushNotification();
+        }
+    }
+
     private User findUserBy(Long userId) {
         return userRepository.findById(userId)
             .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
@@ -188,14 +225,11 @@ public class UserService {
 
         user.updateOtherCharacteristics(request.otherCharacteristics());
 
-        commonEventPublisher.publish(
-            EventType.USER_PERSONA,
-            UserPersonaPayload.builder()
-                .user(user)
-                .allergies(request.allergies())
-                .likeFoods(request.likeFoods())
-                .likeIngredients(request.likeIngredients())
-                .build()
+        userPersonaEvent(
+            user,
+            request.allergies(),
+            request.likeFoods(),
+            request.likeIngredients()
         );
     }
 
@@ -269,5 +303,26 @@ public class UserService {
         if (!toAdd.isEmpty()) {
             saveUserLikeIngredients(user, toAdd);
         }
+    }
+
+    private void userPersonaEvent(
+        User user,
+        List<AllergyType> allergies,
+        List<FoodType> likeFoods,
+        List<IngredientType> likeIngredients
+    ) {
+        commonEventPublisher.publishKafka(
+            EventType.USER_PERSONA_UPDATE,
+            UserPersonaEventPayload.builder()
+                .userId(user.getId())
+                .gender(user.getGender())
+                .nickname(user.getNickname())
+                .ageGroup(user.getAgeGroup())
+                .otherCharacteristics(user.getOtherCharacteristics())
+                .allergies(allergies)
+                .likeFoods(likeFoods)
+                .likeIngredients(likeIngredients)
+                .build()
+        );
     }
 }
