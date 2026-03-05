@@ -51,11 +51,9 @@ public class ChatService {
     private final UserCacheService userCacheService;
 
     @Transactional
-    public void createChatMessage(Long senderId, Long lightningId, ChatMessageRequest request, LocalDateTime currentTime) {
+    public void createChatMessage(Long senderId, String nickname, Long lightningId, ChatMessageRequest request, LocalDateTime currentTime) {
         User userRef = userRepository.getReferenceById(senderId);
         Lightning lightningRef = lightningRepository.getReferenceById(lightningId);
-
-        UserBasicCache userBasicCache = userCacheService.getUserBasic(senderId);
 
         ChatMessage chatMessage = ChatMessage.builder()
             .id(snowflake.nextId())
@@ -74,7 +72,7 @@ public class ChatService {
                 .chatType(request.chatType())
                 .content(request.content())
                 .createdAt(currentTime)
-                .senderNickname(userBasicCache.nickname())
+                .senderNickname(nickname)
                 .unreadCount(0L)
                 .build()
         );
@@ -342,7 +340,7 @@ public class ChatService {
         List<Long> lastChatMessageIds = lightningParticipantRepository.findParticipantsLastChatMessageIds(lightningId, userId);
         NavigableMap<Long, Long> countMap = lastChatMessageIds.stream()
             .collect(Collectors.groupingBy(
-                Function.identity(),
+                lastChatMessageId -> lastChatMessageId,
                 TreeMap::new,
                 Collectors.counting())
             );
@@ -351,10 +349,6 @@ public class ChatService {
         for (Map.Entry<Long, Long> e : countMap.entrySet()) {
             sum += e.getValue();
             e.setValue(sum);
-        }
-
-        for (Map.Entry<Long, Long> e : countMap.entrySet()) {
-            System.out.println("key: " + e.getKey() + " value: " + e.getValue());
         }
 
         return countMap;

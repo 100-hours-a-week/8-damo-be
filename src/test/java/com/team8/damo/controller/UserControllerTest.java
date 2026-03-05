@@ -5,6 +5,7 @@ import com.team8.damo.entity.enumeration.*;
 import com.team8.damo.fixture.CategoryFixture;
 import com.team8.damo.fixture.UserFixture;
 import com.team8.damo.service.UserService;
+import com.team8.damo.service.response.JwtTokenResponse;
 import com.team8.damo.service.response.UserBasicResponse;
 import com.team8.damo.service.response.UserProfileResponse;
 import jakarta.validation.Validation;
@@ -66,7 +67,8 @@ class UserControllerTest {
             }
             """;
 
-        willDoNothing().given(userService).updateUserBasic(any(), any());
+        given(userService.updateUserBasic(any(), any()))
+            .willReturn(new JwtTokenResponse("access", "refresh"));
 
         // when // then
         mockMvc.perform(

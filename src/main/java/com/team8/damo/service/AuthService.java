@@ -40,8 +40,8 @@ public class AuthService {
         User user = userRepository.findByEmail(kakaoEmail)
             .orElseGet(() -> join(snowflake.nextId(), kakaoEmail, providerId, isNew));
 
-        String accessToken = jwtProvider.createAccessToken(user.getId(), user.getEmail());
-        String refreshToken = jwtProvider.createRefreshToken(user.getId(), user.getEmail());
+        String accessToken = jwtProvider.createAccessToken(user.getId(), user.getEmail(), user.getNickname());
+        String refreshToken = jwtProvider.createRefreshToken(user.getId(), user.getEmail(), user.getNickname());
         refreshTokenRepository.save(new RefreshToken(user.getEmail(), refreshToken));
 
         return new UserOAuthResponse(isNew, user.getId(), user.getOnboardingStep(), accessToken, refreshToken);
@@ -69,8 +69,11 @@ public class AuthService {
             throw new CustomException(REFRESH_MISMATCH);
         }
 
-        String newAccessToken = jwtProvider.createAccessToken(userId, email);
-        String newRefreshToken = jwtProvider.createRefreshToken(userId, email);
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+
+        String newAccessToken = jwtProvider.createAccessToken(userId, email, user.getNickname());
+        String newRefreshToken = jwtProvider.createRefreshToken(userId, email, user.getNickname());
 
         refreshTokenRepository.save(new RefreshToken(email, newRefreshToken));
         return new JwtTokenResponse(newAccessToken, newRefreshToken);
@@ -79,8 +82,8 @@ public class AuthService {
     @Transactional
     public JwtTokenResponse test() {
         String email = "user2@test.com";
-        String accessToken = jwtProvider.createAccessToken(2L, email);
-        String refreshToken = jwtProvider.createRefreshToken(2L, email);
+        String accessToken = jwtProvider.createAccessToken(2L, email, "사용자2");
+        String refreshToken = jwtProvider.createRefreshToken(2L, email, "사용자2");
         refreshTokenRepository.save(new RefreshToken(email, refreshToken));
         return new JwtTokenResponse(accessToken, refreshToken);
     }
@@ -89,8 +92,8 @@ public class AuthService {
     public JwtTokenResponse test(Long userId) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
-        String accessToken = jwtProvider.createAccessToken(userId, user.getEmail());
-        String refreshToken = jwtProvider.createRefreshToken(userId, user.getEmail());
+        String accessToken = jwtProvider.createAccessToken(userId, user.getEmail(), user.getNickname());
+        String refreshToken = jwtProvider.createRefreshToken(userId, user.getEmail(), user.getNickname());
         refreshTokenRepository.save(new RefreshToken(user.getEmail(), refreshToken));
         return new JwtTokenResponse(accessToken, refreshToken);
     }
