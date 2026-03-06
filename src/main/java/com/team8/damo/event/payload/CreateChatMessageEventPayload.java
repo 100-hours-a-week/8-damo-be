@@ -14,6 +14,7 @@ public record CreateChatMessageEventPayload(
     String content,
     LocalDateTime createdAt,
     String senderNickname,
+    String senderImagePath,
     Long unreadCount
 ) implements EventPayload {
 }
