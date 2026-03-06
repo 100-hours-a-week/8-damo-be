@@ -1,5 +1,7 @@
 package com.team8.damo.controller;
 
+import co.elastic.apm.api.ElasticApm;
+import co.elastic.apm.api.Traced;
 import com.team8.damo.controller.docs.ChatMessageControllerDocs;
 import com.team8.damo.controller.request.ChatMessagePageRequest;
 import com.team8.damo.controller.request.ChatMessageRequest;
@@ -24,11 +26,13 @@ public class ChatMessageController implements ChatMessageControllerDocs {
     private final ChatService chatService;
 
     @MessageMapping("/message/{lightningId}")
+    @Traced(value = "STOMP SEND /pub/message", type = "messaging")
     public void sendMessage(
         @DestinationVariable Long lightningId,
         Authentication authentication,
         ChatMessageRequest request
     ) {
+        ElasticApm.currentSpan().setLabel("lightningId", lightningId);
         JwtUserDetails user = (JwtUserDetails) authentication.getPrincipal();
         chatService.createChatMessage(user.getUserId(), user.getNickname(), lightningId, request, LocalDateTime.now());
     }
