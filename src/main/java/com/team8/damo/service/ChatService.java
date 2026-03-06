@@ -1,5 +1,6 @@
 package com.team8.damo.service;
 
+import co.elastic.apm.api.CaptureSpan;
 import com.team8.damo.cache.dto.UserBasicCache;
 import com.team8.damo.cache.store.UserCacheService;
 import com.team8.damo.chat.producer.ChatMessageBroker;
@@ -30,7 +31,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.team8.damo.exception.errorcode.ErrorCode.LIGHTNING_PARTICIPANT_NOT_FOUND;
@@ -51,9 +51,12 @@ public class ChatService {
     private final UserCacheService userCacheService;
 
     @Transactional
+    @CaptureSpan(value = "chat.create-message", type = "app")
     public void createChatMessage(Long senderId, String nickname, Long lightningId, ChatMessageRequest request, LocalDateTime currentTime) {
         User userRef = userRepository.getReferenceById(senderId);
         Lightning lightningRef = lightningRepository.getReferenceById(lightningId);
+
+        UserBasicCache userBasic = userCacheService.getUserBasic(senderId);
 
         ChatMessage chatMessage = ChatMessage.builder()
             .id(snowflake.nextId())
@@ -73,6 +76,7 @@ public class ChatService {
                 .content(request.content())
                 .createdAt(currentTime)
                 .senderNickname(nickname)
+                .senderImagePath(userBasic.imagePath())
                 .unreadCount(0L)
                 .build()
         );
@@ -299,6 +303,7 @@ public class ChatService {
                 cm.getId(),
                 cm.getUser().getId(),
                 cm.getUser().getNickname(),
+                cm.getUser().getImagePath(),
                 cm.getContent(),
                 cm.getCreatedAt(),
                 unreadForMessage(unreadCountMap, cm.getId())
