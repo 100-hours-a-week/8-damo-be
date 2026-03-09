@@ -4,11 +4,7 @@ import com.team8.damo.client.AiService;
 import com.team8.damo.client.request.DiningData;
 import com.team8.damo.client.request.RestaurantVoteResult;
 import com.team8.damo.entity.*;
-import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
-import com.team8.damo.entity.enumeration.DiningStatus;
-import com.team8.damo.entity.enumeration.GroupRole;
-import com.team8.damo.entity.enumeration.OcrStatus;
-import com.team8.damo.entity.enumeration.RestaurantVoteStatus;
+import com.team8.damo.entity.enumeration.*;
 import com.team8.damo.event.EventType;
 import com.team8.damo.event.handler.CommonEventPublisher;
 import com.team8.damo.event.payload.*;
@@ -32,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.team8.damo.exception.errorcode.ErrorCode.*;
@@ -534,6 +529,15 @@ public class DiningService {
         dining.complete();
     }
 
+    public String getOcrStatus(Long userId, Long groupId, Long diningId) {
+        if (isNotGroupLeader(userId, groupId)) {
+            throw new CustomException(ONLY_GROUP_LEADER_OCR);
+        }
+
+        String key = RedisKeyPrefix.DINING_OCR_STATUS.key(diningId);
+        return redisTemplate.opsForValue().get(key);
+    }
+
     public void requestReceiptOcr(Long userId, Long groupId, Long diningId, ReceiptOcrServiceRequest request) {
         if (isNotGroupLeader(userId, groupId)) {
             throw new CustomException(ONLY_GROUP_LEADER_OCR);
@@ -624,14 +628,14 @@ public class DiningService {
         Map<Long, List<Long>> likeUserMap = votes.stream()
             .filter(vote -> vote.getStatus() == RestaurantVoteStatus.LIKE)
             .collect(Collectors.groupingBy(
-                    vote  -> vote.getRecommendRestaurant().getId(),
-                    Collectors.mapping(vote -> vote.getUser().getId(), Collectors.toList())
+                vote -> vote.getRecommendRestaurant().getId(),
+                Collectors.mapping(vote -> vote.getUser().getId(), Collectors.toList())
             ));
 
         Map<Long, List<Long>> dislikeUserMap = votes.stream()
             .filter(vote -> vote.getStatus() == RestaurantVoteStatus.DISLIKE)
             .collect(Collectors.groupingBy(
-                vote  -> vote.getRecommendRestaurant().getId(),
+                vote -> vote.getRecommendRestaurant().getId(),
                 Collectors.mapping(vote -> vote.getUser().getId(), Collectors.toList())
             ));
 

@@ -182,6 +182,16 @@ public class DiningController implements DiningControllerDocs {
     }
 
     @Override
+    @GetMapping("/groups/{groupId}/dining/{diningId}/receipt-ocr/status")
+    public BaseResponse<String> getOcrStatus(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @PathVariable Long groupId,
+        @PathVariable Long diningId
+    ) {
+        return BaseResponse.ok(diningService.getOcrStatus(user.getUserId(), groupId, diningId));
+    }
+
+    @Override
     @PostMapping("/groups/{groupId}/dining/{diningId}/receipt-ocr")
     public BaseResponse<Void> requestReceiptOcr(
         @AuthenticationPrincipal JwtUserDetails user,

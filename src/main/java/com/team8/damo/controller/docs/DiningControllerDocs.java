@@ -15,6 +15,7 @@ import com.team8.damo.service.response.DiningResponse;
 import com.team8.damo.service.response.CursorPageResponse;
 import com.team8.damo.service.response.RecommendationStreamingResponse;
 import com.team8.damo.service.response.RestaurantVoteDetailResponse;
+import com.team8.damo.service.response.OcrStatusResponse;
 import com.team8.damo.service.response.RestaurantVoteResponse;
 import com.team8.damo.swagger.annotation.ApiErrorResponses;
 
@@ -354,6 +355,32 @@ public interface DiningControllerDocs {
         Long diningId,
         @Parameter(hidden = true)
         JwtUserDetails user
+    );
+
+    @Operation(
+        summary = "영수증 OCR 상태 조회",
+        description = """
+            ### 특정 회식의 영수증 OCR 처리 상태를 조회합니다.
+
+            **응답 정보**:
+            - ocrStatus: OCR 처리 상태 (PENDING / SUCCESS / FAIL / null)
+              - PENDING: OCR 처리 진행 중
+              - SUCCESS: OCR 처리 성공 -> 회식 완료 상태로 변경
+              - FAIL: OCR 처리 실패 -> 영수증 인증 실패 모달
+              - null: OCR 요청 이력 없음
+
+            **접근 권한**: 해당 그룹의 그룹원만 조회 가능
+            """
+    )
+    @ApiResponse(responseCode = "200", description = "성공")
+    @ApiErrorResponses({USER_NOT_GROUP_MEMBER})
+    BaseResponse<String> getOcrStatus(
+        @Parameter(hidden = true)
+        JwtUserDetails user,
+        @Parameter(description = "그룹 ID", required = true)
+        Long groupId,
+        @Parameter(description = "회식 ID", required = true)
+        Long diningId
     );
 
     @Operation(
