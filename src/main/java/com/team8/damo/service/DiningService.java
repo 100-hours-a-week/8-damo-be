@@ -13,6 +13,7 @@ import com.team8.damo.event.EventType;
 import com.team8.damo.event.handler.CommonEventPublisher;
 import com.team8.damo.event.payload.*;
 import com.team8.damo.exception.CustomException;
+import com.team8.damo.exception.errorcode.ErrorCode;
 import com.team8.damo.redis.key.RedisKeyPrefix;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.DiningCreateServiceRequest;
@@ -524,6 +525,13 @@ public class DiningService {
         );
 
         return DiningConfirmedResponse.of(recommendRestaurant, restaurant);
+    }
+
+    @Transactional
+    public void completeDining(Long diningId) {
+        Dining dining = diningRepository.findById(diningId)
+            .orElseThrow(() -> new CustomException(ErrorCode.DINING_NOT_FOUND));
+        dining.complete();
     }
 
     public void requestReceiptOcr(Long userId, Long groupId, Long diningId, ReceiptOcrServiceRequest request) {

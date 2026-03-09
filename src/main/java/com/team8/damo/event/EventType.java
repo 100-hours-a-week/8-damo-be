@@ -14,6 +14,7 @@ public enum EventType {
     RESTAURANT_CONFIRMED(RestaurantConfirmedEventPayload.class, Topic.RESTAURANT_CONFIRMED),
     RECOMMENDATION_STREAMING(RecommendationStreamingEventPayload.class, Topic.RECOMMENDATION_STREAMING),
     RECEIPT_OCR_REQUEST(ReceiptOcrRequestEventPayload.class, Topic.RECEIPT_OCR_REQUEST),
+    RECEIPT_OCR_RESPONSE(ReceiptOcrResponseEventPayload.class, Topic.RECEIPT_OCR_RESPONSE),
     USER_PERSONA(UserPersonaPayload.class, ""),
     CREATE_CHAT_MESSAGE(CreateChatMessageEventPayload.class, ""),
     UPDATE_UNREAD_COUNT(UpdateUnreadCountEventPayload.class, "")
