@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface CustomLock {
+public @interface DistridutedLock {
     /**
      * 락의 이름
      */

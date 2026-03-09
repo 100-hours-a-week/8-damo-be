@@ -20,20 +20,20 @@ import static net.logstash.logback.argument.StructuredArguments.kv;
 @Aspect
 @Component
 @RequiredArgsConstructor
-public class CustomLockAspect {
+public class DistributedLockAspect {
 
     private final LockStrategy lock;
 
-    @Around("@annotation(com.team8.damo.aop.CustomLock)")
+    @Around("@annotation(com.team8.damo.aop.DistridutedLock)")
     public Object around(final ProceedingJoinPoint joinPoint) throws Throwable {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         Method method = signature.getMethod();
-        CustomLock customLock = method.getAnnotation(CustomLock.class);
+        DistridutedLock distridutedLock = method.getAnnotation(DistridutedLock.class);
 
-        String key = SpelKeyGenerator.getKey(customLock.key(), joinPoint);
+        String key = SpelKeyGenerator.getKey(distridutedLock.key(), joinPoint);
 
         try {
-            return lock.execute(key, customLock, joinPoint);
+            return lock.execute(key, distridutedLock, joinPoint);
         } catch (Exception e) {
             log.error("Lock Already UnLock {} {}",
                 kv("serviceName", method.getName()),
