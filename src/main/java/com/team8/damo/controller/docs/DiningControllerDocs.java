@@ -365,8 +365,10 @@ public interface DiningControllerDocs {
             **요청 조건**:
             - 해당 그룹의 그룹장만 요청할 수 있습니다.
             - 장소가 확정된 회식(CONFIRMED)만 요청 가능합니다.
+            - 이미 OCR 처리가 진행 중인 경우 중복 요청할 수 없습니다.
 
             **처리 방식**:
+            - Redis에 OCR 진행 상태를 PENDING으로 설정합니다.
             - Kafka `receipt-ocr-request` 토픽에 diningId, receiptUrl, restaurantName을 적재합니다.
             - OCR 처리 결과는 비동기로 전달됩니다.
             """
@@ -374,6 +376,7 @@ public interface DiningControllerDocs {
     @ApiResponse(responseCode = "204", description = "성공")
     @ApiErrorResponses({
         ONLY_GROUP_LEADER_OCR,
+        RECEIPT_OCR_ALREADY_IN_PROGRESS,
         DINING_NOT_FOUND,
         DINING_NOT_CONFIRMED,
         RECOMMEND_RESTAURANT_NOT_FOUND,

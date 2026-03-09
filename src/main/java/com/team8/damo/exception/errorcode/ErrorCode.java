@@ -28,6 +28,7 @@ public enum ErrorCode {
     // Dining
     ONLY_GROUP_LEADER_ALLOWED(FORBIDDEN, "회식 생성은 그룹장만 가능합니다."),
     ONLY_GROUP_LEADER_OCR(FORBIDDEN, "영수증 인증은 그룹장만 가능합니다."),
+    RECEIPT_OCR_ALREADY_IN_PROGRESS(CONFLICT, "이미 영수증 OCR 처리가 진행 중입니다."),
     DINING_DATE_MUST_BE_AFTER_NOW(BAD_REQUEST, "회식 진행 날짜는 현재 날짜보다 이후여야 합니다."),
     VOTE_DUE_DATE_MUST_BE_BEFORE_DINING_DATE(BAD_REQUEST, "투표 마감 날짜는 회식 진행 날짜 이전이어야 합니다."),
     DINING_LIMIT_EXCEEDED(BAD_REQUEST, "회식 완료가 되지 않은 회식이 3개 이상이므로 회식을 생성할 수 없습니다."),

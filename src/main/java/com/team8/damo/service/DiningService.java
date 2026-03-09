@@ -7,6 +7,7 @@ import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
 import com.team8.damo.entity.enumeration.DiningStatus;
 import com.team8.damo.entity.enumeration.GroupRole;
+import com.team8.damo.entity.enumeration.OcrStatus;
 import com.team8.damo.entity.enumeration.RestaurantVoteStatus;
 import com.team8.damo.event.EventType;
 import com.team8.damo.event.handler.CommonEventPublisher;
@@ -535,11 +536,19 @@ public class DiningService {
             throw new CustomException(DINING_NOT_CONFIRMED);
         }
 
+        String ocrStatusKey = RedisKeyPrefix.DINING_OCR_STATUS.key(diningId);
+        String currentStatus = redisTemplate.opsForValue().get(ocrStatusKey);
+        if (OcrStatus.PENDING.name().equals(currentStatus)) {
+            throw new CustomException(RECEIPT_OCR_ALREADY_IN_PROGRESS);
+        }
+
         RecommendRestaurant confirmedRestaurant = recommendRestaurantRepository.findConfirmedRecommendRestaurant(diningId, dining.getRecommendationCount())
             .orElseThrow(() -> new CustomException(RECOMMEND_RESTAURANT_NOT_FOUND));
 
         Restaurant restaurant = restaurantRepository.findById(confirmedRestaurant.getRestaurantId())
             .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+
+        redisTemplate.opsForValue().set(ocrStatusKey, OcrStatus.PENDING.name());
 
         commonEventPublisher.publishKafka(
             EventType.RECEIPT_OCR_REQUEST,
