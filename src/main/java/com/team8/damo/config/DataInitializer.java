@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +29,8 @@ public class DataInitializer implements ApplicationRunner {
     private static final int MEMBERS_PER_GROUP = 10;
     private static final int DINING_PER_STATUS = 2;
     private static final int RESTAURANTS_PER_DINING = 5;
+    private static final int LIGHTNING_USER_COUNT = 100;
+    private static final int LIGHTNING_PARTICIPANTS_PER_ROOM = 5;
 
     private final AllergyCategoryRepository allergyCategoryRepository;
     private final LikeFoodCategoryRepository likeFoodCategoryRepository;
@@ -52,7 +55,8 @@ public class DataInitializer implements ApplicationRunner {
         initLikeFoodCategoriesIfEmpty();
         initLikeIngredientCategoriesIfEmpty();
         initSatisfactionCategoriesIfEmpty();
-        initTestDataIfEmpty();
+        initLightningDataIfEmpty();
+        // initTestDataIfEmpty();
     }
 
     private void initAllergyCategoriesIfEmpty() {
@@ -95,12 +99,25 @@ public class DataInitializer implements ApplicationRunner {
         satisfactionCategoryRepository.saveAll(categories);
     }
 
+    private void initLightningDataIfEmpty() {
+        if (lightningRepository.count() > 0 || lightningParticipantRepository.count() > 0) {
+            return;
+        }
+
+        List<User> sortedUsers = userRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
+        if (sortedUsers.size() < LIGHTNING_USER_COUNT) {
+            log.warn("Skip lightning seed: users are not enough. required={}, actual={}", LIGHTNING_USER_COUNT, sortedUsers.size());
+            return;
+        }
+
+        createLightnings(sortedUsers.subList(0, LIGHTNING_USER_COUNT));
+    }
+
     private void initTestDataIfEmpty() {
         List<User> users = createUsers();
         List<Group> groups = createGroups();
         createUserGroups(users, groups);
         createDinings(users, groups);
-        createLightnings(users);
 
         log.info("Test data initialized: {} users, {} groups", users.size(), groups.size());
     }
@@ -415,76 +432,49 @@ public class DataInitializer implements ApplicationRunner {
     }
 
     private void createLightnings(List<User> users) {
-        User user1 = users.get(0);
-        LocalDateTime baseDate = LocalDateTime.now().plusDays(7);
-
-        List<String> restaurantIds = List.of(
+        LocalDateTime baseDate = LocalDateTime.now().plusDays(1);
+        List<String> recommendationRestaurantIds = List.of(
             "6976b54010e1fa815903d4ce",
             "6976b57f10e1fa815903d4cf",
-            "6976b58610e1fa815903d4d0"
+            "6976b58610e1fa815903d4d0",
+            "6976b8b9fb8d6fe1764695b6",
+            "6976b8bafb8d6fe1764695b7"
         );
 
-        String[] descriptions = {"강남역 점심 번개", "판교 저녁 번개", "홍대 카페 모각코"};
-        int[] maxParticipants = {4, 6, 8};
+        int roomCount = users.size() / LIGHTNING_PARTICIPANTS_PER_ROOM;
 
         List<Lightning> lightnings = new ArrayList<>();
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < roomCount; i++) {
             Lightning lightning = Lightning.builder()
                 .id((long) (i + 1))
-                .restaurantId(restaurantIds.get(i))
-                .maxParticipants(maxParticipants[i])
-                .description(descriptions[i])
-                .lightningDate(baseDate.plusDays(i))
+                .restaurantId(recommendationRestaurantIds.get(i % recommendationRestaurantIds.size()))
+                .maxParticipants(LIGHTNING_PARTICIPANTS_PER_ROOM)
+                .description("테스트 번개 방 " + (i + 1))
+                .lightningDate(baseDate.plusHours(i))
                 .build();
             lightnings.add(lightning);
         }
         lightningRepository.saveAll(lightnings);
 
-        // 사용자1을 모든 번개의 리더로, 사용자2·3을 참가자로 추가
         List<LightningParticipant> participants = new ArrayList<>();
-        for (Lightning lightning : lightnings) {
-            participants.add(LightningParticipant.createLeader(snowflake.nextId(), lightning, user1));
-            participants.add(LightningParticipant.createParticipant(snowflake.nextId(), lightning, users.get(1)));
-            participants.add(LightningParticipant.createParticipant(snowflake.nextId(), lightning, users.get(2)));
+        for (int i = 0; i < roomCount; i++) {
+            Lightning lightning = lightnings.get(i);
+            int startIndex = i * LIGHTNING_PARTICIPANTS_PER_ROOM;
+            List<User> roomUsers = users.subList(startIndex, startIndex + LIGHTNING_PARTICIPANTS_PER_ROOM);
+
+            participants.add(LightningParticipant.createLeader(snowflake.nextId(), lightning, roomUsers.get(0)));
+            for (int userIndex = 1; userIndex < roomUsers.size(); userIndex++) {
+                participants.add(LightningParticipant.createParticipant(snowflake.nextId(), lightning, roomUsers.get(userIndex)));
+            }
         }
         lightningParticipantRepository.saveAll(participants);
 
-        // 사용자1이 참가하지 않은 번개 5개 (ID 4~8)
-        List<String> otherRestaurantIds = List.of(
-            "6976b8b9fb8d6fe1764695b6",
-            "6976b8bafb8d6fe1764695b7",
-            "6976b54010e1fa815903d4ce",
-            "6976b57f10e1fa815903d4cf",
-            "6976b58610e1fa815903d4d0"
+        log.info(
+            "Lightning data initialized: {} rooms, {} participants ({} users per room)",
+            lightnings.size(),
+            participants.size(),
+            LIGHTNING_PARTICIPANTS_PER_ROOM
         );
-        String[] otherDescriptions = {"역삼 브런치 번개", "선릉 러닝 크루", "잠실 보드게임", "성수 카페 투어", "합정 맛집 탐방"};
-        int[] otherMaxParticipants = {4, 6, 5, 8, 4};
-
-        List<Lightning> otherLightnings = new ArrayList<>();
-        for (int i = 0; i < 5; i++) {
-            Lightning lightning = Lightning.builder()
-                .id((long) (i + 4))
-                .restaurantId(otherRestaurantIds.get(i))
-                .maxParticipants(otherMaxParticipants[i])
-                .description(otherDescriptions[i])
-                .lightningDate(baseDate.plusDays(i + 3))
-                .build();
-            otherLightnings.add(lightning);
-        }
-        lightningRepository.saveAll(otherLightnings);
-
-        List<LightningParticipant> otherParticipants = new ArrayList<>();
-        for (Lightning lightning : otherLightnings) {
-            otherParticipants.add(LightningParticipant.createLeader(snowflake.nextId(), lightning, users.get(3)));
-            otherParticipants.add(LightningParticipant.createParticipant(snowflake.nextId(), lightning, users.get(4)));
-            otherParticipants.add(LightningParticipant.createParticipant(snowflake.nextId(), lightning, users.get(5)));
-        }
-        lightningParticipantRepository.saveAll(otherParticipants);
-
-        log.info("Lightning data initialized: {} lightnings (user1: 3, others: 5)", lightnings.size() + otherLightnings.size());
-
-        // Lightning 1, 2, 3에 채팅 메시지 생성 (각 20개, 총 60개)
-        createChatMessages(lightnings, List.of(user1, users.get(1), users.get(2)));
     }
 
     private void createChatMessages(List<Lightning> lightnings, List<User> chatUsers) {

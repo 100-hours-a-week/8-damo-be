@@ -3,6 +3,7 @@ package com.team8.damo.controller;
 import com.team8.damo.controller.docs.DiningControllerDocs;
 import com.team8.damo.controller.request.AttendanceVoteRequest;
 import com.team8.damo.controller.request.DiningCreateRequest;
+import com.team8.damo.controller.request.ReceiptOcrRequest;
 import com.team8.damo.controller.request.RestaurantVoteRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.entity.enumeration.DiningStatus;
@@ -178,5 +179,27 @@ public class DiningController implements DiningControllerDocs {
         @AuthenticationPrincipal JwtUserDetails user
     ) {
         return BaseResponse.ok(diningService.getRecommendationStreaming(diningId));
+    }
+
+    @Override
+    @GetMapping("/groups/{groupId}/dining/{diningId}/receipt-ocr/status")
+    public BaseResponse<String> getOcrStatus(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @PathVariable Long groupId,
+        @PathVariable Long diningId
+    ) {
+        return BaseResponse.ok(diningService.getOcrStatus(user.getUserId(), groupId, diningId));
+    }
+
+    @Override
+    @PostMapping("/groups/{groupId}/dining/{diningId}/receipt-ocr")
+    public BaseResponse<Void> requestReceiptOcr(
+        @AuthenticationPrincipal JwtUserDetails user,
+        @PathVariable Long groupId,
+        @PathVariable Long diningId,
+        @Valid @RequestBody ReceiptOcrRequest request
+    ) {
+        diningService.requestReceiptOcr(user.getUserId(), groupId, diningId, request.toServiceRequest());
+        return BaseResponse.noContent();
     }
 }
