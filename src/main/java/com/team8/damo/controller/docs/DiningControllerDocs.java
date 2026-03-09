@@ -2,6 +2,7 @@ package com.team8.damo.controller.docs;
 
 import com.team8.damo.controller.request.AttendanceVoteRequest;
 import com.team8.damo.controller.request.DiningCreateRequest;
+import com.team8.damo.controller.request.ReceiptOcrRequest;
 import com.team8.damo.controller.request.RestaurantVoteRequest;
 import com.team8.damo.controller.response.BaseResponse;
 import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
@@ -353,6 +354,39 @@ public interface DiningControllerDocs {
         Long diningId,
         @Parameter(hidden = true)
         JwtUserDetails user
+    );
+
+    @Operation(
+        summary = "영수증 OCR 요청",
+        description = """
+            ### 확정된 회식의 영수증 OCR 분석을 요청합니다.
+            - receiptUrl: 영수증 이미지 S3 URL
+
+            **요청 조건**:
+            - 해당 그룹의 그룹장만 요청할 수 있습니다.
+            - 장소가 확정된 회식(CONFIRMED)만 요청 가능합니다.
+
+            **처리 방식**:
+            - Kafka `receipt-ocr-request` 토픽에 diningId, receiptUrl, restaurantName을 적재합니다.
+            - OCR 처리 결과는 비동기로 전달됩니다.
+            """
+    )
+    @ApiResponse(responseCode = "204", description = "성공")
+    @ApiErrorResponses({
+        ONLY_GROUP_LEADER_OCR,
+        DINING_NOT_FOUND,
+        DINING_NOT_CONFIRMED,
+        RECOMMEND_RESTAURANT_NOT_FOUND,
+        RESTAURANT_NOT_FOUND
+    })
+    BaseResponse<Void> requestReceiptOcr(
+        @Parameter(hidden = true)
+        JwtUserDetails user,
+        @Parameter(description = "그룹 ID", required = true)
+        Long groupId,
+        @Parameter(description = "회식 ID", required = true)
+        Long diningId,
+        ReceiptOcrRequest request
     );
 
     @Operation(

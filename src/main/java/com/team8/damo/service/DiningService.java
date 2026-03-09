@@ -15,6 +15,7 @@ import com.team8.damo.exception.CustomException;
 import com.team8.damo.redis.key.RedisKeyPrefix;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.DiningCreateServiceRequest;
+import com.team8.damo.service.request.ReceiptOcrServiceRequest;
 import com.team8.damo.service.request.RestaurantVoteServiceRequest;
 import com.team8.damo.service.response.*;
 import com.team8.damo.util.DataSerializer;
@@ -522,6 +523,32 @@ public class DiningService {
         );
 
         return DiningConfirmedResponse.of(recommendRestaurant, restaurant);
+    }
+
+    public void requestReceiptOcr(Long userId, Long groupId, Long diningId, ReceiptOcrServiceRequest request) {
+        if (isNotGroupLeader(userId, groupId)) {
+            throw new CustomException(ONLY_GROUP_LEADER_OCR);
+        }
+
+        Dining dining = findDiningBy(diningId);
+        if (dining.isNotRestaurantConfirmed()) {
+            throw new CustomException(DINING_NOT_CONFIRMED);
+        }
+
+        RecommendRestaurant confirmedRestaurant = recommendRestaurantRepository.findConfirmedRecommendRestaurant(diningId, dining.getRecommendationCount())
+            .orElseThrow(() -> new CustomException(RECOMMEND_RESTAURANT_NOT_FOUND));
+
+        Restaurant restaurant = restaurantRepository.findById(confirmedRestaurant.getRestaurantId())
+            .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+
+        commonEventPublisher.publishKafka(
+            EventType.RECEIPT_OCR_REQUEST,
+            ReceiptOcrRequestEventPayload.builder()
+                .diningId(diningId)
+                .receiptUrl(request.receiptUrl())
+                .restaurantName(restaurant.getPlaceName())
+                .build()
+        );
     }
 
 //    public CursorPageResponse<RecommendationStreamingResponse> getRecommendationStreaming(Long diningId, Long cursor, int limit) {
