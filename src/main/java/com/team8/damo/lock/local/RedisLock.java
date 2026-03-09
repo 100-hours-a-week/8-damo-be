@@ -1,6 +1,6 @@
 package com.team8.damo.lock.local;
 
-import com.team8.damo.aop.CustomLock;
+import com.team8.damo.aop.DistridutedLock;
 import com.team8.damo.lock.LockStrategy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,11 +21,11 @@ public class RedisLock implements LockStrategy {
     private final RedissonClient redissonClient;
 
     @Override
-    public Object execute(String key, CustomLock customLock, ProceedingJoinPoint joinPoint) throws Throwable {
+    public Object execute(String key, DistridutedLock distridutedLock, ProceedingJoinPoint joinPoint) throws Throwable {
         RLock rLock = redissonClient.getLock(key);
 
         try {
-            boolean available = rLock.tryLock(customLock.waitTime(), customLock.leaseTime(), customLock.timeUnit());
+            boolean available = rLock.tryLock(distridutedLock.waitTime(), distridutedLock.leaseTime(), distridutedLock.timeUnit());
             if (!available) {
                 return false;
             }
