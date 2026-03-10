@@ -26,6 +26,9 @@ public interface LightningParticipantRepository extends JpaRepository<LightningP
 
     long countByLightningId(Long lightningId);
 
+    @Query("select count(lp) from LightningParticipant lp where lp.lightning.id in :lightningIds")
+    long countByLightningIdIn(@Param("lightningIds") List<Long> lightningIds);
+
     @Query(
         "select lp from LightningParticipant lp " +
         "join fetch lp.lightning " +
@@ -81,4 +84,8 @@ public interface LightningParticipantRepository extends JpaRepository<LightningP
         @Param("lightningId") Long lightningId,
         @Param("lastReadChatMessageId") Long lastReadChatMessageId
     );
+
+    @Modifying
+    @Query("delete from LightningParticipant lp where lp.lightning.id in :lightningIds")
+    int deleteAllByLightningIds(@Param("lightningIds") List<Long> lightningIds);
 }
