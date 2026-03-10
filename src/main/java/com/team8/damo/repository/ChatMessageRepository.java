@@ -4,12 +4,16 @@ import com.team8.damo.entity.ChatMessage;
 import com.team8.damo.repository.projections.UnreadCount;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
+
+    @Query("select count(cm) from ChatMessage cm where cm.lightning.id in :lightningIds")
+    long countByLightningIdIn(@Param("lightningIds") List<Long> lightningIds);
 
     @Query("SELECT chat.lightning.id as lightningId, COUNT(chat) as unreadCount " +
         "FROM ChatMessage chat " +
@@ -41,4 +45,8 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
         LIMIT 1
         """, nativeQuery = true)
     Long findLatestMessageId(@Param("lightningId") Long lightningId);
+
+    @Modifying
+    @Query("delete from ChatMessage cm where cm.lightning.id in :lightningIds")
+    int deleteAllByLightningIds(@Param("lightningIds") List<Long> lightningIds);
 }

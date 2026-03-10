@@ -186,10 +186,6 @@ spring:
     listener:
       ack-mode: manual
 
-logging:
-  level:
-    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
-
 decorator:
   datasource:
     p6spy:
@@ -200,6 +196,10 @@ springdoc:
     path: /api-test
     csrf:
       enabled: true
+
+test-data:
+  cleanup:
+    token: ${TEST_DATA_CLEANUP_TOKEN}
 
 ---
 
@@ -253,10 +253,6 @@ spring:
     listener:
       ack-mode: manual
 
-logging:
-  level:
-    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
-
 decorator:
   datasource:
     p6spy:
@@ -267,6 +263,10 @@ springdoc:
     path: /api-test
     csrf:
       enabled: true
+
+test-data:
+  cleanup:
+    token: ${TEST_DATA_CLEANUP_TOKEN}
 
 ---
 spring:

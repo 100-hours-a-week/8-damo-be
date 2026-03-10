@@ -16,6 +16,7 @@ import com.team8.damo.repository.LightningRepository;
 import com.team8.damo.repository.RestaurantRepository;
 import com.team8.damo.repository.UserRepository;
 import com.team8.damo.service.request.LightningCreateServiceRequest;
+import com.team8.damo.service.response.AvailableLightningResponse;
 import com.team8.damo.service.response.CursorPageResponse;
 import com.team8.damo.service.response.LightningResponse;
 import com.team8.damo.util.Snowflake;
@@ -741,6 +742,44 @@ class LightningServiceTest {
 
         then(participantRepository).should(never()).countByLightningId(any());
         then(participantRepository).should(never()).delete(any());
+    }
+
+    @Test
+    @DisplayName("참여 가능 번개 목록 조회 시 정원이 찬 번개는 제외된다.")
+    void getAvailableLightningList_excludesFullLightning() {
+        // given
+        Long userId = 1L;
+
+        User user = UserFixture.create(userId);
+        Lightning availableLightning = LightningFixture.create(100L, "restaurant-1", 4);
+        Restaurant restaurant = RestaurantFixture.create("restaurant-1", "맛있는 식당");
+
+        User otherUser = UserFixture.create(2L);
+        LightningParticipant participant1 = LightningParticipant.createLeader(1L, availableLightning, otherUser);
+        LightningParticipant participant2 = LightningParticipant.createParticipant(2L, availableLightning, UserFixture.create(3L));
+
+        PageRequest pageable = PageRequest.of(0, 11);
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(lightningRepository.findAllByStatusAndUserNotParticipatingWithCursor(LightningStatus.OPEN, userId, pageable))
+            .willReturn(List.of(availableLightning));
+        given(participantRepository.findAllByLightningIdIn(List.of(100L)))
+            .willReturn(List.of(participant1, participant2));
+        given(restaurantRepository.findAllById(List.of("restaurant-1")))
+            .willReturn(List.of(restaurant));
+
+        // when
+        CursorPageResponse<AvailableLightningResponse> result = lightningService.getAvailableLightningList(userId, null, 10);
+
+        // then
+        assertThat(result.data()).hasSize(1)
+            .extracting("lightningId", "restaurantName", "maxParticipants", "participantsCount")
+            .containsExactly(tuple(100L, "맛있는 식당", 4, 2));
+        assertThat(result.hasNext()).isFalse();
+        assertThat(result.nextCursor()).isNull();
+
+        then(lightningRepository).should()
+            .findAllByStatusAndUserNotParticipatingWithCursor(LightningStatus.OPEN, userId, pageable);
     }
 
     @Nested
