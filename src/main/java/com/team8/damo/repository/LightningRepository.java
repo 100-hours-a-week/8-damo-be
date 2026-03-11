@@ -20,6 +20,9 @@ public interface LightningRepository extends JpaRepository<Lightning, Long> {
     )
     List<Long> findIdsByDescriptionPrefix(@Param("prefix") String prefix);
 
+    @Query("SELECT l FROM Lightning l WHERE l.description LIKE CONCAT(:prefix, '%')")
+    List<Lightning> findAllByDescriptionPrefix(@Param("prefix") String prefix);
+
     @Query(
         "SELECT l FROM Lightning l " +
             "WHERE l.lightningStatus = :status " +

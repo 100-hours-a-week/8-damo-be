@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
@@ -49,4 +50,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     @Modifying
     @Query("delete from ChatMessage cm where cm.lightning.id in :lightningIds")
     int deleteAllByLightningIds(@Param("lightningIds") List<Long> lightningIds);
+
+    @Query("SELECT cm.lightning.id, COUNT(cm) FROM ChatMessage cm WHERE cm.lightning.id IN :ids GROUP BY cm.lightning.id")
+    List<Object[]> countByLightningIds(@Param("ids") Collection<Long> ids);
 }

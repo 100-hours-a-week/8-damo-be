@@ -21,7 +21,7 @@ import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 @RequiredArgsConstructor
 public class TestDataCleanupService {
 
-    private static final List<String> ALLOWED_PREFIXES = List.of("k6-", "loadtest-");
+    private static final List<String> ALLOWED_PREFIXES = List.of("k6-", "loadtest-", "lt-perm-", "lt-v2-");
 
     private final LightningRepository lightningRepository;
     private final LightningParticipantRepository lightningParticipantRepository;

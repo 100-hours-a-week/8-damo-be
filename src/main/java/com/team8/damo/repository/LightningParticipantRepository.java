@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -88,4 +89,10 @@ public interface LightningParticipantRepository extends JpaRepository<LightningP
     @Modifying
     @Query("delete from LightningParticipant lp where lp.lightning.id in :lightningIds")
     int deleteAllByLightningIds(@Param("lightningIds") List<Long> lightningIds);
+
+    @Query("SELECT lp.lightning.id, COUNT(lp) FROM LightningParticipant lp WHERE lp.lightning.id IN :ids GROUP BY lp.lightning.id")
+    List<Object[]> countByLightningIds(@Param("ids") Collection<Long> ids);
+
+    @Query("SELECT lp FROM LightningParticipant lp WHERE lp.lightning.id IN :ids AND lp.role = 'LEADER'")
+    List<LightningParticipant> findLeadersByLightningIds(@Param("ids") Collection<Long> ids);
 }
