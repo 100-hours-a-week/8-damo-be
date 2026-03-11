@@ -27,7 +27,7 @@ public class ApplicationEventHandler {
     private final List<EventHandler> eventHandlers;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-    @Async("eventRelayExecutor")
+    @Async("chatEventExecutor")
     @Retryable(
         delay = 200L,
         multiplier = 1.5

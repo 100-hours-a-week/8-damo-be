@@ -21,4 +21,14 @@ public class EventRelayConfig {
         executor.setThreadNamePrefix("event-relay-");
         return executor;
     }
+
+    @Bean
+    public ThreadPoolTaskExecutor chatEventExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(20);
+        executor.setMaxPoolSize(40);
+        executor.setQueueCapacity(500);
+        executor.setThreadNamePrefix("chat-event-");
+        return executor;
+    }
 }

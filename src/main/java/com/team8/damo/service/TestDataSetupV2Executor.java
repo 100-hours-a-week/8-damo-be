@@ -181,7 +181,7 @@ public class TestDataSetupV2Executor {
                         int seq = (int) data[2];
 
                         Lightning lightning = Lightning.builder()
-                            .id(snowflake.nextId())
+                            .id(1000L + seq)
                             .restaurantId(restaurants.get(restIdx % restaurants.size()).getId())
                             .maxParticipants(MAX_PARTICIPANTS)
                             .description(desc)
