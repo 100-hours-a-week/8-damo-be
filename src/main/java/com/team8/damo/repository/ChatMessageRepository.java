@@ -51,6 +51,13 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     @Query("delete from ChatMessage cm where cm.lightning.id in :lightningIds")
     int deleteAllByLightningIds(@Param("lightningIds") List<Long> lightningIds);
 
+    @Query("select count(cm) from ChatMessage cm where cm.content like concat(:prefix, '%')")
+    long countByContentPrefix(@Param("prefix") String prefix);
+
+    @Modifying
+    @Query("delete from ChatMessage cm where cm.content like concat(:prefix, '%')")
+    int deleteAllByContentPrefix(@Param("prefix") String prefix);
+
     @Query("SELECT cm.lightning.id, COUNT(cm) FROM ChatMessage cm WHERE cm.lightning.id IN :ids GROUP BY cm.lightning.id")
     List<Object[]> countByLightningIds(@Param("ids") Collection<Long> ids);
 }
