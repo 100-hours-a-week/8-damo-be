@@ -7,6 +7,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 @Configuration
 @EnableAsync
@@ -30,5 +31,10 @@ public class EventRelayConfig {
         executor.setQueueCapacity(500);
         executor.setThreadNamePrefix("chat-event-");
         return executor;
+    }
+
+    @Bean
+    public Executor messageRelayPublishPendingEventExecutor() {
+        return Executors.newSingleThreadScheduledExecutor();
     }
 }
