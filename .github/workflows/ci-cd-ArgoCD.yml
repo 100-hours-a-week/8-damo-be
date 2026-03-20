@@ -11,7 +11,7 @@ env:
   AWS_REGION: ap-northeast-2
   ECR_REPO_PROD: 080598576517.dkr.ecr.ap-northeast-2.amazonaws.com/prod/be
   INFRA_REPO: 100-hours-a-week/8-damo-cloud
-  HELM_VALUES_PATH: k8s/be/helm/values.yaml
+  HELM_VALUES_PATH: k8s/apps/be/helm/values.yaml
 
 jobs:
   ci:
