@@ -2,7 +2,7 @@ name: Backend CI/CD (CodeDeploy Blue/Green)
 
 on:
   push:
-    branches: [develop]
+    branches: [main]
 
 env:
   JAVA_VERSION: "21"
