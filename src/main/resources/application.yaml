@@ -56,6 +56,9 @@ qr:
 ai:
   base-url: ${AI_BASE_URL}
 
+fcm:
+  service-account-file: ${FCM_SERVICE_ACCOUNT_FILE:firebase-service-account.json}
+
 management:
   endpoints:
     web:
