@@ -154,7 +154,7 @@ public class DiningController implements DiningControllerDocs {
         @PathVariable Long groupId,
         @PathVariable Long diningId
     ) {
-        diningService.refreshRecommendRestaurants(user.getUserId(), groupId, diningId);
+        diningService.refreshRecommendRestaurantsV2(user.getUserId(), groupId, diningId);
         return BaseResponse.noContent();
     }
 
