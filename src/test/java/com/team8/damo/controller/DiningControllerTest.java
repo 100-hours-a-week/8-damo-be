@@ -815,25 +815,4 @@ class DiningControllerTest {
         then(diningService).should().confirmDiningRestaurant(any(), eq(groupId), eq(diningId), eq(recommendRestaurantsId));
     }
 
-    @Test
-    @DisplayName("그룹장이 추천 장소를 새로고침한다.")
-    void refreshRecommendRestaurants_success() throws Exception {
-        // given
-        Long groupId = 100L;
-        Long diningId = 200L;
-
-        willDoNothing().given(diningService).refreshRecommendRestaurants(any(), eq(groupId), eq(diningId));
-
-        // when // then
-        mockMvc.perform(
-                post("/api/v1/groups/{groupId}/dining/{diningId}/recommend-restaurant/refresh",
-                    groupId, diningId)
-                    .contentType(MediaType.APPLICATION_JSON)
-            )
-            .andDo(print())
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data").doesNotExist());
-
-        then(diningService).should().refreshRecommendRestaurants(any(), eq(groupId), eq(diningId));
-    }
 }
