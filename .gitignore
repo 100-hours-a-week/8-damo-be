@@ -47,3 +47,6 @@ k6
 
 # Docker compose
 docker-compose.yml
+
+# fcm
+firebase-service-account.json

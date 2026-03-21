@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum EventType {
-    RECOMMENDATION_REQUEST(RecommendationEventPayload.class, Topic.RECOMMENDATION_REQUEST),
+    RECOMMENDATION_REQUEST(RecommendationV2EventPayload.class, Topic.RECOMMENDATION_REQUEST),
     RECOMMENDATION_RESPONSE(RecommendationDoneEventPayload.class, Topic.RECOMMENDATION_RESPONSE),
     RECOMMENDATION_REFRESH_REQUEST(RecommendationRefreshEventPayload.class, Topic.RECOMMENDATION_REFRESH_REQUEST),
     USER_PERSONA_UPDATE(UserPersonaEventPayload.class, Topic.USER_PERSONA_UPDATE),
@@ -15,6 +15,7 @@ public enum EventType {
     RECOMMENDATION_STREAMING(RecommendationStreamingEventPayload.class, Topic.RECOMMENDATION_STREAMING),
     RECEIPT_OCR_REQUEST(ReceiptOcrRequestEventPayload.class, Topic.RECEIPT_OCR_REQUEST),
     RECEIPT_OCR_RESPONSE(ReceiptOcrResponseEventPayload.class, Topic.RECEIPT_OCR_RESPONSE),
+    NOTIFICATION_SEND(NotificationEventPayload.class, Topic.NOTIFICATION_SEND),
     USER_PERSONA(UserPersonaPayload.class, ""),
     CREATE_CHAT_MESSAGE(CreateChatMessageEventPayload.class, ""),
     UPDATE_UNREAD_COUNT(UpdateUnreadCountEventPayload.class, "")
@@ -43,5 +44,7 @@ public enum EventType {
         public static final String RECOMMENDATION_RESPONSE = "recommendation-response";
         public static final String RECOMMENDATION_STREAMING = "recommendation-streaming";
         public static final String RECEIPT_OCR_RESPONSE = "receipt-ocr-response";
+
+        public static final String NOTIFICATION_SEND = "notification-send";
     }
 }

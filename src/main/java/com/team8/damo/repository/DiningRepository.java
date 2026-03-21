@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface DiningRepository extends JpaRepository<Dining, Long> {
 
@@ -25,4 +26,7 @@ public interface DiningRepository extends JpaRepository<Dining, Long> {
 
     @Query("select d.attendanceVoteDoneCount from Dining d where d.id = :diningId")
     int getAttendanceVoteDoneCount(@Param("diningId") Long diningId);
+
+    @Query("select d from Dining d join fetch d.group where d.id = :diningId")
+    Optional<Dining> findByIdWithGroup(Long diningId);
 }

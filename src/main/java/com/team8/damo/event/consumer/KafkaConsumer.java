@@ -24,7 +24,8 @@ public class KafkaConsumer {
     @KafkaListener(topics = {
         EventType.Topic.RECOMMENDATION_RESPONSE,
         EventType.Topic.RECOMMENDATION_STREAMING,
-        EventType.Topic.RECEIPT_OCR_RESPONSE
+        EventType.Topic.RECEIPT_OCR_RESPONSE,
+        EventType.Topic.NOTIFICATION_SEND
     })
     public void consume(String message, Acknowledgment ack) {
         Event<EventPayload> event = Event.fromJson(message);
