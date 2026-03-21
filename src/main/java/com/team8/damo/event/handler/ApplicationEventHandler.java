@@ -73,6 +73,7 @@ public class ApplicationEventHandler {
                 outbox.getEventType().getTopic(),
                 outbox.getPayload()
             ).get(1, TimeUnit.SECONDS);
+            outboxRepository.delete(outbox);
         } catch (Exception e) {
             outboxMetric.incrementPublishFailure();
             log.error("[MessageRelay.produceOutboxEvent] failed outboxEvent={}", outbox.getId(), e);
