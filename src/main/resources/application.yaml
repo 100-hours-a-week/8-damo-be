@@ -56,6 +56,9 @@ qr:
 ai:
   base-url: ${AI_BASE_URL}
 
+fcm:
+  service-account-file: ${FCM_SERVICE_ACCOUNT_FILE:firebase-service-account.json}
+
 management:
   endpoints:
     web:
@@ -186,10 +189,6 @@ spring:
     listener:
       ack-mode: manual
 
-logging:
-  level:
-    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
-
 decorator:
   datasource:
     p6spy:
@@ -200,6 +199,10 @@ springdoc:
     path: /api-test
     csrf:
       enabled: true
+
+test-data:
+  cleanup:
+    token: ${TEST_DATA_CLEANUP_TOKEN}
 
 ---
 
@@ -253,10 +256,6 @@ spring:
     listener:
       ack-mode: manual
 
-logging:
-  level:
-    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
-
 decorator:
   datasource:
     p6spy:
@@ -267,6 +266,10 @@ springdoc:
     path: /api-test
     csrf:
       enabled: true
+
+test-data:
+  cleanup:
+    token: ${TEST_DATA_CLEANUP_TOKEN}
 
 ---
 spring:
@@ -307,6 +310,16 @@ spring:
   output:
     ansi:
       enabled: ALWAYS
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    consumer:
+      group-id: ${KAFKA_GROUP_ID}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      enable-auto-commit: false
+    listener:
+      ack-mode: manual
 
 decorator:
   datasource:

@@ -4,17 +4,16 @@ import com.team8.damo.client.AiService;
 import com.team8.damo.client.request.DiningData;
 import com.team8.damo.client.request.RestaurantVoteResult;
 import com.team8.damo.entity.*;
-import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
-import com.team8.damo.entity.enumeration.DiningStatus;
-import com.team8.damo.entity.enumeration.GroupRole;
-import com.team8.damo.entity.enumeration.RestaurantVoteStatus;
+import com.team8.damo.entity.enumeration.*;
 import com.team8.damo.event.EventType;
 import com.team8.damo.event.handler.CommonEventPublisher;
 import com.team8.damo.event.payload.*;
 import com.team8.damo.exception.CustomException;
+import com.team8.damo.exception.errorcode.ErrorCode;
 import com.team8.damo.redis.key.RedisKeyPrefix;
 import com.team8.damo.repository.*;
 import com.team8.damo.service.request.DiningCreateServiceRequest;
+import com.team8.damo.service.request.ReceiptOcrServiceRequest;
 import com.team8.damo.service.request.RestaurantVoteServiceRequest;
 import com.team8.damo.service.response.*;
 import com.team8.damo.util.DataSerializer;
@@ -29,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.team8.damo.exception.errorcode.ErrorCode.*;
@@ -524,6 +522,56 @@ public class DiningService {
         return DiningConfirmedResponse.of(recommendRestaurant, restaurant);
     }
 
+    @Transactional
+    public void completeDining(Long diningId) {
+        Dining dining = diningRepository.findById(diningId)
+            .orElseThrow(() -> new CustomException(ErrorCode.DINING_NOT_FOUND));
+        dining.complete();
+    }
+
+    public String getOcrStatus(Long userId, Long groupId, Long diningId) {
+        if (isNotGroupLeader(userId, groupId)) {
+            throw new CustomException(ONLY_GROUP_LEADER_OCR);
+        }
+
+        String key = RedisKeyPrefix.DINING_OCR_STATUS.key(diningId);
+        return redisTemplate.opsForValue().get(key);
+    }
+
+    public void requestReceiptOcr(Long userId, Long groupId, Long diningId, ReceiptOcrServiceRequest request) {
+        if (isNotGroupLeader(userId, groupId)) {
+            throw new CustomException(ONLY_GROUP_LEADER_OCR);
+        }
+
+        Dining dining = findDiningBy(diningId);
+        if (dining.isNotRestaurantConfirmed()) {
+            throw new CustomException(DINING_NOT_CONFIRMED);
+        }
+
+        String ocrStatusKey = RedisKeyPrefix.DINING_OCR_STATUS.key(diningId);
+        String currentStatus = redisTemplate.opsForValue().get(ocrStatusKey);
+        if (OcrStatus.PENDING.name().equals(currentStatus)) {
+            throw new CustomException(RECEIPT_OCR_ALREADY_IN_PROGRESS);
+        }
+
+        RecommendRestaurant confirmedRestaurant = recommendRestaurantRepository.findConfirmedRecommendRestaurant(diningId, dining.getRecommendationCount())
+            .orElseThrow(() -> new CustomException(RECOMMEND_RESTAURANT_NOT_FOUND));
+
+        Restaurant restaurant = restaurantRepository.findById(confirmedRestaurant.getRestaurantId())
+            .orElseThrow(() -> new CustomException(RESTAURANT_NOT_FOUND));
+
+        redisTemplate.opsForValue().set(ocrStatusKey, OcrStatus.PENDING.name());
+
+        commonEventPublisher.publishKafka(
+            EventType.RECEIPT_OCR_REQUEST,
+            ReceiptOcrRequestEventPayload.builder()
+                .diningId(diningId)
+                .receiptUrl(request.receiptUrl())
+                .restaurantName(restaurant.getPlaceName())
+                .build()
+        );
+    }
+
 //    public CursorPageResponse<RecommendationStreamingResponse> getRecommendationStreaming(Long diningId, Long cursor, int limit) {
 //        String key = RedisKeyPrefix.DINING_RECOMMENDATION_STREAMING.key(diningId);
 //
@@ -580,14 +628,14 @@ public class DiningService {
         Map<Long, List<Long>> likeUserMap = votes.stream()
             .filter(vote -> vote.getStatus() == RestaurantVoteStatus.LIKE)
             .collect(Collectors.groupingBy(
-                    vote  -> vote.getRecommendRestaurant().getId(),
-                    Collectors.mapping(vote -> vote.getUser().getId(), Collectors.toList())
+                vote -> vote.getRecommendRestaurant().getId(),
+                Collectors.mapping(vote -> vote.getUser().getId(), Collectors.toList())
             ));
 
         Map<Long, List<Long>> dislikeUserMap = votes.stream()
             .filter(vote -> vote.getStatus() == RestaurantVoteStatus.DISLIKE)
             .collect(Collectors.groupingBy(
-                vote  -> vote.getRecommendRestaurant().getId(),
+                vote -> vote.getRecommendRestaurant().getId(),
                 Collectors.mapping(vote -> vote.getUser().getId(), Collectors.toList())
             ));
 

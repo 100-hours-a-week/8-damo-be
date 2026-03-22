@@ -50,6 +50,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.apache.commons:commons-pool2'
 
+    // redisson
+    implementation 'org.redisson:redisson-spring-boot-starter:4.3.0'
+
     //Jwt
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
@@ -86,6 +89,7 @@ dependencies {
 
     // Elastic APM
     implementation 'co.elastic.apm:apm-agent-attach:1.55.4'
+    implementation 'co.elastic.apm:apm-agent-api:1.55.4'
 
     // websocket
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
@@ -94,6 +98,9 @@ dependencies {
     // kafka
     implementation 'org.springframework.boot:spring-boot-starter-kafka'
     testImplementation 'org.springframework.boot:spring-boot-starter-kafka-test'
+
+    // fcm
+    implementation 'com.google.firebase:firebase-admin:9.4.3'
 }
 
 tasks.named('test') {

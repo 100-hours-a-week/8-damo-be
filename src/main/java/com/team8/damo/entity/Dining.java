@@ -82,6 +82,10 @@ public class Dining extends BaseTimeEntity implements Persistable<Long> {
         this.diningStatus = DiningStatus.CONFIRMED;
     }
 
+    public void complete() {
+        this.diningStatus = DiningStatus.COMPLETE;
+    }
+
     @Override
     public boolean isNew() {
         return getCreatedAt() == null;

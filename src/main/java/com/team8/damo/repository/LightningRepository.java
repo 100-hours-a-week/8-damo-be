@@ -14,8 +14,22 @@ public interface LightningRepository extends JpaRepository<Lightning, Long> {
     List<Lightning> findAllByLightningStatus(LightningStatus status);
 
     @Query(
+        "SELECT l.id FROM Lightning l " +
+            "WHERE l.description LIKE CONCAT(:prefix, '%') " +
+            "ORDER BY l.id DESC"
+    )
+    List<Long> findIdsByDescriptionPrefix(@Param("prefix") String prefix);
+
+    @Query("SELECT l FROM Lightning l WHERE l.description LIKE CONCAT(:prefix, '%')")
+    List<Lightning> findAllByDescriptionPrefix(@Param("prefix") String prefix);
+
+    @Query(
         "SELECT l FROM Lightning l " +
             "WHERE l.lightningStatus = :status " +
+            "AND (" +
+            "SELECT COUNT(lp) FROM LightningParticipant lp " +
+            "WHERE lp.lightning = l" +
+            ") < l.maxParticipants " +
             "AND NOT EXISTS (" +
             "SELECT 1 FROM LightningParticipant lp " +
             "WHERE lp.lightning = l AND lp.user.id = :userId" +
@@ -46,6 +60,10 @@ public interface LightningRepository extends JpaRepository<Lightning, Long> {
         "SELECT l FROM Lightning l " +
             "WHERE l.lightningStatus = :status " +
             "AND l.id < :lastLightningId " +
+            "AND (" +
+            "SELECT COUNT(lp) FROM LightningParticipant lp " +
+            "WHERE lp.lightning = l" +
+            ") < l.maxParticipants " +
             "AND NOT EXISTS (" +
             "SELECT 1 FROM LightningParticipant lp " +
             "WHERE lp.lightning = l AND lp.user.id = :userId" +

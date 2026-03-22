@@ -1,6 +1,6 @@
 package com.team8.damo.lock.local;
 
-import com.team8.damo.aop.CustomLock;
+import com.team8.damo.aop.DistridutedLock;
 import com.team8.damo.lock.LockStrategy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,13 +19,13 @@ public class LocalLock implements LockStrategy {
     private final ConcurrentHashMap<String, AtomicInteger> counterMap = new ConcurrentHashMap<>();
 
     @Override
-    public Object execute(String key, CustomLock customLock, ProceedingJoinPoint joinPoint) throws Throwable {
+    public Object execute(String key, DistridutedLock distridutedLock, ProceedingJoinPoint joinPoint) throws Throwable {
         AtomicInteger counter = counterMap.computeIfAbsent(key, k -> new AtomicInteger(0));
         counter.incrementAndGet();
 
         ReentrantLock lock = lockMap.computeIfAbsent(key, k -> new ReentrantLock(true));
 
-        if (!lock.tryLock(customLock.waitTime(), customLock.timeUnit())) {
+        if (!lock.tryLock(distridutedLock.waitTime(), distridutedLock.timeUnit())) {
             counter.decrementAndGet();
             throw new RuntimeException();
         }

@@ -1,7 +1,5 @@
 package com.team8.damo.config;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import com.team8.damo.cache.CacheSpec;
 import com.team8.damo.chat.producer.RedisMessageBroker;
 import io.lettuce.core.api.StatefulConnection;
@@ -14,6 +12,8 @@ import org.springframework.data.redis.cache.CacheKeyPrefix;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisNode;
+import org.springframework.data.redis.connection.RedisSentinelConfiguration;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettucePoolingClientConfiguration;
@@ -25,9 +25,7 @@ import org.springframework.data.redis.repository.configuration.EnableRedisReposi
 import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-import tools.jackson.databind.DefaultTyping;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.json.JsonMapper;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 
 import java.time.Duration;
@@ -45,12 +43,16 @@ public class RedisConfig {
     @Value("${spring.data.redis.port}")
     private int port;
 
+    @Value("${spring.data.redis.sentinel.master:#{null}}")
+    private String sentinelMaster;
+
+    @Value("${spring.data.redis.sentinel.nodes:#{null}}")
+    private String sentinelNodes;
+
     public static final String CHANNEL = "chat:broadcast";
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
-        RedisStandaloneConfiguration serverConfig = new RedisStandaloneConfiguration(host, port);
-
         GenericObjectPoolConfig<StatefulConnection<?, ?>> poolConfig = new GenericObjectPoolConfig<>();
         poolConfig.setMaxTotal(8);
         poolConfig.setMaxIdle(8);
@@ -65,7 +67,20 @@ public class RedisConfig {
             .commandTimeout(Duration.ofSeconds(2))
             .build();
 
-        return new LettuceConnectionFactory(serverConfig, clientConfig);
+        if (sentinelMaster != null) {
+            // prod: Sentinel 모드
+            RedisSentinelConfiguration sentinelConfig = new RedisSentinelConfiguration();
+            sentinelConfig.setMaster(sentinelMaster);
+            for (String node : sentinelNodes.split(",")) {
+                String[] parts = node.trim().split(":");
+                sentinelConfig.addSentinel(new RedisNode(parts[0], Integer.parseInt(parts[1])));
+            }
+            return new LettuceConnectionFactory(sentinelConfig, clientConfig);
+        } else {
+            // local/test: Standalone 모드 (기존 방식 유지)
+            RedisStandaloneConfiguration serverConfig = new RedisStandaloneConfiguration(host, port);
+            return new LettuceConnectionFactory(serverConfig, clientConfig);
+        }
     }
 
     @Bean
@@ -127,6 +142,16 @@ public class RedisConfig {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
         container.addMessageListener(messageListenerAdapter, new ChannelTopic(CHANNEL));
+
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(8);
+        executor.setMaxPoolSize(16);
+        executor.setQueueCapacity(200);
+        executor.setThreadNamePrefix("redis-listener-");
+        executor.setKeepAliveSeconds(60);
+        executor.initialize();
+
+        container.setTaskExecutor(executor);
         return container;
     }
 

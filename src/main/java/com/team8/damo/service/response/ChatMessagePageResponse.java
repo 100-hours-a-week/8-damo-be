@@ -17,6 +17,7 @@ public record ChatMessagePageResponse(
         Long messageId,
         Long senderId,
         String senderNickname,
+        String senderImagePath,
         String content,
         LocalDateTime createdAt,
         Long unreadCount

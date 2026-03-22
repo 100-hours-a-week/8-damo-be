@@ -23,7 +23,7 @@ public class GlobalExceptionHandler {
     // 커스텀 예외
     @ExceptionHandler(value = {CustomException.class})
     public BaseResponse<?> handleCustomException(CustomException e) {
-        log.error("[Custom Exception]", e);
+        log.error("[Custom Exception] {}", e.getMessage());
         return BaseResponse.fail(e);
     }
 

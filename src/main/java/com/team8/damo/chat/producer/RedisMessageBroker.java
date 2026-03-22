@@ -1,5 +1,7 @@
 package com.team8.damo.chat.producer;
 
+import co.elastic.apm.api.CaptureTransaction;
+import co.elastic.apm.api.ElasticApm;
 import com.team8.damo.chat.message.WsEventMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,9 +28,11 @@ public class RedisMessageBroker implements ChatMessageBroker {
         }
     }
 
+    @CaptureTransaction(value = "redis.onMessage", type = "messaging")
     public void onMessage(String jsonMessage) {
         try {
             WsEventMessage message = objectMapper.readValue(jsonMessage, WsEventMessage.class);
+            ElasticApm.currentTransaction().setLabel("lightningId", message.lightningId());
             messageSendingOperations.convertAndSend("/sub/lightning/" + message.lightningId(), message);
         } catch (Exception e) {
             log.error(e.getMessage(), e);

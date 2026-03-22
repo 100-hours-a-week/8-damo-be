@@ -39,6 +39,7 @@ public class SecurityConfig {
         "/swagger-ui/**",
         "/v3/api-docs/**",
         "/api-test",
+        "/api/internal/test-data/**",
         "/api/ws-stomp",
         "/sub/**",
         "/pub/**",

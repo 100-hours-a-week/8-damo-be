@@ -1,5 +1,6 @@
 package com.team8.damo.event.handler;
 
+import com.team8.damo.entity.Outbox;
 import com.team8.damo.event.Event;
 import com.team8.damo.event.EventType;
 import com.team8.damo.event.KafkaEvent;
@@ -23,7 +24,14 @@ public class CommonEventPublisher {
 
     public void publishKafka(EventType eventType, EventPayload payload) {
         String eventPayload = Event.of(snowflake.nextId(), eventType, payload).toJson();
-        KafkaEvent kafkaEvent = new KafkaEvent(eventType.getTopic(), eventPayload);
-        eventPublisher.publishEvent(kafkaEvent);
+//        KafkaEvent kafkaEvent = new KafkaEvent(eventType.getTopic(), eventPayload);
+//        eventPublisher.publishEvent(kafkaEvent);
+
+        Outbox outbox = Outbox.create(
+            snowflake.nextId(),
+            eventType,
+            eventPayload
+        );
+        eventPublisher.publishEvent(outbox);
     }
 }

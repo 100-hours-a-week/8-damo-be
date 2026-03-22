@@ -5,6 +5,8 @@ import com.team8.damo.entity.DiningParticipant;
 import com.team8.damo.entity.enumeration.AttendanceVoteStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,4 +29,7 @@ public interface DiningParticipantRepository extends JpaRepository<DiningPartici
 
     @EntityGraph(attributePaths = {"user"})
     List<DiningParticipant> findAllByDiningAndAttendanceVoteStatus(Dining dining, AttendanceVoteStatus attendanceVoteStatus);
+
+    @Query("SELECT dp FROM DiningParticipant dp JOIN FETCH dp.user WHERE dp.dining.id = :diningId AND dp.attendanceVoteStatus = 'ATTEND'")
+    List<DiningParticipant> findAttendingParticipantsWithUser(@Param("diningId") Long diningId);
 }
