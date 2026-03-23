@@ -133,7 +133,7 @@ public class SseEmitterService {
         RecommendationStreamingResponse streamingResponse = RecommendationStreamingResponse.builder()
             .eventId(snowflake.nextId())
             .userId(data.userId())
-            .nickname(user == null ? "익명" : user.getNickname())
+            .nickname(user == null ? "다모 AI봇" : user.getNickname())
             .content(data.content())
             .createdAt(LocalDateTime.now())
             .build();
