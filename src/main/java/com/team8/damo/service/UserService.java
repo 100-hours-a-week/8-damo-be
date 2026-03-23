@@ -1,5 +1,6 @@
 package com.team8.damo.service;
 
+import com.team8.damo.cache.CacheSpec;
 import com.team8.damo.entity.*;
 import com.team8.damo.entity.enumeration.AllergyType;
 import com.team8.damo.entity.enumeration.FoodType;
@@ -24,6 +25,7 @@ import com.team8.damo.service.response.UserBasicResponse;
 import com.team8.damo.service.response.UserProfileResponse;
 import com.team8.damo.util.Snowflake;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,6 +56,7 @@ public class UserService {
     private final JwtProvider jwtProvider;
 
     @Transactional
+    @CacheEvict(cacheNames = CacheSpec.userBasic, key = "#userId")
     public JwtTokenResponse updateUserBasic(Long userId, UserBasicUpdateServiceRequest request) {
         if (userRepository.existsByNicknameAndIdNot(request.nickname(), userId)) {
             throw new CustomException(DUPLICATE_NICKNAME);
@@ -95,6 +98,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = CacheSpec.userBasic, key = "#userId")
     public void changeImagePath(Long userId, String imagePath) {
         User user = findUserBy(userId);
         user.changeImagePath(imagePath);
@@ -173,6 +177,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = CacheSpec.userBasic, key = "#userId")
     public void withdraw(Long userId) {
         User user = findUserBy(userId);
 
@@ -188,6 +193,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = CacheSpec.userBasic, key = "#userId")
     public void updatePushNotification(Long userId, PushNotificationUpdateServiceRequest request) {
         User user = findUserBy(userId);
 
