@@ -5,7 +5,7 @@ import lombok.Builder;
 @Builder
 public record ReceiptOcrRequestEventPayload(
     Long diningId,
-    String presignedUrl,
+    String receiptUrl,
     String restaurantName
 ) implements EventPayload {
 }

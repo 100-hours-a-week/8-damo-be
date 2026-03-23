@@ -566,7 +566,7 @@ public class DiningService {
             EventType.RECEIPT_OCR_REQUEST,
             ReceiptOcrRequestEventPayload.builder()
                 .diningId(diningId)
-                .presignedUrl(request.receiptUrl())
+                .receiptUrl(request.receiptUrl())
                 .restaurantName(restaurant.getPlaceName())
                 .build()
         );
