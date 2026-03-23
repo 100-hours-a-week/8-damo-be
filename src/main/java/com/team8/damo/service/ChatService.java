@@ -78,6 +78,7 @@ public class ChatService {
                 .senderNickname(nickname)
                 .senderImagePath(userBasic.imagePath())
                 .unreadCount(0L)
+                .clientMessageId(request.clientMessageId())
                 .build()
         );
     }

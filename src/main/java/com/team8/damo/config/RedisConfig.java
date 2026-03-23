@@ -41,7 +41,7 @@ public class RedisConfig {
     private String host;
 
     @Value("${spring.data.redis.port:#{null}}")
-    private int port;
+    private Integer port;
 
     @Value("${spring.data.redis.sentinel.master:#{null}}")
     private String sentinelMaster;
