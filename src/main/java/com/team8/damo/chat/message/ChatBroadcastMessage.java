@@ -12,7 +12,8 @@ public record ChatBroadcastMessage(
     String content,
     LocalDateTime createdAt,
     String senderNickname,
-    Long unreadCount
+    Long unreadCount,
+    String clientMessageId
 ) {
     public static ChatBroadcastMessage from(CreateChatMessageEventPayload payload, Long unreadCount) {
         return new ChatBroadcastMessage(
@@ -23,7 +24,8 @@ public record ChatBroadcastMessage(
             payload.content(),
             payload.createdAt(),
             payload.senderNickname(),
-            unreadCount
+            unreadCount,
+            payload.clientMessageId()
         );
     }
 }
