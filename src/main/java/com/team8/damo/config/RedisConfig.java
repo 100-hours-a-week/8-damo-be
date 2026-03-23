@@ -37,10 +37,10 @@ import java.util.Map;
 @EnableRedisRepositories
 public class RedisConfig {
 
-    @Value("${spring.data.redis.host}")
+    @Value("${spring.data.redis.host:#{null}}")
     private String host;
 
-    @Value("${spring.data.redis.port}")
+    @Value("${spring.data.redis.port:#{null}}")
     private int port;
 
     @Value("${spring.data.redis.sentinel.master:#{null}}")
