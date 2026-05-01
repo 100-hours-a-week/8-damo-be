@@ -59,7 +59,6 @@ public class ApplicationEventHandler {
         }
     }
 
-    @Async("eventRelayExecutor")
     @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void createOutbox(Outbox outbox) {
          outboxRepository.save(outbox);
