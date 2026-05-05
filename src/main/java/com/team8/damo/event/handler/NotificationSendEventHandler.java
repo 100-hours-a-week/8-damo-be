@@ -6,8 +6,10 @@ import com.team8.damo.event.payload.NotificationEventPayload;
 import com.team8.damo.fcm.FcmService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.util.Map;
 
 @Slf4j
@@ -16,9 +18,20 @@ import java.util.Map;
 public class NotificationSendEventHandler implements EventHandler<NotificationEventPayload> {
 
     private final FcmService fcmService;
+    private final RedisTemplate<String, String> redisTemplate;
 
     @Override
     public void handle(Event<NotificationEventPayload> event) {
+        String dedupKey = "notif:sent:" + event.getEventId();
+
+        Boolean isNew = redisTemplate.opsForValue()
+            .setIfAbsent(dedupKey, "1", Duration.ofHours(24));
+
+        if (Boolean.FALSE.equals(isNew)) {
+            log.info("Duplicate notification event skipped: {}", event.getEventId());
+            return;
+        }
+
         NotificationEventPayload payload = event.getPayload();
         fcmService.sendMulticast(
             payload.tokens(),
