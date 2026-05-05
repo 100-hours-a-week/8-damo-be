@@ -22,18 +22,27 @@ public class KafkaConsumer {
     private final List<EventHandler> eventHandlers;
 
     @KafkaListener(topics = {
-        EventType.Topic.RECOMMENDATION_RESPONSE,
-        EventType.Topic.RECOMMENDATION_STREAMING,
+        EventType.Topic.RECOMMENDATION_RESPONSE
+    })
+    public void consume1(String message, Acknowledgment ack) {
+        handleEvent(message);
+        ack.acknowledge();
+    }
+
+    @KafkaListener(
+        topics = EventType.Topic.RECOMMENDATION_STREAMING
+    )
+    public void consume2(String message, Acknowledgment ack) {
+        handleEvent(message);
+        ack.acknowledge();
+    }
+
+    @KafkaListener(topics = {
         EventType.Topic.RECEIPT_OCR_RESPONSE,
         EventType.Topic.NOTIFICATION_SEND
     })
-    public void consume(String message, Acknowledgment ack) {
-        Event<EventPayload> event = Event.fromJson(message);
-        log.info("[KafkaConsumer.consume] Consumed event \n {} \n {}",
-            kv("eventType", event.getEventType()),
-            kv("payload", event.getPayload())
-        );
-        findEventHandler(event).handle(event);
+    public void consume3(String message, Acknowledgment ack) {
+        handleEvent(message);
         ack.acknowledge();
     }
 
@@ -44,5 +53,14 @@ public class KafkaConsumer {
             }
         }
         return null;
+    }
+
+    private void handleEvent(String message) {
+        Event<EventPayload> event = Event.fromJson(message);
+        log.info("[KafkaConsumer.consume] Consumed event \n {} \n {}",
+            kv("eventType", event.getEventType()),
+            kv("payload", event.getPayload())
+        );
+        findEventHandler(event).handle(event);
     }
 }
